@@ -1,4 +1,5 @@
 // Real & Simulated Investigative Cases and Evidence Board Data
+// Investigation cases are invented sandbox content (not in docs/cjp-timeline.md); each is flagged isFictional.
 import { InvestigationCase, EvidenceItem } from '../types';
 
 export const INITIAL_CASES: InvestigationCase[] = [
@@ -10,6 +11,7 @@ export const INITIAL_CASES: InvestigationCase[] = [
     currentStage: 'GATHERING_RECORDS',
     legalRisk: 'MEDIUM',
     publicImpactPotential: 95,
+    isFictional: true,
     outcomeNotes: 'Involves tracing compromised question papers from printing presses and transit couriers to solvers operating inside safe-houses in Bihar and Jharkhand.',
     evidenceItems: [
       {
@@ -70,6 +72,7 @@ export const INITIAL_CASES: InvestigationCase[] = [
     currentStage: 'LEGAL_REVIEW',
     legalRisk: 'LOW',
     publicImpactPotential: 88,
+    isFictional: true,
     outcomeNotes: 'Exposes forged Fire No-Objection Certificates (NOCs) granted to commercial coaching libraries operating in flood-prone basements without emergency exits.',
     evidenceItems: [
       {
@@ -106,6 +109,7 @@ export const INITIAL_CASES: InvestigationCase[] = [
     currentStage: 'TIP_OFF',
     legalRisk: 'SEVERE',
     publicImpactPotential: 90,
+    isFictional: true,
     outcomeNotes: 'Tip-off regarding medical supplier monopolies supplying expired injections and non-functional PSA oxygen plants to rural district hospitals.',
     evidenceItems: [
       {

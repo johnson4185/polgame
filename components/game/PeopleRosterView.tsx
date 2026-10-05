@@ -126,6 +126,8 @@ export function PeopleRosterView() {
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="font-bold text-fg text-xs">{person.name}</span>
                       <span className="text-[10px] text-accent-fg font-mono">[{person.role}]</span>
+                      {person.historical && <span className="rounded-full border border-ink bg-teal px-1.5 text-[9px] font-extrabold text-white">REAL</span>}
+                      {person.fictional && <span className="rounded-full border border-line px-1.5 text-[9px] font-bold text-muted">FICTIONAL</span>}
                     </div>
                     <div className="text-[10px] text-muted mt-0.5 font-sans">
                       {person.currentAssignment || 'Awaiting assignment'}
@@ -156,10 +158,17 @@ export function PeopleRosterView() {
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <h3 className="font-display text-xl font-bold text-fg">{selectedPerson.name}</h3>
                   <span className="stamp-yellow text-[9px]">{selectedPerson.role}</span>
+                  {selectedPerson.historical && <span className="rounded-full border-2 border-ink bg-teal px-2 py-0.5 text-[10px] font-extrabold text-white">REAL PERSON</span>}
+                  {selectedPerson.fictional && <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted">FICTIONAL CHARACTER</span>}
                 </div>
                 <p className="text-[11px] font-tactical text-muted mt-1">
-                  Region: {selectedPerson.state} · Monthly Stipend: <strong className="text-fg">₹{selectedPerson.salaryMonthly.toLocaleString('en-IN')}/mo</strong>
+                  Region: {selectedPerson.state} · {selectedPerson.isVolunteer ? 'Volunteer (unpaid)' : <>Monthly Stipend: <strong className="text-fg">₹{selectedPerson.salaryMonthly.toLocaleString('en-IN')}/mo</strong></>}
                 </p>
+                {selectedPerson.joinDate && !selectedPerson.isHired && (
+                  <p className="mt-1 text-[11px] font-semibold text-fg-2">
+                    In the record from {selectedPerson.joinDate.day}/{selectedPerson.joinDate.month}/{selectedPerson.joinDate.year}; can join from then.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -197,7 +206,8 @@ export function PeopleRosterView() {
               </div>
               <div className="rounded-xs border border-line bg-inset p-2.5 text-center">
                 <span className="text-muted text-[10px]">INTEGRITY</span>
-                <div className="text-lg font-black text-success-fg mt-0.5">{selectedPerson.integrity}%</div>
+                {/* Real people aren't given an integrity score */}
+                <div className="text-lg font-black text-success-fg mt-0.5">{selectedPerson.historical ? '—' : `${selectedPerson.integrity}%`}</div>
               </div>
               <div className="rounded-xs border border-line bg-inset p-2.5 text-center">
                 <span className="text-muted text-[10px]">MORALE</span>

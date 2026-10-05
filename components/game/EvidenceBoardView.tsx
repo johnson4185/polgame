@@ -144,6 +144,11 @@ export function EvidenceBoardView() {
               <div>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="stamp-black text-[10px]">CLASSIFIED DOSSIER</span>
+                  {selectedCase.isFictional && (
+                    <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted" title="This case is invented for the game; it is not part of the historical record.">
+                      FICTIONAL CASE
+                    </span>
+                  )}
                   <h3 className="font-display text-lg font-bold text-fg">{selectedCase.title}</h3>
                 </div>
                 <p className="text-[11px] font-tactical text-muted mt-1">

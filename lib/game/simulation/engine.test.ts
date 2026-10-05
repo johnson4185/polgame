@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createInitialState, gameReducer, BALANCE, GameAction, migrateState } from './engine';
+import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION } from './engine';
 import type { GameState } from '../types';
 
 const begin = () => gameReducer(createInitialState('ABHIJEET_CJP', 42), { type: 'FINISH_PROLOGUE' });
@@ -186,8 +186,55 @@ describe('save migration', () => {
     delete v1.insolventMonths;
     delete v1.idCounter;
     const migrated = migrateState(v1 as GameState);
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(SAVE_VERSION);
     expect(migrated.gameOver).toBeNull();
     expect(migrated.insolventMonths).toBe(0);
+  });
+});
+
+describe('historical record (S4)', () => {
+  it('archive holds only 2026 entries from the record, each with an https source', () => {
+    const s = createInitialState();
+    expect(s.historicalArchive.length).toBeGreaterThan(30);
+    for (const d of s.historicalArchive) {
+      expect(d.historicalDate >= '2026-05-12' && d.historicalDate <= '2026-10-05').toBe(true);
+      expect(d.sourceUrl.startsWith('https://')).toBe(true);
+    }
+    expect(s.historicalArchive.some(d => d.verificationStatus === 'CONTESTED_CLAIM')).toBe(true);
+  });
+
+  it('unlocks entries dated on or before the start date', () => {
+    const s = createInitialState();
+    const start = '2026-06-01';
+    for (const d of s.historicalArchive) expect(d.isUnlocked).toBe(d.historicalDate <= start);
+  });
+
+  it('refuses to recruit a real person before they appear in the record', () => {
+    const s = begin();
+    const early = gameReducer(s, { type: 'HIRE_STAFF', personId: 'CJP-SAURAV-DAS' });
+    expect(early.lastOutcome?.tone).toBe('FAILURE');
+    expect(early.people.find(p => p.id === 'CJP-SAURAV-DAS')?.isHired).toBe(false);
+    const later = gameReducer({ ...s, currentDate: { year: 2026, month: 6, day: 3 } }, { type: 'HIRE_STAFF', personId: 'CJP-SAURAV-DAS' });
+    expect(later.people.find(p => p.id === 'CJP-SAURAV-DAS')?.isHired).toBe(true);
+  });
+
+  it('labels every non-historical recruit and every investigation as fiction', () => {
+    const s = createInitialState();
+    for (const p of s.people) expect(!!p.historical !== !!p.fictional).toBe(true);
+    for (const c of s.cases) expect(c.isFictional).toBe(true);
+  });
+
+  it('migrates v2 saves to the corrected archive and adds the real cast', () => {
+    const fresh = createInitialState();
+    const v2 = {
+      ...fresh,
+      version: 2,
+      historicalArchive: [{ ...fresh.historicalArchive[0], id: 'HIST-2024-07-18', historicalDate: '2024-07-18' }],
+      people: fresh.people.filter(p => p.fictional),
+    } as GameState;
+    const migrated = migrateState(v2);
+    expect(migrated.historicalArchive.some(d => d.id === 'HIST-2024-07-18')).toBe(false);
+    expect(migrated.people.some(p => p.id === 'CJP-ASHUTOSH-RANKA')).toBe(true);
+    expect(migrated.people.filter(p => p.fictional)).toHaveLength(8);
   });
 });

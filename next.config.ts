@@ -2,6 +2,8 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // NEXT_DIST_DIR lets `npm run build:check` build alongside a running dev server (they can't share .next)
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // The floating dev badge overlaps the bottom dock; build errors still show as an overlay
   devIndicators: false,
   eslint: {

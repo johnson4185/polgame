@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "clean": "next clean",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:check": "cross-env NEXT_DIST_DIR=.next-check next build"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -31,6 +32,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.8",
     "firebase-tools": "^15.0.0",

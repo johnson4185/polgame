@@ -22,7 +22,7 @@ import { INITIAL_REFORMS, INITIAL_CABINET } from '../data/reforms';
 import { CRISIS_EVENT_DECK } from '../data/crises';
 import { SeededRNG } from './random';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -66,6 +66,12 @@ export function getDaysInMonth(year: number, month: number): number {
 export function formatDate(date: GameDate): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${date.day.toString().padStart(2, '0')} ${months[date.month - 1]} ${date.year}`;
+}
+
+/** Fresh copy of the archive with entries up to `date` unlocked */
+export function archiveUnlockedBy(date: GameDate) {
+  const iso = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
+  return HISTORICAL_ARCHIVE.map(d => ({ ...d, isUnlocked: d.historicalDate <= iso }));
 }
 
 export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: number = 20260601): GameState {
@@ -258,7 +264,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     cases: [...INITIAL_CASES],
     constituencies,
     states: [...INITIAL_STATES],
-    historicalArchive: [...HISTORICAL_ARCHIVE],
+    historicalArchive: archiveUnlockedBy(INITIAL_GAME_DATE),
     newsFeed: initialNews,
     reforms: [...INITIAL_REFORMS],
     cabinet: [...INITIAL_CABINET],
@@ -721,6 +727,12 @@ export function migrateState(saved: GameState): GameState {
     insolventMonths: saved.insolventMonths ?? 0,
     gameOver: saved.gameOver ?? null,
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
+    // v3: the archive was rebuilt from the record, and the real CJP team was added
+    historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
+    people:
+      (saved.version ?? 1) < 3
+        ? [...(saved.people ?? []), ...fresh.people.filter(p => !(saved.people ?? []).some(sp => sp.id === p.id))]
+        : saved.people,
   };
 }
 
@@ -953,6 +965,9 @@ function reduce(state: GameState, action: GameAction): GameState {
     case 'HIRE_STAFF': {
       const person = state.people.find(p => p.id === action.personId);
       if (!person || person.isHired) return state;
+      if (person.joinDate && dateKey(state.currentDate) < dateKey(person.joinDate)) {
+        return fail(state, `${person.name} joins the movement on ${formatDate(person.joinDate)}.`);
+      }
       return withOutcome(
         {
           ...state,

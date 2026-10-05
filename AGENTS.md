@@ -28,11 +28,12 @@ npx tsc --noEmit     # typecheck
 npm run lint         # eslint
 npm test             # vitest: engine unit tests + headless balance simulation
 npm run build        # production build (also typechecks)
+npm run build:check  # same build into .next-check/, safe while `npm run dev` is running
 ```
 
-Before declaring work done: `npx tsc --noEmit && npm run lint && npm test && npm run build` must all pass.
-Don't run `npm run build` while `npm run dev` is running — they share `.next/` and the dev
-server starts returning 500s (fix: stop dev, `rm -rf .next`, restart).
+Before declaring work done: `npx tsc --noEmit && npm run lint && npm test && npm run build:check` must all pass.
+Don't run plain `npm run build` while `npm run dev` is running — they share `.next/` and the dev
+server starts returning 500s (fix: stop dev, `rm -rf .next`, restart). Use `build:check` instead.
 
 `npx vitest run balance.sim` prints a table of full simulated campaigns (balanced / reckless /
 passive strategies × 5 seeds). Run it after any balance change; it fails if the difficulty

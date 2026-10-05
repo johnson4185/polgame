@@ -119,7 +119,7 @@ Files: new `lib/game/data/story/act1-*.ts` only (one file per batch). Depends on
 - Quotes only as reported in the timeline. No duplicate of C5 news content; reference it by trigger
   instead.
 
-### S4. Make existing story content match the record — Claude · IN PROGRESS `claude/s4-record`
+### S4. Make existing story content match the record — Claude · ✅ DONE (merged 5 Oct 2026)
 **Plan (self-approved, autonomous run):**
 1. Add "Contested claims" and "Sensitive subjects" rules to `docs/story-brief.md`.
 2. Rebuild `historicalArchive.ts` only from `docs/cjp-timeline.md`: ~30 dated entries, 15 May → 5 Oct

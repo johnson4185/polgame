@@ -127,6 +127,14 @@ export interface RecruitablePerson {
   currentAssignment: string | null;
   memories: string[];
   observation: string;
+  /** A real person from docs/cjp-timeline.md. No integrity score is shown and no words are invented for them. */
+  historical?: boolean;
+  /** An invented character (not in the record) */
+  fictional?: boolean;
+  /** First date the person appears in the record; they can't be recruited before it */
+  joinDate?: GameDate;
+  /** Timeline citation for historical people */
+  source?: string;
 }
 
 export interface Transaction {
@@ -203,6 +211,8 @@ export interface InvestigationCase {
   legalRisk: 'LOW' | 'MEDIUM' | 'SEVERE';
   publicImpactPotential: number; // 0 - 100
   outcomeNotes?: string;
+  /** Invented sandbox content, not part of the historical record */
+  isFictional?: boolean;
 }
 
 // Geography & 543 Lok Sabha Constituencies
@@ -249,15 +259,18 @@ export interface StateData {
 // Real Historical Archive
 export interface HistoricalDispatch {
   id: string;
-  historicalDate: string; // e.g. "2024-06-18" or "2024-07-22"
+  historicalDate: string; // ISO date, e.g. "2026-07-20"
   title: string;
   sourcePublication: string;
   sourceUrl: string;
-  verificationStatus: 'DOCUMENTED_FACT' | 'OFFICIAL_PROCEEDING' | 'COURT_RECORD' | 'SIMULATED_DRAMATIZATION';
+  // CONTESTED_CLAIM: sources disagree; the summary attributes each side (see docs/story-brief.md)
+  verificationStatus: 'DOCUMENTED_FACT' | 'OFFICIAL_PROCEEDING' | 'COURT_RECORD' | 'CONTESTED_CLAIM' | 'SIMULATED_DRAMATIZATION';
   peopleMentioned: string[];
   summary: string;
   relevanceToCJP: string;
   isUnlocked: boolean;
+  /** Mentions student suicides or serious harm: the UI shows a helpline note */
+  sensitive?: boolean;
 }
 
 // Media & News feed
