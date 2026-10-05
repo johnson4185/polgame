@@ -9,10 +9,14 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 | Files | Owner |
 |-------|-------|
 | `lib/game/data/crises.ts` | Codex — `codex/crisis-deck` |
+| `app/`, `components/game/`, `components/ui/`, `lib/game/**` (except files listed for Codex) | Claude — parchment redesign |
+| `components/map/**`, `app/kit/map/**`, `public/maps/**` | Codex — `codex/india-map` |
+| `lib/game/data/media.ts` | Codex — `codex/media-content` |
 
 ## In progress
 | Task | Agent | Branch |
 |------|-------|--------|
+| Parchment redesign to match the 5 mockups (see "Redesign plan" below) | Claude | `claude/parchment-*` |
 
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
@@ -35,6 +39,40 @@ Files: `src/assets/`, `.eslintrc.json`, `package.json`, `package-lock.json`.
 - Delete `src/assets/images/` (duplicate of `public/images/`, unused) and the empty `src/`.
 - Delete legacy `.eslintrc.json` (flat `eslint.config.mjs` is the active config); confirm `npm run lint` still passes.
 - Run `npm audit fix` (non-breaking only, no `--force`); confirm build passes.
+
+### C4. Interactive India map component — `codex/india-map`
+Files: `components/map/**`, `app/kit/map/page.tsx`, `public/maps/**` only.
+- Build `components/map/IndiaMap.tsx`: an SVG choropleth of India's states/UTs.
+- **Boundaries must follow the official Survey of India depiction** (full J&K and Ladakh).
+  Use a source that does, e.g. DataMeet's maps (check and note the licence in a comment).
+  Simplify paths so the SVG is small (< 300 KB).
+- Props: `values: Record<stateName, number>` (0–100) → fill using the support legend
+  (80–100 `#7a1a1f`, 60–80 `#a3343a`, 40–60 `#c96a6a`, 20–40 `#e3a7a0`, <20 `#9a9188`);
+  `selected?: string`; `onSelect(stateName)`; `onHover(stateName | null)`;
+  `markers?: { state: string; kind: 'protest' | 'police' | 'flag'; }[]` rendered at state centroids;
+  `renderTooltip?(stateName) => ReactNode` shown in a floating card near the cursor.
+- State names must match `INITIAL_STATES[].name` in `lib/game/data/statesAndConstituencies.ts`.
+- Keyboard: states focusable (tab), Enter selects; `aria-label` per state.
+- Use the parchment tokens (`bg-surface`, `border-line`, `text-fg`…) from `app/globals.css`.
+- Demo page at `/kit/map` with random values. Do not edit any other file.
+
+### C5. Media content data — `codex/media-content`
+Files: `lib/game/data/media.ts` only (export types from the same file; don't edit `types.ts`).
+- `NEWS_TEMPLATES`: 40+ headlines with `{ id, outlet, headline, summary, tone: 'SYMPATHETIC' | 'NEUTRAL' | 'HOSTILE', trigger: string }`
+  where `trigger` names the game event that should surface it (e.g. `'PROTEST_DAY'`, `'CRACKDOWN_HIGH'`,
+  `'PARTY_FORMED'`, `'PIL_ADMITTED'`, `'EXPOSE_LANDED'`, `'ELECTION_CALLED'`).
+- `SOCIAL_POSTS`: 40+ posts `{ id, author, handle, text, hashtags[], trigger }` in the voice of the
+  mockups (students, the founder, the spokesperson, critics).
+- `HASHTAGS`: 20+ `{ tag, theme: 'EDUCATION' | 'JOBS' | 'DEMOCRACY' | 'GOVERNANCE' | 'HOSTILE' }`.
+- Keep the movement's satirical tone ("Voice of the Lazy & Unemployed"). Hindi/Hinglish welcome.
+
+## Redesign plan (Claude)
+Source: 5 mockups the user supplied on 2026-10-05 (title, overview, event, protest scene, media room).
+Decisions: real names kept · parchment theme only · placeholder art for now · look first, then mechanics.
+1. [x] Foundation: parchment tokens, Oswald/Barlow/Kalam fonts, Radix-based kit (`components/ui/`), `/kit` preview
+2. [ ] App shell: top stat bar, bottom nav, settings menu, title screen (New / Continue / Settings)
+3. [ ] Screens: Overview (map + feeds) → Event dialog → Protest scene → Media room → People, Finance, Research, Lawsuits, Election
+4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Backlog
 Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
