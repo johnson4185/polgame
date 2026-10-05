@@ -29,6 +29,7 @@ import { TooltipProvider } from '@/components/ui/menus';
 import { TopBar } from '@/components/shell/TopBar';
 import { BottomDock } from '@/components/shell/BottomDock';
 import { TitleScreen } from '@/components/shell/TitleScreen';
+import { CampaignStatisticsProvider } from '@/components/statistics/CampaignStatisticsProvider';
 
 function GameScreenRouter() {
   const { state } = useGame();
@@ -86,9 +87,11 @@ function GameAppContainer() {
 export default function Home() {
   return (
     <GameProvider>
-      <TooltipProvider>
-        <GameAppContainer />
-      </TooltipProvider>
+      <CampaignStatisticsProvider>
+        <TooltipProvider>
+          <GameAppContainer />
+        </TooltipProvider>
+      </CampaignStatisticsProvider>
     </GameProvider>
   );
 }

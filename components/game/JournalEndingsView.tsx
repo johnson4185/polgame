@@ -4,8 +4,19 @@ import React from 'react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { formatDate } from '@/lib/game/simulation/engine';
 import { ScrollText, Award, Shield, CheckCircle, Scale, AlertTriangle, Sparkles, BookOpen } from 'lucide-react';
+import { Tabs, TabPanel } from '@/components/ui/menus';
+import { CampaignStatistics } from '@/components/statistics/CampaignStatistics';
 
 export function JournalEndingsView() {
+  return (
+    <Tabs tabs={[{ value: 'chronicle', label: 'Chronicle' }, { value: 'statistics', label: 'Statistics' }]} defaultValue="chronicle">
+      <TabPanel value="chronicle"><Chronicle /></TabPanel>
+      <TabPanel value="statistics"><CampaignStatistics /></TabPanel>
+    </Tabs>
+  );
+}
+
+function Chronicle() {
   const { state } = useGame();
 
   const passedLawsCount = state.reforms.filter(r => r.status === 'PASSED_ACT').length;
