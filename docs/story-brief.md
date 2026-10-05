@@ -42,6 +42,26 @@ really happened (the "historical choice") and cite the timeline entry they come 
   the US afterwards (a viral claim that he did was fact-checked as false). Model a single
   US-to-India move, not a round trip.
 
+## Contested claims
+
+The record disagrees with itself in places (who called whom for talks on 20 July; pellets; injury
+and detention counts; whether stones were thrown). In the game:
+
+- **Attribute, don't assert.** "CJP alleged…", "Police said…", "Amnesty reported…". Never state one
+  side's account as fact when the timeline marks it as disputed.
+- Where sources give different numbers or dates, show both or use the lower, attributed figure.
+- Archive entries for disputed points use the `CONTESTED_CLAIM` status.
+
+## Sensitive subjects
+
+- **Student suicides** (organisers said more than 20 students died amid the exam crisis). Treat with
+  care: never a resource, reward, score or "effect chip"; never a choice that exploits a death for
+  gain; no method details. Mention only as the record does, with families at the centre. Wherever
+  the subject appears, show the Tele-MANAS helpline (14416).
+- **Violence and injuries** (20 July). Report as the record does, attributed; no gore, no glorifying.
+- **Caste, religion and personal details** of real people appear only where the timeline states them
+  and the story needs them.
+
 ## Names (decided 5 Oct 2026)
 
 - **Use real names** for people, parties, institutions and media, as they appear in

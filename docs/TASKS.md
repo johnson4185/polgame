@@ -8,15 +8,12 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 
 | Files | Owner |
 |-------|-------|
-| `lib/game/data/crises.ts` | Codex — `codex/crisis-deck` |
-| `app/`, `components/game/`, `components/ui/`, `lib/game/**` (except files listed for Codex) | Claude — UI redesign |
-| `components/map/**`, `app/kit/map/**`, `public/maps/**` | Codex — `codex/india-map` |
-| `lib/game/data/media.ts` | Codex — `codex/media-content` |
+| Everything | Claude — autonomous run (5 Oct 2026). Codex tasks C1, C4, C5 taken over by Claude with the owner's permission; no other agent is active. |
 
 ## In progress
 | Task | Agent | Branch |
 |------|-------|--------|
-| UI redesign to match the 5 mockups in Truck Art style (see "Redesign plan" below) | Claude | `claude/*` |
+| Autonomous run: S4 → S1 → S2 → S3 → S5 → redesign + backlog (plans below, progress in `docs/PROGRESS.md`) | Claude | `claude/*` (one branch per task) |
 
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
@@ -122,7 +119,21 @@ Files: new `lib/game/data/story/act1-*.ts` only (one file per batch). Depends on
 - Quotes only as reported in the timeline. No duplicate of C5 news content; reference it by trigger
   instead.
 
-### S4. Make existing story content match the record — Claude
+### S4. Make existing story content match the record — Claude · IN PROGRESS `claude/s4-record`
+**Plan (self-approved, autonomous run):**
+1. Add "Contested claims" and "Sensitive subjects" rules to `docs/story-brief.md`.
+2. Rebuild `historicalArchive.ts` only from `docs/cjp-timeline.md`: ~30 dated entries, 15 May → 5 Oct
+   2026, each with the timeline's source link. Add a `CONTESTED_CLAIM` status for disputed points
+   (pellets, who called whom, injury counts) written with attribution. Drop the invented and
+   2024 entries (not in the timeline; several were false).
+3. Archive screen: filter for the new status, honest disclaimer, sources shown.
+4. Real cast in `recruits.ts` (Saurav Das, Ashutosh Ranka, the spokespersons, Ajinkya Shinde) as
+   volunteers with `historical: true`, a join date, and roles/notes from the people index; no
+   invented quotes, no integrity score shown for real people. Existing recruits kept, flagged
+   `fictional: true`.
+5. Investigation cases flagged fictional and labelled in the Research screen.
+6. Hiring a real cast member before their join date is refused by the engine. Tests updated.
+
 Files: `lib/game/data/historicalArchive.ts`, `lib/game/data/recruits.ts`,
 `lib/game/data/investigations.ts`, `lib/game/types.ts` (only to add a "fictional" flag if needed).
 - Rebuild the Archive from the timeline (correct 2026 dates, sources, no invented entries).
