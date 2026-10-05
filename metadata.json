@@ -1,0 +1,6 @@
+{
+  "name": "REPUBLIC: 543",
+  "description": "A high-stakes 2D political strategy and life-simulation game of citizen movement, Jantar Mantar protests, elections, and governance in modern India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
