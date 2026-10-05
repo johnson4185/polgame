@@ -35,7 +35,7 @@ export function GameHeader() {
 
       <header className="border-b-2 border-zinc-800 bg-[#0A0E17] px-3 sm:px-4 py-2.5 shadow-md">
         {/* Top Bar Contract: Zone 1 (Brand) — Zone 2 (Tactical stats & nav) — Zone 3 (Primary Actions) */}
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+        <div className="mx-auto flex flex-wrap max-w-7xl items-center justify-between gap-x-3 gap-y-2">
           
           {/* Zone 1: Striking Brand Wordmark with Black, Red, Yellow Badge */}
           <div className="flex items-center gap-2.5">
@@ -64,7 +64,7 @@ export function GameHeader() {
           </div>
 
           {/* Zone 2: Tactical Clock Controls & Core Status Meters */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4 min-w-0">
             {/* Clock speeds with Black/Yellow/Red tactile states */}
             <div className="flex items-center rounded-xs border-2 border-zinc-700 bg-black p-0.5 shadow-inner">
               <button
@@ -100,7 +100,7 @@ export function GameHeader() {
             </button>
 
             {/* Tactical Resource Meters in Black, Red, Yellow */}
-            <div className="hidden lg:flex items-center gap-3 text-xs font-tactical">
+            <div className="hidden lg:flex flex-wrap items-center gap-2 text-xs font-tactical">
               {/* Energy Meter */}
               <div className="flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-xs border border-zinc-800">
                 <Zap className="h-3.5 w-3.5 text-[#FACC15]" />

@@ -8,14 +8,11 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 
 | Files | Owner |
 |-------|-------|
-| `lib/game/simulation/engine.ts`, `lib/game/types.ts`, `lib/game/context/GameContext.tsx`, `lib/game/simulation/persistence.ts` | Claude — `claude/real-mechanics` |
-| `components/game/GameActionHUD.tsx`, `ElectionNightView.tsx`, `PartyECIView.tsx`, `IndiaMapView.tsx`, `EvidenceBoardView.tsx`, `JantarMantarScene.tsx`, `GovernanceView.tsx`, `GameHeader.tsx`, `app/page.tsx` | Claude — `claude/real-mechanics` |
 | `lib/game/data/crises.ts` | Codex — `codex/crisis-deck` |
 
 ## In progress
 | Task | Agent | Branch |
 |------|-------|--------|
-| Real game mechanics: turn-based loop, engine-enforced AP, real election model, game-over endings, pure reducer, save compat, Vitest | Claude | `claude/real-mechanics` |
 
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
@@ -46,11 +43,31 @@ Files: `components/game/PersonalLifeView.tsx`, `PeopleRosterView.tsx`, `Historic
 - Icon-only buttons get `aria-label`; modals get `role="dialog"` + `aria-modal`.
 - Do not change any `dispatch(...)` calls or game logic.
 
-## Backlog (after `claude/real-mechanics` merges)
+## Backlog
+Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
+- [ ] **More operations.** Only the Jantar Mantar vigil exists; once it concludes (day 14) the
+      Operations screen has nothing to do. `OperationType` already lists `STATE_JAN_YATRA`,
+      `SCHOOL_AUDIT_DRIVE`, `PARLIAMENT_MARCH` — add a "launch operation" action + templates.
+- [ ] **Prologue choice is cosmetic.** `PrologueModal` stores `selectedResponse` but never
+      dispatches it; make each response set different starting stats.
+- [ ] **Mini-game rewards are computed in the components** (`RallyMiniGameModal`,
+      `TVDebateMiniGameModal`). Move the formulas into the engine so it can validate them.
+- [ ] **One election per campaign.** After the coalition there is no next cycle, by-election,
+      or no-confidence motion.
+- [ ] Manifesto pledges and cabinet ministries are display-only; wire them to reforms/trust.
+- [ ] Election realism: candidates in boosted strongholds win almost every time — add more
+      local variance / incumbency effects (verify with `npx vitest run balance.sim`).
+
+Features:
 - [ ] Gemini-generated dynamic news headlines via a server route (keeps `GEMINI_API_KEY` secret)
 - [ ] Interactive SVG India map (state-level choropleth of CJP support)
-- [ ] Onboarding/tutorial overlay explaining AP, crackdown, funds
-- [ ] Balance pass using a headless simulation script (play N games with a scripted strategy)
+- [ ] Onboarding/tutorial overlay explaining AP, energy, crackdown, funds, and END DAY
 
 ## Done
 - [x] Initial local setup: install, typecheck, lint, build, dev server verified (2026-10-05)
+- [x] Real game mechanics (Claude, `claude/real-mechanics`, 2026-10-05): pure reducer; engine-enforced
+      AP/energy/costs with real outcome toasts; turn-based loop; per-constituency election model;
+      majority-checked coalitions; reform passage → victory; 4 defeat endings + game-over screen;
+      crackdown/insolvency/trust-decay pressure; derived quests & rank-based AP; all 543 seats
+      nominatable; save migration; Vitest (engine + balance sim); header no longer overflows
+- [x] Headless balance simulation (`lib/game/simulation/balance.sim.test.ts`)

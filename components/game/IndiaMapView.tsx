@@ -55,21 +55,9 @@ export function IndiaMapView() {
     setSelectedStateCode(code);
   };
 
-  const handleBoostConstituency = (conId: number | string) => {
-    if (state.movement.movementFunds < 5000) return;
+  const handleBoostConstituency = (conId: number) => {
     soundManager.playClick();
-    // Simulate tactical boost
-    dispatch({
-      type: 'LOG_JOURNAL',
-      entry: {
-        id: `BOOST-${conId}-${state.journal.length + 1}`,
-        date: state.currentDate,
-        title: `Grassroots Blitz in ${currentState.name}`,
-        text: `Dispatched volunteer flyers and audio van to constituency #${conId}. Citizen awareness elevated.`,
-        significance: 'MINOR',
-        associatedScreen: 'MAP_543',
-      },
-    });
+    dispatch({ type: 'BOOST_CONSTITUENCY', constituencyId: conId });
   };
 
   const totalVolunteers = state.states.reduce((acc, s) => acc + s.volunteerStrength, 0);
@@ -332,10 +320,10 @@ export function IndiaMapView() {
 
                     <button
                       onClick={() => handleBoostConstituency(con.id)}
-                      title="Dispatch volunteer brigade and informational pamphlets"
+                      title="Dispatch volunteer brigade and pamphlets: raises local support (1 AP, ₹5,000)"
                       className="px-2.5 py-1.5 rounded-xs bg-[#DC2626] hover:bg-red-700 text-white font-bold text-[10px] uppercase tracking-wider transition-colors shadow-xs"
                     >
-                      Campaign
+                      Campaign · 1 AP
                     </button>
                   </div>
                 </div>

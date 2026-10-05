@@ -21,11 +21,17 @@ npm install
 npm run dev          # http://localhost:3000
 npx tsc --noEmit     # typecheck
 npm run lint         # eslint
+npm test             # vitest: engine unit tests + headless balance simulation
 npm run build        # production build (also typechecks)
 ```
 
-Before declaring work done: `npx tsc --noEmit && npm run lint && npm run build` must all pass.
-There is no test suite yet.
+Before declaring work done: `npx tsc --noEmit && npm run lint && npm test && npm run build` must all pass.
+Don't run `npm run build` while `npm run dev` is running — they share `.next/` and the dev
+server starts returning 500s (fix: stop dev, `rm -rf .next`, restart).
+
+`npx vitest run balance.sim` prints a table of full simulated campaigns (balanced / reckless /
+passive strategies × 5 seeds). Run it after any balance change; it fails if the difficulty
+curve breaks (e.g. balanced play stops winning, or passive play can form a party).
 
 ## Architecture
 
@@ -46,6 +52,32 @@ components/game/*Modal.tsx        Prologue, crisis, mini-games (rally, TV debate
 State flow: components call `useGame()` → `dispatch({ type: ... })` → `gameReducer` in
 `engine.ts` returns new state. All game rules belong in the reducer/engine, not in components.
 
+### Engine rules (enforced by tests)
+- **The reducer is pure.** No `soundManager`, `Date.now()`, `Math.random()`, timers, or in-place
+  mutation (`array.push`) inside `engine.ts`. Randomness: `rngFor(state, salt)`. Ids: `uid(state, prefix)`.
+  Sounds for engine events (crisis, level-up, election result, game over, failures) are played by
+  `GameContext` when it sees the state change; components play their own click sounds.
+- **The engine validates everything.** Costs, action points (`spendAction`), energy, and
+  prerequisites are checked in the reducer, never only in the UI. A refused action returns
+  `fail(state, reason)`; a successful one returns `withOutcome(state, text)`. The HUD shows
+  `state.lastOutcome` as a toast, so **never write a UI toast that claims an effect** — report
+  what the engine actually did.
+- **Movement stat changes go through `adjustMovement`**, which applies diminishing returns to
+  trust and volunteer gains. Don't write to `movement.publicTrust` / `volunteerCount` directly.
+- Tunable numbers live in `BALANCE` at the top of `engine.ts`.
+- `gameReducer` = `reduce` (the switch) + `finalize` (derives quests/XP/level/AP cap, projected
+  seats, and checks endings). Game-over blocks all gameplay actions.
+- Turn-based by default: days advance via END DAY. The header clock is optional auto-advance and
+  pauses itself during crises, mini-games and game over.
+
+### Core loop
+Each day the player has 3 AP (4 at rank 3, 5 at rank 5). Actions cost AP + energy + often money.
+Pressure: **crackdown** (100 = sealed), **funds** (2 missed payrolls = bankrupt), **health**
+(collapse), **trust** (≤5 = irrelevant). Arc: Jantar Mantar vigil → investigations/PIL →
+register party (15k volunteers + ₹50k) → nominate candidates (deposit + campaign fund) → election
+(per-constituency vote-share model in `contestSeat`) → coalition (needs 272) → table & lobby
+reforms → 3 laws passed = victory.
+
 ### Adding a feature — the usual path
 1. Add/extend types in `lib/game/types.ts`
 2. Add initial values in `createInitialState` (engine.ts)
@@ -55,8 +87,10 @@ State flow: components call `useGame()` → `dispatch({ type: ... })` → `gameR
 6. New screen? Add to the `ScreenTab` union, `ScreenNav.tsx`, and the router in `app/page.tsx`
 
 ### Save compatibility
-Changing `GameState` shape can break existing localStorage saves. When you add fields,
-give them defaults so `LOAD_STATE` of an older save doesn't crash (merge over `createInitialState`).
+Changing `GameState` shape can break existing localStorage saves. `LOAD_STATE` runs
+`migrateState`, which merges the save over `createInitialState`. When you add a field, add it to
+`createInitialState` and, if it needs a non-default value for old saves, handle it in `migrateState`.
+Bump `SAVE_VERSION` for breaking changes.
 
 ## Conventions
 - `'use client'` at the top of every component/hook file (the whole app is client-rendered)

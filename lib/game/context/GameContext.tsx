@@ -4,6 +4,7 @@ import React, { createContext, useContext, useReducer, useEffect, useRef } from 
 import { GameState, CampaignMode } from '../types';
 import { createInitialState, gameReducer, GameAction } from '../simulation/engine';
 import { saveGameToSlot, loadGameFromSlot } from '../simulation/persistence';
+import { soundManager } from '../simulation/sound';
 
 interface GameContextType {
   state: GameState;
@@ -34,9 +35,33 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Running clock timer
+  // The reducer is pure, so engine-driven events get their sounds here
+  const prevRef = useRef(state);
   useEffect(() => {
-    if (state.clockSpeed === 0 || !state.hasBegun) return;
+    const prev = prevRef.current;
+    prevRef.current = state;
+    if (prev === state) return;
+    if (state.activeCrisis && state.activeCrisis !== prev.activeCrisis) soundManager.playCrisisSting();
+    if ((state.movementLevel ?? 1) > (prev.movementLevel ?? 1)) soundManager.playLevelUp();
+    if (state.electionLiveState.isCountingFinished && !prev.electionLiveState.isCountingFinished) soundManager.playFanfare();
+    if (state.gameOver && !prev.gameOver) {
+      if (state.gameOver.victory) soundManager.playFanfare();
+      else soundManager.playAlert();
+    }
+    if (state.lastOutcome && state.lastOutcome !== prev.lastOutcome && state.lastOutcome.tone === 'FAILURE') {
+      soundManager.playAlert();
+    }
+  }, [state]);
+
+  useEffect(() => {
+    soundManager.setEnabled(state.settings.soundEnabled);
+  }, [state.settings.soundEnabled]);
+
+  // Auto-advance clock (optional; the default is turn-based via END DAY).
+  // Pauses while a crisis or mini-game needs the player's attention.
+  const clockBlocked = !!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver;
+  useEffect(() => {
+    if (state.clockSpeed === 0 || !state.hasBegun || clockBlocked) return;
 
     const intervalMs = state.clockSpeed === 1 ? 2400 : state.clockSpeed === 2 ? 1200 : 450;
     const timer = setInterval(() => {
@@ -44,9 +69,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [state.clockSpeed, state.hasBegun]);
+  }, [state.clockSpeed, state.hasBegun, clockBlocked]);
 
-  // Periodic autosave every 30 seconds
+  // Periodic autosave every 20 seconds
   useEffect(() => {
     if (!state.hasBegun) return;
     const autosaveTimer = setInterval(() => {
@@ -57,7 +82,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [state.hasBegun]);
 
   const startNewGame = (mode: CampaignMode) => {
-    const newState = createInitialState(mode);
+    // Fresh seed per campaign so crises, donations and elections differ between runs
+    const newState = createInitialState(mode, Math.floor(Math.random() * 2 ** 31));
     dispatch({ type: 'LOAD_STATE', state: newState });
     saveGameToSlot('autosave', newState);
   };

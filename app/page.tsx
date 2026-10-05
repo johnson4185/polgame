@@ -21,6 +21,7 @@ import { GameActionHUD } from '@/components/game/GameActionHUD';
 import { CrisisModal } from '@/components/game/CrisisModal';
 import { RallyMiniGameModal } from '@/components/game/RallyMiniGameModal';
 import { TVDebateMiniGameModal } from '@/components/game/TVDebateMiniGameModal';
+import { GameOverModal } from '@/components/game/GameOverModal';
 import { Radio, ShieldAlert } from 'lucide-react';
 
 function LiveNewsTicker() {
@@ -105,6 +106,9 @@ function GameAppContainer() {
 
       {/* Playable Prime-Time TV News Debate Mini-Game */}
       <TVDebateMiniGameModal />
+
+      {/* Campaign ending (victory or defeat) */}
+      <GameOverModal />
 
       {/* Tactical War Room / Editorial Footer */}
       <footer className={`border-t-2 px-4 py-3 text-xs font-tactical transition-colors ${

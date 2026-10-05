@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
+import { BALANCE } from '@/lib/game/simulation/engine';
 import { Vote, Shield, Check, Plus, AlertCircle, ArrowRight, UserCheck, Award, Flag, Flame } from 'lucide-react';
 
 export function PartyECIView() {
@@ -17,7 +18,6 @@ export function PartyECIView() {
   const [targetConstituencyId, setTargetConstituencyId] = useState<number>(1);
   const [candidateName, setCandidateName] = useState<string>('Advocate Meera Tandon');
   const [campaignFund, setCampaignFund] = useState<number>(25000);
-  const [nominationFeedback, setNominationFeedback] = useState<string | null>(null);
 
   const symbolsList = [
     { name: 'The Resilient Bug (Cockroach)', desc: 'Survives political radiation and systemic apathy.' },
@@ -49,9 +49,28 @@ export function PartyECIView() {
       candidateName: candidateName.trim(),
       funding: campaignFund,
     });
-    setNominationFeedback(`Nominated ${candidateName} for Constituency #${targetConstituencyId}`);
-    setTimeout(() => setNominationFeedback(null), 3000);
   };
+
+  // Group all 543 seats by state for the nomination picker
+  const seatsByState = state.constituencies.reduce<Record<string, typeof state.constituencies>>((acc, c) => {
+    (acc[c.state] ||= []).push(c);
+    return acc;
+  }, {});
+  const targetSeat = state.constituencies.find(c => c.id === targetConstituencyId);
+  const deposit = targetSeat?.category === 'GEN' ? BALANCE.securityDepositGeneral : BALANCE.securityDepositReserved;
+  const requirements = [
+    {
+      label: `${BALANCE.partyVolunteersRequired.toLocaleString('en-IN')} volunteers`,
+      have: state.movement.volunteerCount.toLocaleString('en-IN'),
+      met: state.movement.volunteerCount >= BALANCE.partyVolunteersRequired,
+    },
+    {
+      label: `₹${BALANCE.partyRegistrationCost.toLocaleString('en-IN')} registration & office costs`,
+      have: `₹${state.movement.movementFunds.toLocaleString('en-IN')}`,
+      met: state.movement.movementFunds >= BALANCE.partyRegistrationCost,
+    },
+  ];
+  const electionHeld = state.electionLiveState.isCountingUnderway || state.electionLiveState.isCountingFinished;
 
   const handleLaunchElection = () => {
     soundManager.playGavel();
@@ -78,13 +97,23 @@ export function PartyECIView() {
         </div>
 
         {state.party.isFormed && (
-          <button
-            onClick={handleLaunchElection}
-            className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-5 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5"
-          >
-            <Vote className="h-4 w-4 text-[#FACC15]" />
-            <span>Launch 543 General Election Tally</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="font-tactical text-xs text-right">
+              <div className="text-zinc-400 text-[10px]">CANDIDATES · PROJECTED SEATS</div>
+              <div className="font-black text-white tabular-nums">
+                {state.party.candidateCount} · <span className="text-[#FACC15]">{state.party.projectedSeats}</span>
+              </div>
+            </div>
+            <button
+              onClick={handleLaunchElection}
+              disabled={electionHeld || state.party.candidateCount < 1}
+              title={state.party.candidateCount < 1 ? 'Nominate at least one candidate first' : undefined}
+              className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-5 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Vote className="h-4 w-4 text-[#FACC15]" />
+              <span>{electionHeld ? 'Election Held' : 'Launch 543 General Election Tally'}</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -156,9 +185,23 @@ export function PartyECIView() {
               </div>
             </div>
 
+            <div className="rounded-xs border-2 border-zinc-800 bg-black p-3 space-y-1.5">
+              <div className="font-bold text-zinc-200">ECI REQUIREMENTS:</div>
+              {requirements.map(r => (
+                <div key={r.label} className={`flex items-center justify-between gap-2 ${r.met ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className="flex items-center gap-1.5">
+                    {r.met ? <Check className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                    {r.label}
+                  </span>
+                  <span className="tabular-nums text-zinc-300">have {r.have}</span>
+                </div>
+              ))}
+            </div>
+
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 py-3 text-sm font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5"
+              disabled={!requirements.every(r => r.met)}
+              className="w-full flex items-center justify-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5"
             >
               <Flag className="h-4 w-4 text-[#FACC15]" />
               <span>SUBMIT ECI RECOGNITION DOSSIER</span>
@@ -226,12 +269,6 @@ export function PartyECIView() {
               <span className="text-zinc-400 font-mono text-[10px]">Form 2A Certified</span>
             </div>
 
-            {nominationFeedback && (
-              <div className="rounded-xs bg-yellow-950/80 border-2 border-[#FACC15] p-2 text-xs font-bold text-[#FDE047] flex items-center gap-2">
-                <Award className="h-4 w-4 text-[#FACC15]" />
-                <span>{nominationFeedback}</span>
-              </div>
-            )}
 
             <form onSubmit={handleNominate} className="space-y-3 font-tactical">
               <div>
@@ -241,10 +278,14 @@ export function PartyECIView() {
                   onChange={(e) => setTargetConstituencyId(Number(e.target.value))}
                   className="w-full rounded-xs border-2 border-zinc-700 bg-black px-3 py-2 text-xs text-white focus:outline-none focus:border-[#FACC15]"
                 >
-                  {state.constituencies.slice(0, 30).map((con) => (
-                    <option key={con.id} value={con.id}>
-                      #{con.id} · {con.name} ({con.state}) - Support: {con.cjpSupportScore}%
-                    </option>
+                  {Object.entries(seatsByState).map(([stateName, seats]) => (
+                    <optgroup key={stateName} label={stateName}>
+                      {seats.map((con) => (
+                        <option key={con.id} value={con.id} disabled={!!con.cjpCandidate}>
+                          {con.cjpCandidate ? '✓ ' : ''}#{con.id} · {con.name} ({con.category}) - Support: {con.cjpSupportScore}%
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>
@@ -266,16 +307,20 @@ export function PartyECIView() {
                 <input
                   type="number"
                   step="5000"
-                  min="5000"
+                  min="0"
                   value={campaignFund}
                   onChange={(e) => setCampaignFund(Number(e.target.value))}
                   className="w-full rounded-xs border-2 border-zinc-700 bg-black px-3 py-2 text-xs text-white focus:outline-none focus:border-[#FACC15]"
                 />
+                <p className="mt-1 text-[10px] text-zinc-400 font-sans">
+                  Total ₹{(campaignFund + deposit).toLocaleString('en-IN')} (₹{deposit.toLocaleString('en-IN')} security deposit + campaign fund) from movement funds of ₹{state.movement.movementFunds.toLocaleString('en-IN')}. More funding raises vote share, with diminishing returns.
+                </p>
               </div>
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 py-2.5 font-black text-white hover:bg-red-700 transition-colors shadow-xs"
+                disabled={electionHeld}
+                className="w-full flex items-center justify-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed font-black text-white hover:bg-red-700 transition-colors shadow-xs"
               >
                 <Plus className="h-4 w-4 text-[#FACC15]" />
                 <span>CONFIRM NOMINATION ON FORM 2A</span>

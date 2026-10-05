@@ -343,6 +343,27 @@ export interface CrisisEvent {
   options: CrisisOption[];
 }
 
+export interface ActionOutcome {
+  id: number;
+  text: string;
+  tone: 'SUCCESS' | 'FAILURE' | 'WARNING';
+}
+
+export type EndingKind =
+  | 'COLLAPSE'        // player health gave out
+  | 'SEALED'          // crackdown reached 100
+  | 'BANKRUPT'        // movement insolvent too long
+  | 'IRRELEVANT'      // public trust collapsed
+  | 'REFORMER';       // passed enough reforms into law
+
+export interface GameEnding {
+  kind: EndingKind;
+  victory: boolean;
+  title: string;
+  text: string;
+  date: GameDate;
+}
+
 // Authoritative Master Game State
 export interface GameState {
   version: number;
@@ -402,6 +423,22 @@ export interface GameState {
     reducedMotion: boolean;
     theme?: 'DARK' | 'LIGHT';
   };
+
+  // Result of the most recent player action, surfaced as a toast by the HUD.
+  // `id` increments on every outcome so the UI can detect repeats of the same text.
+  lastOutcome: ActionOutcome | null;
+
+  // dateKey of the last day each mini-game was played (one of each per day)
+  miniGameLastPlayed?: Partial<Record<'RALLY' | 'TV_DEBATE', number>>;
+
+  // Incremented once per state-changing action; used to build unique, deterministic ids
+  idCounter: number;
+
+  // Consecutive month-starts where the movement could not cover its burn rate
+  insolventMonths: number;
+
+  // Set when the campaign ends (victory or defeat); the engine ignores gameplay actions after this
+  gameOver: GameEnding | null;
 
   // Active dialogue or notification alert
   activeDialogue: {

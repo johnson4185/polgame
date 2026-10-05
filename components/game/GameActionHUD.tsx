@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import type { ActionOutcome } from '@/lib/game/types';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
 import { 
@@ -29,115 +30,54 @@ const LEVEL_NAMES = [
 
 export function GameActionHUD() {
   const { state, dispatch } = useGame();
-  const [floatingToast, setFloatingToast] = useState<string | null>(null);
+  const [dismissedOutcomeId, setDismissedOutcomeId] = useState(0);
 
   const ap = state.actionPoints ?? 3;
   const maxAp = state.maxActionPoints ?? 3;
   const crackdown = state.crackdownLevel ?? 15;
   const level = state.movementLevel ?? 1;
-  const xp = state.movementXP ?? 250;
-  const nextLevelXp = level * 1000;
-  const activeQuest = state.activeQuests?.[0] || {
-    id: 'QUEST-1',
-    chapter: 1,
-    title: 'The Jantar Mantar Vigil',
-    description: 'Sustain ground resistance against Delhi heat & police intimidation.',
-    currentProgress: state.movement.volunteerCount,
-    targetProgress: 5000,
-    unit: 'Volunteers',
-    rewardXP: 500,
-    isCompleted: false,
-  };
+  const xp = state.movementXP ?? 0;
+  const activeQuest = state.activeQuests?.find(q => !q.isCompleted) ?? state.activeQuests?.[state.activeQuests.length - 1];
+  const openCase = state.cases.find(c => c.currentStage !== 'FILED_PIL' && c.currentStage !== 'EXPOSED');
 
-  const showToast = (msg: string) => {
-    setFloatingToast(msg);
-    setTimeout(() => setFloatingToast(null), 3500);
-  };
+  // Every engine action reports its real result via lastOutcome; show it as a toast
+  const outcome = state.lastOutcome;
+  const floatingToast: ActionOutcome | null = outcome && outcome.id !== dismissedOutcomeId ? outcome : null;
+  useEffect(() => {
+    if (!outcome) return;
+    const t = setTimeout(() => setDismissedOutcomeId(outcome.id), 3500);
+    return () => clearTimeout(t);
+  }, [outcome]);
 
   const handleActionRally = () => {
-    if (ap <= 0) {
-      showToast('⚠️ No Action Points left today. End day to reset AP.');
-      return;
-    }
     soundManager.playMegaphone();
-    dispatch({ type: 'USE_ACTION_POINT', cost: 1 });
     dispatch({ type: 'OPEN_MINI_GAME', miniGame: 'RALLY' });
   };
 
   const handleActionDebate = () => {
-    if (ap <= 0) {
-      showToast('⚠️ No Action Points left today. End day to reset AP.');
-      return;
-    }
     soundManager.playCameraShutter();
-    dispatch({ type: 'USE_ACTION_POINT', cost: 1 });
     dispatch({ type: 'OPEN_MINI_GAME', miniGame: 'TV_DEBATE' });
   };
 
   const handleActionInvestigate = () => {
-    if (ap <= 0) {
-      showToast('⚠️ No Action Points left today. End day to reset AP.');
-      return;
-    }
+    if (!openCase) return;
     soundManager.playPaper();
-    dispatch({ type: 'USE_ACTION_POINT', cost: 1 });
-    const activeCase = state.cases[0];
-    if (activeCase) {
-      dispatch({
-        type: 'INVESTIGATION_ACTION',
-        caseId: activeCase.id,
-        action: 'CORROBORATE_EVIDENCE',
-      });
-      showToast('🕵️ Met Whistleblower: Corroborated Port Infrastructure Ledger (+15% Case Progress)');
-    }
+    dispatch({ type: 'INVESTIGATION_ACTION', caseId: openCase.id, action: 'CORROBORATE_EVIDENCE' });
   };
 
   const handleActionLegal = () => {
-    if (ap <= 0) {
-      showToast('⚠️ No Action Points left today. End day to reset AP.');
-      return;
-    }
     soundManager.playGavel();
-    dispatch({ type: 'USE_ACTION_POINT', cost: 1 });
-    dispatch({
-      type: 'LOG_JOURNAL',
-      entry: {
-        id: `LEGAL-${Date.now()}`,
-        date: state.currentDate,
-        title: 'Emergency High Court Bail Injunction Filed',
-        text: 'Senior advocates secured ad-interim protection for 18 detained student volunteers. Police tension lowered.',
-        significance: 'MILESTONE',
-        associatedScreen: 'OPERATIONS',
-      },
-    });
-    showToast('⚖️ High Court Relief: Police crackdown tension reduced by 15%');
+    dispatch({ type: 'LEGAL_AID' });
   };
 
   const handleActionRest = () => {
-    if (ap <= 0) {
-      showToast('⚠️ No Action Points left today. End day to reset AP.');
-      return;
-    }
     soundManager.playClick();
-    dispatch({ type: 'USE_ACTION_POINT', cost: 1 });
-    dispatch({
-      type: 'LOG_JOURNAL',
-      entry: {
-        id: `REST-${Date.now()}`,
-        date: state.currentDate,
-        title: 'Strategic Council & Comrade Rest',
-        text: 'Spent the evening strategizing over chai in the field tent. Restored vital focus.',
-        significance: 'MINOR',
-        associatedScreen: 'PERSONAL',
-      },
-    });
-    showToast('☕ Rested & Strategized: +25 Energy, -15 Stress');
+    dispatch({ type: 'FIELD_REST' });
   };
 
   const handleEndDay = () => {
     soundManager.playPaper();
     dispatch({ type: 'ADVANCE_DAY' });
-    showToast('🌙 Night Falls: Advanced to the next day. AP fully restored!');
   };
 
   return (
@@ -145,9 +85,14 @@ export function GameActionHUD() {
       
       {/* Floating Consequence Toast */}
       {floatingToast && (
-        <div className="fixed top-20 right-4 z-50 flex items-center gap-2 rounded-xs border-2 border-[#FACC15] bg-[#0A0E17] px-4 py-2.5 shadow-2xl font-tactical text-xs font-bold text-white animate-in slide-in-from-top-4">
-          <Sparkles className="h-4 w-4 text-[#FACC15] shrink-0" />
-          <span>{floatingToast}</span>
+        <div
+          role="status"
+          className={`fixed top-20 right-4 left-4 sm:left-auto sm:max-w-md z-[60] flex items-center gap-2 rounded-xs border-2 bg-[#0A0E17] px-4 py-2.5 shadow-2xl font-tactical text-xs font-bold text-white animate-in slide-in-from-top-4 ${
+            floatingToast.tone === 'FAILURE' ? 'border-red-500' : floatingToast.tone === 'WARNING' ? 'border-orange-400' : 'border-[#FACC15]'
+          }`}
+        >
+          <Sparkles className={`h-4 w-4 shrink-0 ${floatingToast.tone === 'FAILURE' ? 'text-red-400' : 'text-[#FACC15]'}`} />
+          <span>{floatingToast.text}</span>
         </div>
       )}
 
@@ -165,7 +110,7 @@ export function GameActionHUD() {
               
               {/* AP Battery Pips */}
               <div className="flex items-center gap-1.5 mt-1.5">
-                {[1, 2, 3].map((pip) => (
+                {Array.from({ length: maxAp }, (_, i) => i + 1).map((pip) => (
                   <div
                     key={pip}
                     className={`flex h-7 w-7 items-center justify-center rounded-xs border-2 font-mono font-black text-xs transition-all ${
@@ -224,7 +169,8 @@ export function GameActionHUD() {
 
             <button
               onClick={handleActionInvestigate}
-              disabled={ap <= 0}
+              disabled={ap <= 0 || !openCase}
+              title={openCase ? `Corroborate evidence: ${openCase.title}` : 'All cases concluded'}
               className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
                 ap > 0
                   ? 'border-zinc-700 bg-black/60 text-zinc-300 hover:border-[#FACC15] hover:text-white'
@@ -245,7 +191,7 @@ export function GameActionHUD() {
               }`}
             >
               <Scale className="h-3.5 w-3.5 text-blue-400" />
-              <span>Legal Writ (1 AP)</span>
+              <span>Legal Writ (1 AP · ₹10k)</span>
             </button>
 
             <button
@@ -258,7 +204,7 @@ export function GameActionHUD() {
               }`}
             >
               <Coffee className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Rest (1 AP)</span>
+              <span>Rest (1 AP · +25 energy)</span>
             </button>
           </div>
 
@@ -303,6 +249,7 @@ export function GameActionHUD() {
         </div>
 
         {/* Sub-strip: Active Campaign Quest */}
+        {activeQuest && (
         <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-tactical">
           <div className="flex items-center gap-2 min-w-0">
             <span className="flex h-5 w-5 items-center justify-center rounded-xs bg-[#DC2626] text-white shrink-0">
@@ -325,9 +272,10 @@ export function GameActionHUD() {
                 {activeQuest.currentProgress.toLocaleString('en-IN')} / {activeQuest.targetProgress.toLocaleString('en-IN')} {activeQuest.unit}
               </span>
             </div>
-            <span className="stamp-yellow text-[9px]">REWARD: +{activeQuest.rewardXP} XP</span>
+            <span className="stamp-yellow text-[9px]">{activeQuest.isCompleted ? 'COMPLETE' : `REWARD: +${activeQuest.rewardXP} XP`}</span>
           </div>
         </div>
+        )}
 
       </div>
 
