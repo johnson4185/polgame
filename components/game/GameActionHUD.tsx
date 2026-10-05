@@ -4,21 +4,7 @@ import React, { useEffect, useState } from 'react';
 import type { ActionOutcome } from '@/lib/game/types';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { 
-  Zap, 
-  Megaphone, 
-  Tv, 
-  Search, 
-  Scale, 
-  Coffee, 
-  Moon, 
-  ShieldAlert, 
-  Target, 
-  Award, 
-  ChevronRight,
-  TrendingUp,
-  Sparkles
-} from 'lucide-react';
+import { Zap, Megaphone, Tv, Search, Scale, Coffee, Moon, ShieldAlert, Target, Award, Sparkles } from 'lucide-react';
 
 const LEVEL_NAMES = [
   'Grassroots Street Agitators',
@@ -80,205 +66,169 @@ export function GameActionHUD() {
     dispatch({ type: 'ADVANCE_DAY' });
   };
 
+  const handleDayOff = () => {
+    soundManager.playPaper();
+    dispatch({ type: 'REST_DAY' });
+  };
+
+  const today = state.currentDate.year * 10000 + state.currentDate.month * 100 + state.currentDate.day;
+  const actions: { label: string; hint: string; icon: React.ElementType; onClick: () => void; disabled?: boolean; title: string }[] = [
+    { label: 'Stage Rally', hint: '1 AP', icon: Megaphone, onClick: handleActionRally, disabled: state.miniGameLastPlayed?.RALLY === today, title: 'Mini-game, once per day. Raises crackdown slightly.' },
+    { label: 'TV Debate', hint: '1 AP', icon: Tv, onClick: handleActionDebate, disabled: state.miniGameLastPlayed?.TV_DEBATE === today, title: 'Mini-game, once per day.' },
+    { label: 'Whistleblower', hint: '1 AP · ₹8k', icon: Search, onClick: handleActionInvestigate, disabled: !openCase, title: openCase ? `Corroborate evidence: ${openCase.title}` : 'All cases concluded' },
+    { label: 'Legal Writ', hint: '1 AP · ₹10k', icon: Scale, onClick: handleActionLegal, title: 'Crackdown −15' },
+    { label: 'Chai Break', hint: '1 AP', icon: Coffee, onClick: handleActionRest, title: '+25 energy, −15 stress' },
+  ];
+  const questPct = activeQuest ? Math.min(100, Math.round((activeQuest.currentProgress / activeQuest.targetProgress) * 100)) : 0;
+  const xpInLevel = xp % 1000;
+
+  const toastTone =
+    floatingToast?.tone === 'FAILURE' ? 'border-danger-line' :
+    floatingToast?.tone === 'WARNING' ? 'border-accent-line' :
+    'border-success-line';
+  const toastIcon =
+    floatingToast?.tone === 'FAILURE' ? 'text-danger-fg' :
+    floatingToast?.tone === 'WARNING' ? 'text-accent-fg' :
+    'text-success-fg';
+
   return (
-    <div className="relative mb-4 space-y-2.5">
-      
-      {/* Floating Consequence Toast */}
+    <div className="relative mb-4">
+      {/* Outcome toast: always the engine's real result */}
       {floatingToast && (
         <div
           role="status"
-          className={`fixed top-20 right-4 left-4 sm:left-auto sm:max-w-md z-[60] flex items-center gap-2 rounded-xs border-2 bg-[#0A0E17] px-4 py-2.5 shadow-2xl font-tactical text-xs font-bold text-white animate-in slide-in-from-top-4 ${
-            floatingToast.tone === 'FAILURE' ? 'border-red-500' : floatingToast.tone === 'WARNING' ? 'border-orange-400' : 'border-[#FACC15]'
-          }`}
+          className={`fixed left-4 right-4 top-4 z-[60] flex items-start gap-2 rounded-xs border-l-4 border bg-surface px-4 py-3 font-tactical text-xs font-semibold text-fg shadow-2xl sm:left-auto sm:max-w-md ${toastTone}`}
         >
-          <Sparkles className={`h-4 w-4 shrink-0 ${floatingToast.tone === 'FAILURE' ? 'text-red-400' : 'text-[#FACC15]'}`} />
-          <span>{floatingToast.text}</span>
+          <Sparkles className={`mt-0.5 h-4 w-4 shrink-0 ${toastIcon}`} aria-hidden="true" />
+          <span className="leading-relaxed">{floatingToast.text}</span>
         </div>
       )}
 
-      {/* Main HUD Banner */}
-      <div className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-3 sm:p-4 shadow-xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-center">
-          
-          {/* Section 1: Daily Turn & Action Points (AP) */}
-          <div className="lg:col-span-4 flex items-center justify-between gap-3 border-b lg:border-b-0 lg:border-r border-zinc-800 pb-3 lg:pb-0 lg:pr-4">
+      <section className="rounded-xs border border-line bg-surface shadow-sm" aria-label="Daily actions">
+        <div className="grid gap-4 p-3 sm:p-4 lg:grid-cols-[auto_1fr_auto] lg:items-center">
+          {/* Action points + end day */}
+          <div className="flex items-center justify-between gap-4 lg:justify-start">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="stamp-yellow text-[9px]">TACTICAL TURNS</span>
-                <span className="font-tactical text-xs font-black text-white">DAILY ACTION POINTS</span>
-              </div>
-              
-              {/* AP Battery Pips */}
-              <div className="flex items-center gap-1.5 mt-1.5">
-                {Array.from({ length: maxAp }, (_, i) => i + 1).map((pip) => (
-                  <div
-                    key={pip}
-                    className={`flex h-7 w-7 items-center justify-center rounded-xs border-2 font-mono font-black text-xs transition-all ${
-                      pip <= ap
-                        ? 'border-[#FACC15] bg-[#FACC15] text-black shadow-xs shadow-yellow-500/20'
-                        : 'border-zinc-800 bg-black/60 text-zinc-600'
+              <div className="font-tactical text-[10px] font-bold uppercase tracking-wider text-muted">Action points</div>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                {Array.from({ length: maxAp }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`flex h-7 w-7 items-center justify-center rounded-xs border ${
+                      i < ap ? 'border-accent bg-[#FACC15] text-black' : 'border-line bg-inset text-faint'
                     }`}
+                    aria-hidden="true"
                   >
-                    ⚡
-                  </div>
+                    <Zap className="h-3.5 w-3.5" />
+                  </span>
                 ))}
-                <span className="font-mono text-xs font-bold text-zinc-300 ml-1.5">
-                  {ap} / {maxAp} AP
-                </span>
+                <span className="ml-1 font-tactical text-xs font-bold tabular-nums text-fg">{ap}/{maxAp}</span>
               </div>
             </div>
-
-            {/* End Day Button */}
-            <button
-              onClick={handleEndDay}
-              title="Conclude today's operations and advance to the next day"
-              className="flex items-center gap-1.5 rounded-xs bg-[#DC2626] border-2 border-red-500 px-3.5 py-2 text-xs font-black font-tactical text-white hover:bg-red-700 transition-colors shadow-xs group"
-            >
-              <Moon className="h-3.5 w-3.5 text-[#FACC15] group-hover:rotate-12 transition-transform" />
-              <span>END DAY</span>
-            </button>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={handleEndDay}
+                title="End today and advance to the next day"
+                className="flex h-9 items-center justify-center gap-1.5 rounded-xs bg-[#DC2626] px-4 font-tactical text-xs font-black text-white transition-colors hover:bg-red-700"
+              >
+                <Moon className="h-3.5 w-3.5" aria-hidden="true" />
+                END DAY
+              </button>
+              <button
+                onClick={handleDayOff}
+                title="Spend the whole day resting: +35 energy, −25 stress, +5 health"
+                className="h-7 rounded-xs border border-line px-2 font-tactical text-[10px] font-bold uppercase tracking-wide text-muted transition-colors hover:border-accent hover:text-fg"
+              >
+                Take day off
+              </button>
+            </div>
           </div>
 
-          {/* Section 2: Quick Tactical Actions */}
-          <div className="lg:col-span-5 flex flex-wrap items-center gap-1.5">
-            <button
-              onClick={handleActionRally}
-              disabled={ap <= 0}
-              className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
-                ap > 0
-                  ? 'border-yellow-600/70 bg-yellow-950/40 text-yellow-300 hover:bg-[#FACC15] hover:text-black hover:border-[#FACC15]'
-                  : 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <Megaphone className="h-3.5 w-3.5 text-[#FACC15]" />
-              <span>Stage Rally (1 AP)</span>
-            </button>
-
-            <button
-              onClick={handleActionDebate}
-              disabled={ap <= 0}
-              className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
-                ap > 0
-                  ? 'border-red-600/70 bg-red-950/40 text-red-300 hover:bg-red-600 hover:text-white hover:border-red-500'
-                  : 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <Tv className="h-3.5 w-3.5 text-red-400" />
-              <span>TV Crossfire (1 AP)</span>
-            </button>
-
-            <button
-              onClick={handleActionInvestigate}
-              disabled={ap <= 0 || !openCase}
-              title={openCase ? `Corroborate evidence: ${openCase.title}` : 'All cases concluded'}
-              className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
-                ap > 0
-                  ? 'border-zinc-700 bg-black/60 text-zinc-300 hover:border-[#FACC15] hover:text-white'
-                  : 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <Search className="h-3.5 w-3.5 text-amber-400" />
-              <span>Whistleblower (1 AP)</span>
-            </button>
-
-            <button
-              onClick={handleActionLegal}
-              disabled={ap <= 0}
-              className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
-                ap > 0
-                  ? 'border-zinc-700 bg-black/60 text-zinc-300 hover:border-blue-400 hover:text-white'
-                  : 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <Scale className="h-3.5 w-3.5 text-blue-400" />
-              <span>Legal Writ (1 AP · ₹10k)</span>
-            </button>
-
-            <button
-              onClick={handleActionRest}
-              disabled={ap <= 0}
-              className={`flex items-center gap-1.5 rounded-xs border px-2.5 py-1.5 text-xs font-bold font-tactical transition-all ${
-                ap > 0
-                  ? 'border-zinc-700 bg-black/60 text-zinc-300 hover:border-emerald-400 hover:text-white'
-                  : 'border-zinc-800 bg-zinc-900/50 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <Coffee className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Rest (1 AP · +25 energy)</span>
-            </button>
+          {/* Actions */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:border-x lg:border-line lg:px-4 xl:grid-cols-5">
+            {actions.map(({ label, hint, icon: Icon, onClick, disabled, title }) => {
+              const off = ap <= 0 || disabled;
+              return (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  disabled={off}
+                  title={title}
+                  className="flex h-12 flex-col items-start justify-center rounded-xs border border-line bg-raised px-3 text-left transition-colors enabled:hover:border-accent enabled:hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <span className="flex items-center gap-1.5 font-tactical text-xs font-bold text-fg">
+                    <Icon className="h-3.5 w-3.5 text-accent-fg" aria-hidden="true" />
+                    {label}
+                  </span>
+                  <span className="font-tactical text-[10px] text-muted">{hint}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Section 3: State Crackdown Threat & Level Badges */}
-          <div className="lg:col-span-3 flex items-center justify-end gap-3 border-t lg:border-t-0 lg:border-l border-zinc-800 pt-3 lg:pt-0 lg:pl-4 text-xs font-tactical">
-            
-            {/* Crackdown Danger Meter */}
-            <div className="rounded-xs border border-zinc-800 bg-black/70 p-2 min-w-[125px]">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-zinc-400 font-bold flex items-center gap-1">
-                  <ShieldAlert className={`h-3 w-3 ${crackdown > 50 ? 'text-red-500 animate-pulse' : 'text-zinc-500'}`} />
-                  STATE ALERT
+          {/* Pressure + rank */}
+          <div className="grid grid-cols-2 gap-2 lg:w-56 lg:grid-cols-1">
+            <div className="rounded-xs border border-line bg-inset p-2">
+              <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
+                <span className="flex items-center gap-1 text-muted">
+                  <ShieldAlert className={`h-3 w-3 ${crackdown > 60 ? 'text-danger-fg' : ''}`} aria-hidden="true" />
+                  Crackdown
                 </span>
-                <span className={`font-black tabular-nums ${crackdown > 50 ? 'text-red-400' : 'text-zinc-300'}`}>
-                  {crackdown}%
-                </span>
+                <span className={`tabular-nums ${crackdown > 60 ? 'text-danger-fg' : 'text-fg'}`}>{crackdown}%</span>
               </div>
-              <div className="h-1.5 w-full bg-zinc-900 rounded-xs overflow-hidden mt-1 border border-zinc-800">
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
                 <div
-                  className={`h-full transition-all duration-300 ${crackdown > 60 ? 'bg-red-500' : 'bg-yellow-500'}`}
+                  className={`h-full rounded-full transition-all ${crackdown > 60 ? 'bg-[#DC2626]' : crackdown > 35 ? 'bg-orange-500' : 'bg-[#FACC15]'}`}
                   style={{ width: `${crackdown}%` }}
                 />
               </div>
             </div>
-
-            {/* Movement Rank Badge */}
-            <div className="rounded-xs border border-zinc-800 bg-black/70 p-2 min-w-[130px]">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="text-[#FACC15] font-bold flex items-center gap-1">
-                  <Award className="h-3 w-3" />
-                  RANK {level}
+            <div className="rounded-xs border border-line bg-inset p-2">
+              <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
+                <span className="flex items-center gap-1 text-accent-fg">
+                  <Award className="h-3 w-3" aria-hidden="true" />
+                  Rank {level}
                 </span>
-                <span className="text-zinc-500 font-mono text-[9px]">{xp} XP</span>
+                <span className="tabular-nums text-muted">{level >= 5 ? 'MAX' : `${xpInLevel}/1000 XP`}</span>
               </div>
-              <span className="text-[10px] text-white font-bold truncate block mt-0.5" title={LEVEL_NAMES[level - 1] || 'Movement'}>
+              <div className="mt-1 truncate font-tactical text-[11px] font-semibold text-fg" title={LEVEL_NAMES[level - 1]}>
                 {LEVEL_NAMES[level - 1] || 'Movement'}
-              </span>
+              </div>
             </div>
-
           </div>
-
         </div>
 
-        {/* Sub-strip: Active Campaign Quest */}
+        {/* Quest strip */}
         {activeQuest && (
-        <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-tactical">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="flex h-5 w-5 items-center justify-center rounded-xs bg-[#DC2626] text-white shrink-0">
-              <Target className="h-3 w-3" />
-            </span>
-            <div className="flex items-center gap-2 truncate">
-              <span className="font-black text-white uppercase tracking-wider">
-                MAIN QUEST {activeQuest.chapter}: {activeQuest.title}
-              </span>
-              <span className="hidden sm:inline text-zinc-400 truncate">
-                · {activeQuest.description}
+          <div className="flex flex-col gap-2 border-t border-line px-3 py-2.5 sm:px-4 md:flex-row md:items-center md:gap-4">
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+              <Target className="mt-0.5 h-4 w-4 shrink-0 text-danger-fg" aria-hidden="true" />
+              <div className="min-w-0">
+                <div className="font-tactical text-xs font-bold uppercase tracking-wide text-fg">
+                  Chapter {activeQuest.chapter}: {activeQuest.title}
+                </div>
+                <p className="line-clamp-2 text-xs text-muted">{activeQuest.description}</p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-3 md:w-80">
+              <div className="flex-1">
+                <div className="flex justify-between font-tactical text-[10px] text-muted">
+                  <span className="tabular-nums text-fg">
+                    {activeQuest.currentProgress.toLocaleString('en-IN')} / {activeQuest.targetProgress.toLocaleString('en-IN')} {activeQuest.unit}
+                  </span>
+                  <span className="tabular-nums">{questPct}%</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line">
+                  <div className="h-full rounded-full bg-[#FACC15] transition-all" style={{ width: `${questPct}%` }} />
+                </div>
+              </div>
+              <span className="stamp-yellow shrink-0 text-[9px]">
+                {activeQuest.isCompleted ? 'Complete' : `+${activeQuest.rewardXP} XP`}
               </span>
             </div>
           </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-zinc-400">PROGRESS:</span>
-              <span className="font-bold text-[#FACC15] tabular-nums text-xs">
-                {activeQuest.currentProgress.toLocaleString('en-IN')} / {activeQuest.targetProgress.toLocaleString('en-IN')} {activeQuest.unit}
-              </span>
-            </div>
-            <span className="stamp-yellow text-[9px]">{activeQuest.isCompleted ? 'COMPLETE' : `REWARD: +${activeQuest.rewardXP} XP`}</span>
-          </div>
-        </div>
         )}
-
-      </div>
-
+      </section>
     </div>
   );
 }

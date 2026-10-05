@@ -29,20 +29,19 @@ function LiveNewsTicker() {
   const latestArticle = state.newsFeed?.[0];
 
   return (
-    <div className="border-b border-zinc-800 bg-[#0C0F17] px-3 py-1.5 text-xs font-tactical flex items-center gap-3 overflow-hidden">
-      <div className="flex items-center gap-1.5 shrink-0 px-2 py-0.5 rounded-xs bg-[#DC2626] text-white font-black text-[10px] uppercase tracking-wider animate-pulse">
-        <Radio className="h-3 w-3" />
-        <span>FLASH WIRE</span>
-      </div>
-      <div className="truncate text-zinc-300 font-mono text-xs flex items-center gap-2">
-        <span className="text-[#FACC15] font-bold">[{latestArticle?.sourceName || 'PTI / ANI'}]</span>
-        <span className="text-zinc-100">{latestArticle?.headline || 'Students assemble at Jantar Mantar demanding transparency in central testing agencies.'}</span>
-      </div>
-      <div className="hidden md:flex items-center gap-2 shrink-0 ml-auto text-[11px] text-zinc-400">
-        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-        <span className="text-zinc-300">543 SEATS ACTIVE</span>
-        <span className="text-zinc-600">|</span>
-        <span className="text-[#FACC15] font-bold">MAJORITY: 272</span>
+    <div className="border-b border-line bg-inset">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 font-tactical text-xs sm:px-4">
+        <span className="flex shrink-0 items-center gap-1.5 rounded-xs bg-[#DC2626] px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+          <Radio className="h-3 w-3" aria-hidden="true" />
+          Wire
+        </span>
+        <p className="min-w-0 truncate">
+          <span className="font-bold text-accent-fg">{latestArticle?.sourceName || 'PTI / ANI'}:</span>{' '}
+          <span className="text-fg-2">{latestArticle?.headline || 'Students assemble at Jantar Mantar demanding transparency in central testing agencies.'}</span>
+        </p>
+        <span className="ml-auto hidden shrink-0 text-[11px] text-muted md:inline">
+          543 seats · <span className="font-bold text-accent-fg">272 for majority</span>
+        </span>
       </div>
     </div>
   );
@@ -52,7 +51,7 @@ function GameScreenRouter() {
   const { state } = useGame();
 
   return (
-    <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-6 py-4">
+    <div className="mx-auto max-w-7xl px-3 py-4 sm:px-4">
       {/* Interactive Turn-Based Game Action & Quest HUD */}
       <GameActionHUD />
 
@@ -76,11 +75,7 @@ function GameAppContainer() {
   const isLight = state.settings.theme === 'LIGHT';
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
-      isLight 
-        ? 'theme-light bg-[#F8F9FA] text-slate-900 selection:bg-[#DC2626] selection:text-white' 
-        : 'theme-dark bg-[#080B11] text-zinc-100 selection:bg-[#DC2626] selection:text-white'
-    }`}>
+    <div className={`app-backdrop min-h-screen flex flex-col transition-colors duration-200 selection:bg-[#DC2626] selection:text-white ${isLight ? 'theme-light' : ''}`}>
       {/* Top Header */}
       <GameHeader />
 
@@ -111,24 +106,13 @@ function GameAppContainer() {
       <GameOverModal />
 
       {/* Tactical War Room / Editorial Footer */}
-      <footer className={`border-t-2 px-4 py-3 text-xs font-tactical transition-colors ${
-        isLight ? 'border-zinc-300 bg-white text-zinc-600' : 'border-zinc-800 bg-[#0A0D15] text-zinc-400'
-      }`}>
-        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2">
-            <span className={`font-extrabold tracking-wider ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-              REPUBLIC: <span className="text-[#DC2626]">543</span>
-            </span>
-            <span className="stamp-red text-[10px]">POLITICAL SIMULATION</span>
-            <span className="hidden md:inline text-zinc-500">·</span>
-            <span className="hidden md:inline">Citizen Resistance &amp; Electoral Strategy</span>
-          </div>
-          <div className="flex items-center gap-3 text-[11px] font-mono">
-            <span className="text-zinc-500">HISTORY CUTOFF:</span>
-            <span className="text-[#DC2626] font-bold">30 SEPT 2026</span>
-            <span className="text-zinc-400">|</span>
-            <span>Values &amp; Personal Dialogues Dramatized</span>
-          </div>
+      <footer className="border-t border-line bg-surface px-4 py-3 font-tactical text-[11px] text-muted">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1.5 text-center sm:flex-row sm:text-left">
+          <span>
+            <span className="font-display font-bold text-fg">REPUBLIC <span className="text-danger-fg">543</span></span>
+            <span className="hidden md:inline"> · Citizen resistance &amp; electoral strategy</span>
+          </span>
+          <span>History cutoff 30 Sept 2026 · Personal dialogues dramatized</span>
         </div>
       </footer>
 

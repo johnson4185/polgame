@@ -3,7 +3,7 @@
 import React from 'react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { Trophy, CheckCircle, Flag, Handshake, ShieldAlert, Sparkles, Radio, Award, AlertTriangle } from 'lucide-react';
+import { Trophy, Vote, CheckCircle, Flag, Handshake, ShieldAlert, Sparkles, Radio, Award, AlertTriangle } from 'lucide-react';
 
 export function ElectionNightView() {
   const { state, dispatch } = useGame();
@@ -28,39 +28,67 @@ export function ElectionNightView() {
   const cjpWidth = (live.cjpSeats / totalSeats) * 100;
   const otherWidth = (live.otherSeats / totalSeats) * 100;
 
+  const hasElection = live.isCountingUnderway || live.isCountingFinished;
+  if (!hasElection) {
+    return (
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-xs border border-line bg-inset">
+          <div className="h-1.5 caution-stripes" />
+          <div className="flex items-center justify-between gap-3 px-3 py-2 font-tactical text-xs sm:px-4">
+            <span className="font-bold text-fg">Election Commission of India · 543 Lok Sabha tabulation</span>
+            <span className="shrink-0 font-bold text-accent-fg">272 for majority</span>
+          </div>
+        </div>
+        <div className="rounded-xs border border-line bg-surface px-6 py-12 text-center">
+          <Vote className="mx-auto h-10 w-10 text-faint" aria-hidden="true" />
+          <h2 className="mt-3 font-display text-xl font-bold text-fg">No election has been called yet</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+            {state.party.isFormed
+              ? `Nominate candidates at the Party & ECI desk, then call the general election. You have ${state.party.candidateCount} candidate${state.party.candidateCount === 1 ? '' : 's'} (projected ${state.party.projectedSeats} seat${state.party.projectedSeats === 1 ? '' : 's'}).`
+              : 'Register your party with the Election Commission first, then nominate candidates and call the election.'}
+          </p>
+          <button
+            onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'PARTY_ECI' })}
+            className="mt-5 rounded-xs bg-[#DC2626] px-5 py-2.5 font-tactical text-xs font-black text-white transition-colors hover:bg-red-700"
+          >
+            GO TO PARTY &amp; ECI DESK
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       
-      {/* Live Breaking Election Studio Banner in Black, Red, Yellow */}
-      <div className="flex items-center justify-between caution-stripes px-3 sm:px-4 py-2 rounded-xs border-2 border-zinc-700 font-tactical text-xs font-black text-black shadow-lg">
-        <div className="flex items-center gap-2">
-          <span className="bg-[#DC2626] text-white px-2 py-0.5 rounded-xs animate-pulse text-[10px] tracking-widest uppercase font-mono">
-            LIVE BROADCAST
-          </span>
-          <span className="tracking-wide hidden sm:inline">ELECTION COMMISSION OF INDIA · 543 LOK SABHA TABULATION</span>
-          <span className="tracking-wide sm:hidden">ECI 543 COUNTING</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="bg-black text-[#FACC15] px-2 py-0.5 rounded-xs font-bold text-[11px]">
-            MAJORITY: 272 SEATS
-          </span>
+      {/* Broadcast banner: stripes as an edge accent so the text stays readable */}
+      <div className="overflow-hidden rounded-xs border border-line bg-inset">
+        <div className="h-1.5 caution-stripes" />
+        <div className="flex items-center justify-between gap-3 px-3 py-2 font-tactical text-xs sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 rounded-xs bg-[#DC2626] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+              {live.isCountingUnderway ? 'Live' : live.isCountingFinished ? 'Final' : 'Standby'}
+            </span>
+            <span className="truncate font-bold text-fg">Election Commission of India · 543 Lok Sabha tabulation</span>
+          </div>
+          <span className="shrink-0 font-bold text-accent-fg">272 for majority</span>
         </div>
       </div>
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-zinc-800 bg-[#0E1320] p-4 shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-[#EF4444] flex items-center gap-1.5 bg-red-950/40 px-2 py-0.5 rounded-xs border border-red-900/60">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
               <span className="h-2 w-2 rounded-full bg-[#EF4444] animate-ping" />
               543 CONSTITUENCIES LIVE COUNTING
             </span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-xs font-bold text-[#FACC15] bg-black px-2 py-0.5 rounded-xs border border-zinc-700">
+            <span className="text-faint">|</span>
+            <span className="text-xs font-bold text-accent-fg bg-inset px-2 py-0.5 rounded-xs border border-line-strong">
               Mandate 2026-2029
             </span>
           </div>
-          <h2 className="font-tactical text-xl font-black text-white mt-1">
+          <h2 className="font-display text-xl font-bold text-fg mt-1">
             EVM Tabulation Room &amp; National Coalition Command
           </h2>
         </div>
@@ -71,8 +99,8 @@ export function ElectionNightView() {
             onClick={handleStepCount}
             className={`rounded-xs border-2 px-5 py-2.5 font-black shadow-md transition-all ${
               live.isCountingUnderway && !live.isCountingFinished
-                ? 'bg-[#FACC15] text-black border-yellow-400 hover:bg-white hover:scale-105 active:scale-95'
-                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border-zinc-700'
+                ? 'bg-[#FACC15] text-black border-accent-line hover:bg-yellow-300 hover:scale-105 active:scale-95'
+                : 'bg-line-strong text-faint cursor-not-allowed border-line-strong'
             }`}
           >
             {live.isCountingFinished ? 'COUNTING CONCLUDED' : 'TABULATE NEXT 35 SEATS'}
@@ -81,15 +109,15 @@ export function ElectionNightView() {
       </div>
 
       {/* Main 543 Tally Bar with 272 Majority Line */}
-      <div className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-5 text-xs space-y-4 shadow-xl">
+      <div className="rounded-xs border-2 border-line bg-surface p-5 text-xs space-y-4 shadow-xl">
         
         <div className="flex items-center justify-between font-tactical">
-          <span className="font-black text-base text-white flex items-center gap-2">
-            <Radio className="h-4 w-4 text-[#DC2626] animate-pulse" />
+          <span className="font-black text-base text-fg flex items-center gap-2">
+            <Radio className="h-4 w-4 text-danger-fg animate-pulse" />
             <span>543 SEAT PARLIAMENTARY ALLOCATION:</span>
           </span>
-          <span className="text-xs font-bold text-zinc-300">
-            Counted: <strong className="text-[#FACC15] tabular-nums font-black text-base">{live.countedSeatsCount}</strong> / 543 Seats
+          <span className="text-xs font-bold text-fg-2">
+            Counted: <strong className="text-accent-fg tabular-nums font-black text-base">{live.countedSeatsCount}</strong> / 543 Seats
           </span>
         </div>
 
@@ -105,7 +133,7 @@ export function ElectionNightView() {
           </div>
 
           {/* Visual Progress Stacked Bar */}
-          <div className="relative h-14 w-full overflow-hidden rounded-xs border-2 border-zinc-700 bg-black flex shadow-inner">
+          <div className="relative h-14 w-full overflow-hidden rounded-xs border-2 border-line-strong bg-inset flex shadow-inner">
             {/* Ruling Coalition (Amber / Saffron) */}
             <div
               style={{ width: `${rulingWidth}%` }}
@@ -136,7 +164,7 @@ export function ElectionNightView() {
             {/* Regional Others (Charcoal) */}
             <div
               style={{ width: `${otherWidth}%` }}
-              className="bg-[#3F3F46] h-full flex items-center justify-center text-zinc-200 font-tactical text-xs font-black transition-all duration-500"
+              className="bg-[#3F3F46] h-full flex items-center justify-center text-fg font-tactical text-xs font-black transition-all duration-500"
               title={`Others / Independents: ${live.otherSeats} seats`}
             >
               {live.otherSeats > 15 && `OTH ${live.otherSeats}`}
@@ -151,35 +179,35 @@ export function ElectionNightView() {
         </div>
 
         {/* Legend with Color Accents in Black, Red, Yellow */}
-        <div className="flex flex-wrap items-center justify-between gap-3 font-tactical text-xs pt-3 border-t-2 border-zinc-800">
+        <div className="flex flex-wrap items-center justify-between gap-3 font-tactical text-xs pt-3 border-t-2 border-line">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2 bg-black px-2.5 py-1 rounded-xs border border-zinc-800">
+            <div className="flex items-center gap-2 bg-inset px-2.5 py-1 rounded-xs border border-line">
               <span className="h-3 w-3 rounded-xs bg-[#F59E0B]" />
-              <span className="font-bold text-zinc-300">Ruling NDA:</span>
-              <span className="tabular-nums font-black text-sm text-[#F59E0B]">{live.rulingSeats}</span>
+              <span className="font-bold text-fg-2">Ruling NDA:</span>
+              <span className="tabular-nums font-black text-sm text-accent-fg">{live.rulingSeats}</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-black px-2.5 py-1 rounded-xs border border-red-900/60">
+            <div className="flex items-center gap-2 bg-inset px-2.5 py-1 rounded-xs border border-danger-line">
               <span className="h-3 w-3 rounded-xs bg-[#DC2626]" />
-              <span className="font-black text-white">{state.party.abbreviation || 'CJP'}:</span>
-              <span className="tabular-nums font-black text-sm text-[#EF4444]">{live.cjpSeats}</span>
+              <span className="font-black text-fg">{state.party.abbreviation || 'CJP'}:</span>
+              <span className="tabular-nums font-black text-sm text-danger-fg">{live.cjpSeats}</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-black px-2.5 py-1 rounded-xs border border-zinc-800">
+            <div className="flex items-center gap-2 bg-inset px-2.5 py-1 rounded-xs border border-line">
               <span className="h-3 w-3 rounded-xs bg-[#2563EB]" />
-              <span className="font-bold text-zinc-300">Opposition INDIA:</span>
-              <span className="tabular-nums font-black text-sm text-blue-400">{live.oppositionSeats}</span>
+              <span className="font-bold text-fg-2">Opposition INDIA:</span>
+              <span className="tabular-nums font-black text-sm text-info-fg">{live.oppositionSeats}</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-black px-2.5 py-1 rounded-xs border border-zinc-800">
+            <div className="flex items-center gap-2 bg-inset px-2.5 py-1 rounded-xs border border-line">
               <span className="h-3 w-3 rounded-xs bg-[#3F3F46]" />
-              <span className="text-zinc-400 font-semibold">Others:</span>
-              <span className="tabular-nums font-bold text-zinc-200">{live.otherSeats}</span>
+              <span className="text-muted font-semibold">Others:</span>
+              <span className="tabular-nums font-bold text-fg">{live.otherSeats}</span>
             </div>
           </div>
 
-          <div className="text-right text-zinc-300 text-xs font-bold">
-            Target to Form Union Government: <strong className="text-[#FACC15] text-sm ml-1">272 Seats</strong>
+          <div className="text-right text-fg-2 text-xs font-bold">
+            Target to Form Union Government: <strong className="text-accent-fg text-sm ml-1">272 Seats</strong>
           </div>
         </div>
 
@@ -187,15 +215,15 @@ export function ElectionNightView() {
 
       {/* Counting Concluded & Coalition Talks Section */}
       {live.isCountingFinished && (
-        <div className="rounded-xs border-2 border-zinc-700 bg-[#0C101A] p-5 text-xs space-y-4 shadow-2xl">
-          <div className="flex items-center gap-2 text-lg font-tactical font-black text-white">
-            <Trophy className="h-7 w-7 text-[#FACC15]" />
+        <div className="rounded-xs border-2 border-line-strong bg-surface p-5 text-xs space-y-4 shadow-2xl">
+          <div className="flex items-center gap-2 text-lg font-tactical font-black text-fg">
+            <Trophy className="h-7 w-7 text-accent-fg" />
             <span>MANDATE DELIVERED · PARLIAMENTARY VERDICT</span>
           </div>
 
-          <p className="text-zinc-200 leading-relaxed font-sans text-sm">
+          <p className="text-fg leading-relaxed font-sans text-sm">
             The Election Commission has certified all 543 constituencies. The Cockroach Janta Party has secured 
-            <strong className="text-[#FACC15] font-tactical font-black text-base mx-1.5 bg-black px-2 py-0.5 rounded-xs border border-[#FACC15]">
+            <strong className="text-accent-fg font-tactical font-black text-base mx-1.5 bg-inset px-2 py-0.5 rounded-xs border border-accent">
               {live.cjpSeats} Lok Sabha seats
             </strong>.
             Neither national bloc reached the 272 absolute majority on its own. Your citizen delegation holds the decisive balance of power in the Republic.
@@ -203,7 +231,7 @@ export function ElectionNightView() {
 
           {!live.coalitionFormed ? (
             <div className="space-y-3 pt-2">
-              <span className="font-tactical font-black text-white text-xs block uppercase tracking-wider flex items-center gap-2">
+              <span className="font-tactical font-black text-fg text-xs block uppercase tracking-wider flex items-center gap-2">
                 <span className="h-2.5 w-2.5 bg-[#DC2626]" />
                 <span>CHOOSE YOUR STRATEGIC PARLIAMENTARY PATH:</span>
               </span>
@@ -212,16 +240,16 @@ export function ElectionNightView() {
                 {/* Coalition Option 1 */}
                 <button
                   onClick={() => handleCoalition('RULING')}
-                  className="rounded-xs border-2 border-yellow-600/70 bg-[#161208] p-4 text-left hover:border-[#FACC15] hover:bg-yellow-950/40 transition-all space-y-1.5 shadow-md group"
+                  className="rounded-xs border-2 border-accent-line bg-accent-soft p-4 text-left hover:border-accent hover:bg-accent-soft transition-all space-y-1.5 shadow-md group"
                 >
-                  <div className="font-black text-[#FACC15] flex items-center gap-1.5 text-xs">
-                    <Handshake className="h-4 w-4 text-[#FACC15]" />
+                  <div className="font-black text-accent-fg flex items-center gap-1.5 text-xs">
+                    <Handshake className="h-4 w-4 text-accent-fg" />
                     <span>Common Minimum Programme</span>
                   </div>
-                  <p className="text-[11px] text-zinc-300 font-normal leading-relaxed">
+                  <p className="text-[11px] text-fg-2 font-normal leading-relaxed">
                     Form government with Ruling Alliance. Demand Education, Law, and Independent Exam Commission portfolios.
                   </p>
-                  <div className="text-[10px] text-emerald-400 font-black pt-1 bg-emerald-950 px-2 py-0.5 rounded-xs border border-emerald-800 inline-block">
+                  <div className="text-[10px] text-success-fg font-black pt-1 bg-success-soft px-2 py-0.5 rounded-xs border border-success-line inline-block">
                     Enters Union Cabinet ({live.rulingSeats + live.cjpSeats} seats)
                   </div>
                 </button>
@@ -229,16 +257,16 @@ export function ElectionNightView() {
                 {/* Coalition Option 2 */}
                 <button
                   onClick={() => handleCoalition('OPPOSITION')}
-                  className="rounded-xs border-2 border-blue-600/70 bg-[#091122] p-4 text-left hover:border-blue-400 hover:bg-blue-950/40 transition-all space-y-1.5 shadow-md group"
+                  className="rounded-xs border-2 border-blue-600/70 bg-surface p-4 text-left hover:border-blue-400 hover:bg-info-soft transition-all space-y-1.5 shadow-md group"
                 >
-                  <div className="font-black text-blue-400 flex items-center gap-1.5 text-xs">
-                    <Sparkles className="h-4 w-4 text-blue-400" />
+                  <div className="font-black text-info-fg flex items-center gap-1.5 text-xs">
+                    <Sparkles className="h-4 w-4 text-info-fg" />
                     <span>Accountability Coalition</span>
                   </div>
-                  <p className="text-[11px] text-zinc-300 font-normal leading-relaxed">
+                  <p className="text-[11px] text-fg-2 font-normal leading-relaxed">
                     Unite with Opposition Alliance to replace the ruling government and pass whistleblower protection acts.
                   </p>
-                  <div className="text-[10px] text-blue-300 font-black pt-1 bg-blue-950 px-2 py-0.5 rounded-xs border border-blue-800 inline-block">
+                  <div className="text-[10px] text-info-fg font-black pt-1 bg-info-soft px-2 py-0.5 rounded-xs border border-info-line inline-block">
                     Reform Coalition ({live.oppositionSeats + live.cjpSeats} seats)
                   </div>
                 </button>
@@ -246,13 +274,13 @@ export function ElectionNightView() {
                 {/* Option 3: Independent Watchdog */}
                 <button
                   onClick={() => handleCoalition('THIRD_FRONT')}
-                  className="rounded-xs border-2 border-red-600/70 bg-[#1A0A0A] p-4 text-left hover:border-red-500 hover:bg-red-950/40 transition-all space-y-1.5 shadow-md group"
+                  className="rounded-xs border-2 border-red-600/70 bg-danger-soft p-4 text-left hover:border-red-500 hover:bg-danger-soft transition-all space-y-1.5 shadow-md group"
                 >
-                  <div className="font-black text-[#EF4444] flex items-center gap-1.5 text-xs">
-                    <Flag className="h-4 w-4 text-[#EF4444]" />
+                  <div className="font-black text-danger-fg flex items-center gap-1.5 text-xs">
+                    <Flag className="h-4 w-4 text-danger-fg" />
                     <span>Crossbench Watchdog Bloc</span>
                   </div>
-                  <p className="text-[11px] text-zinc-300 font-normal leading-relaxed">
+                  <p className="text-[11px] text-fg-2 font-normal leading-relaxed">
                     Decline ministerial perks and red beacons. Hold both sides accountable on every single bill from the floor.
                   </p>
                   <div className="text-[10px] text-white font-black pt-1 bg-[#DC2626] px-2 py-0.5 rounded-xs inline-block">
@@ -262,12 +290,12 @@ export function ElectionNightView() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xs bg-yellow-950/80 border-2 border-[#FACC15] p-4 text-xs text-white font-tactical shadow-md">
-              <div className="font-black flex items-center gap-2 text-sm text-[#FACC15]">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+            <div className="rounded-xs bg-accent-soft border-2 border-accent p-4 text-xs text-fg font-tactical shadow-md">
+              <div className="font-black flex items-center gap-2 text-sm text-accent-fg">
+                <CheckCircle className="h-5 w-5 text-success-fg" />
                 <span>GOVERNMENT MANDATE RATIFIED</span>
               </div>
-              <p className="text-xs mt-1.5 text-zinc-200 leading-relaxed font-sans">{live.coalitionSummary}</p>
+              <p className="text-xs mt-1.5 text-fg leading-relaxed font-sans">{live.coalitionSummary}</p>
             </div>
           )}
         </div>

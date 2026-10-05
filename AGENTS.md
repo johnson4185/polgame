@@ -97,7 +97,29 @@ Bump `SAVE_VERSION` for breaking changes.
 - Import via `@/` alias (maps to repo root)
 - Keep simulation deterministic: use `SeededRNG` from state, not `Math.random()`
 - Images are served from `public/images/` (`src/assets/images/` is an unused duplicate)
-- Match existing style: Tailwind utility classes, dark "war room" palette (`#080B11`, red `#DC2626`, yellow `#FACC15`)
+
+### Styling (dark + light themes)
+Colours come from semantic tokens defined once in `app/globals.css` (dark values on `:root`,
+light values on `.theme-light`). **Never use raw hex, `zinc-*`, `black`/`white` for surfaces or text** —
+the light theme would break. Use:
+
+| Purpose | Classes |
+|---|---|
+| Page / card / nested item / well | `bg-canvas` · `bg-surface` · `bg-raised` · `bg-inset` |
+| Borders | `border-line` · `border-line-strong` |
+| Text | `text-fg` · `text-fg-2` · `text-muted` · `text-faint` |
+| Yellow / red / green / blue as text | `text-accent-fg` · `text-danger-fg` · `text-success-fg` · `text-info-fg` |
+| Tinted badges & callouts | `bg-{accent,danger,success,info}-soft` + `border-{…}-line` |
+
+Brand fills stay literal and look the same in both themes: red buttons `bg-[#DC2626] text-white`,
+yellow buttons `bg-[#FACC15] text-black`. Photo scenes and cinematic full-screen modals add
+`theme-dark-scope` to stay dark in light mode.
+
+Fonts (loaded via `next/font` in `app/layout.tsx`): `font-display` (Space Grotesk) for headings
+`text-base` and up, `font-tactical` (IBM Plex Mono) for labels/numbers, default sans (Inter) for prose.
+
+Layout: rows of badges/chips must `flex-wrap`; groups of action buttons use a responsive `grid`
+so they don't wrap unevenly. Check new UI at 390px wide — no horizontal page scroll.
 
 ## Working with multiple agents in parallel
 Claude Code and Codex may both be working on this repo at the same time.

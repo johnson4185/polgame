@@ -36,13 +36,6 @@ Files: `src/assets/`, `.eslintrc.json`, `package.json`, `package-lock.json`.
 - Delete legacy `.eslintrc.json` (flat `eslint.config.mjs` is the active config); confirm `npm run lint` still passes.
 - Run `npm audit fix` (non-breaking only, no `--force`); confirm build passes.
 
-### C3. Responsive / accessibility pass on non-core views — `codex/a11y-views`
-Files: `components/game/PersonalLifeView.tsx`, `PeopleRosterView.tsx`, `HistoricalArchiveView.tsx`,
-`FinanceLedgerView.tsx`, `SituationLogView.tsx`, `ScreenNav.tsx`, `SaveLoadModal.tsx`.
-- Check at 375px width: no horizontal page scroll, tap targets ≥ 40px.
-- Icon-only buttons get `aria-label`; modals get `role="dialog"` + `aria-modal`.
-- Do not change any `dispatch(...)` calls or game logic.
-
 ## Backlog
 Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
 - [ ] **More operations.** Only the Jantar Mantar vigil exists; once it concludes (day 14) the
@@ -71,3 +64,7 @@ Features:
       crackdown/insolvency/trust-decay pressure; derived quests & rank-based AP; all 543 seats
       nominatable; save migration; Vitest (engine + balance sim); header no longer overflows
 - [x] Headless balance simulation (`lib/game/simulation/balance.sim.test.ts`)
+- [x] UI overhaul (Claude, 2026-10-05; absorbed Codex task C3): semantic colour tokens with a real
+      light theme; next/font typography; rebuilt header, tab bar, HUD, ticker, footer; no horizontal
+      scroll on any screen at 390px; election empty state; honest Parliament state before MPs;
+      TV debate close button + Escape on mini-games; all 11 tabs fit at 1366px

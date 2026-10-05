@@ -23,25 +23,25 @@ export function FinanceLedgerView() {
     <div className="space-y-4">
       
       {/* Finance Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-zinc-800 bg-[#0E1320] p-4 shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-[#EF4444] flex items-center gap-1.5 bg-red-950/40 px-2 py-0.5 rounded-xs border border-red-900/60">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
               <span className="stamp-red text-[9px]">AUDIT LEVEL 1</span>
               <span>TRANSPARENT PUBLIC AUDIT BOOK</span>
             </span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-xs text-zinc-300">Triple Ledger Strict Separation</span>
+            <span className="text-faint">|</span>
+            <span className="text-xs text-fg-2">Triple Ledger Strict Separation</span>
           </div>
-          <h2 className="font-tactical text-xl font-black text-white mt-1">
+          <h2 className="font-display text-xl font-bold text-fg mt-1">
             Personal Savings · Movement Public Fund · Party Account
           </h2>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-tactical">
-          <div className="rounded-xs border border-zinc-700 bg-black px-3.5 py-1.5">
-            <span className="text-zinc-400">CASH RUNWAY: </span>
-            <span className={`font-black tabular-nums text-sm ${Number(movementRunwayMonths) < 2 ? 'text-[#EF4444] animate-pulse' : 'text-[#FACC15]'}`}>
+          <div className="rounded-xs border border-line-strong bg-inset px-3.5 py-1.5">
+            <span className="text-muted">CASH RUNWAY: </span>
+            <span className={`font-black tabular-nums text-sm ${Number(movementRunwayMonths) < 2 ? 'text-danger-fg animate-pulse' : 'text-accent-fg'}`}>
               {movementRunwayMonths} Months
             </span>
           </div>
@@ -52,43 +52,43 @@ export function FinanceLedgerView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-tactical text-xs">
         
         {/* Personal Account */}
-        <div className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-zinc-400">
+        <div className="rounded-xs border-2 border-line bg-surface p-4 space-y-1.5 shadow-md">
+          <div className="flex items-center justify-between text-muted">
             <span className="font-bold">1. PERSONAL FOUNDER ACCOUNT</span>
-            <Wallet className="h-4 w-4 text-[#FACC15]" />
+            <Wallet className="h-4 w-4 text-accent-fg" />
           </div>
-          <div className="text-2xl font-black text-white tabular-nums">
+          <div className="text-2xl font-black text-fg tabular-nums">
             ₹{state.player.personalSavings.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-zinc-400 font-sans">
+          <div className="text-[11px] text-muted font-sans">
             Monthly Living Costs: ₹{state.player.monthlyLivingCost.toLocaleString('en-IN')}
           </div>
         </div>
 
         {/* Movement Fund */}
-        <div className="rounded-xs border-2 border-red-900/80 bg-[#160D12] p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-[#EF4444]">
+        <div className="rounded-xs border-2 border-danger-line bg-danger-soft p-4 space-y-1.5 shadow-md">
+          <div className="flex items-center justify-between text-danger-fg">
             <span className="font-black">2. MOVEMENT OPERATIONAL FUND</span>
-            <CreditCard className="h-4 w-4 text-[#EF4444]" />
+            <CreditCard className="h-4 w-4 text-danger-fg" />
           </div>
-          <div className="text-2xl font-black text-[#FACC15] tabular-nums">
+          <div className="text-2xl font-black text-accent-fg tabular-nums">
             ₹{state.movement.movementFunds.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-zinc-300 font-sans">
+          <div className="text-[11px] text-fg-2 font-sans">
             Monthly Burn: ₹{state.movement.monthlyBurnRate.toLocaleString('en-IN')}/mo
           </div>
         </div>
 
         {/* Party Account */}
-        <div className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-zinc-400">
+        <div className="rounded-xs border-2 border-line bg-surface p-4 space-y-1.5 shadow-md">
+          <div className="flex items-center justify-between text-muted">
             <span className="font-bold">3. ELECTORAL PARTY ACCOUNT</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <ShieldCheck className="h-4 w-4 text-success-fg" />
           </div>
-          <div className="text-2xl font-black text-white tabular-nums">
+          <div className="text-2xl font-black text-fg tabular-nums">
             ₹{state.party.partyFunds.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-zinc-400 font-sans">
+          <div className="text-[11px] text-muted font-sans">
             {state.party.isFormed ? 'ECI Regulated Candidate Funds' : 'Pending ECI Registration (₹0)'}
           </div>
         </div>
@@ -97,7 +97,7 @@ export function FinanceLedgerView() {
 
       {/* Account Filters */}
       <div className="flex items-center gap-2 text-xs font-tactical">
-        <span className="text-zinc-400 font-bold">FILTER ACCOUNT:</span>
+        <span className="text-muted font-bold">FILTER ACCOUNT:</span>
         {['ALL', 'PERSONAL', 'MOVEMENT', 'PARTY'].map((acc) => (
           <button
             key={acc}
@@ -107,8 +107,8 @@ export function FinanceLedgerView() {
             }}
             className={`px-3 py-1 rounded-xs border font-black transition-all ${
               accountFilter === acc
-                ? 'border-[#FACC15] bg-[#FACC15] text-black shadow-xs'
-                : 'border-zinc-800 bg-[#121624] text-zinc-400 hover:text-white hover:border-zinc-600'
+                ? 'border-accent bg-[#FACC15] text-black shadow-xs'
+                : 'border-line bg-raised text-muted hover:text-fg hover:border-line-strong'
             }`}
           >
             {acc}
@@ -117,12 +117,12 @@ export function FinanceLedgerView() {
       </div>
 
       {/* Transactions Ledger Table */}
-      <div className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-4 text-xs shadow-md">
-        <div className="flex items-center justify-between border-b-2 border-zinc-800 pb-2 mb-3">
-          <h3 className="font-tactical font-black text-white">
+      <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs shadow-md">
+        <div className="flex items-center justify-between border-b-2 border-line pb-2 mb-3">
+          <h3 className="font-tactical font-black text-fg">
             CHRONOLOGICAL PUBLIC TRANSACTION BOOK ({filteredTxns.length} ENTRIES)
           </h3>
-          <span className="text-[10px] font-tactical text-zinc-400">
+          <span className="text-[10px] font-tactical text-muted">
             Immutable Double-Entry Ledger
           </span>
         </div>
@@ -131,34 +131,34 @@ export function FinanceLedgerView() {
           {filteredTxns.slice().reverse().map((t) => (
             <div
               key={t.id}
-              className="rounded-xs border border-zinc-800 bg-black/80 p-3 flex items-center justify-between font-tactical hover:border-zinc-700 transition-colors"
+              className="rounded-xs border border-line bg-inset p-3 flex items-center justify-between font-tactical hover:border-line-strong transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className={`p-1.5 rounded-xs ${
-                  t.type === 'INCOME' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-[#EF4444] border border-red-800'
+                  t.type === 'INCOME' ? 'bg-success-soft text-success-fg border border-success-line' : 'bg-danger-soft text-danger-fg border border-danger-line'
                 }`}>
                   {t.type === 'INCOME' ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
                 </div>
 
                 <div>
-                  <div className="font-bold text-white text-xs">{t.description}</div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">
-                    {formatDate(t.date)} · Account: <span className="text-[#FACC15] font-bold">{t.account}</span> · Ref: {t.donorName || t.category}
+                  <div className="font-bold text-fg text-xs">{t.description}</div>
+                  <div className="text-[10px] text-muted mt-0.5">
+                    {formatDate(t.date)} · Account: <span className="text-accent-fg font-bold">{t.account}</span> · Ref: {t.donorName || t.category}
                   </div>
                 </div>
               </div>
 
               <div className="text-right">
                 <div className={`text-sm font-black tabular-nums ${
-                  t.type === 'INCOME' ? 'text-emerald-400' : 'text-[#EF4444]'
+                  t.type === 'INCOME' ? 'text-success-fg' : 'text-danger-fg'
                 }`}>
                   {t.type === 'INCOME' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono">
+                <div className="text-[10px] text-faint font-mono">
                   {!t.verified ? (
-                    <span className="text-[#EF4444] font-black animate-pulse">FLAGGED</span>
+                    <span className="text-danger-fg font-black animate-pulse">FLAGGED</span>
                   ) : (
-                    <span className="text-emerald-400 font-bold">AUDIT VERIFIED</span>
+                    <span className="text-success-fg font-bold">AUDIT VERIFIED</span>
                   )}
                 </div>
               </div>

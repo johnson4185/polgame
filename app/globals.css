@@ -1,23 +1,157 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cabinet+Grotesk:wght@800;900&display=swap');
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Cabinet Grotesk', 'Plus Jakarta Sans', sans-serif;
-  }
+/* =========================================================================
+   DESIGN TOKENS
+   Every colour in the UI comes from these. Components use the semantic
+   utilities (bg-surface, text-muted, border-line, text-accent-fg, ...),
+   never raw hex or zinc shades, so the light theme is just a second set of
+   values below — not a pile of overrides.
+   ========================================================================= */
+
+:root,
+.theme-dark-scope {
+  --canvas: #080b11;        /* page background */
+  --surface: #0e131e;       /* cards / panels */
+  --raised: #151b29;        /* items nested inside cards */
+  --inset: #05070c;         /* wells, inputs, stat chips */
+  --line: #232a3a;          /* default borders */
+  --line-strong: #364056;   /* emphasized borders, bar tracks */
+
+  --fg: #f4f4f5;            /* primary text */
+  --fg-2: #d4d4d8;          /* secondary text */
+  --muted: #a1a1aa;         /* labels */
+  --faint: #71717a;         /* hints, disabled */
+
+  --accent: #facc15;        /* brand yellow fill */
+  --accent-fg: #facc15;     /* yellow used as text on surfaces */
+  --accent-soft: rgb(250 204 21 / 0.12);
+  --accent-line: rgb(250 204 21 / 0.55);
+
+  --danger: #dc2626;        /* brand red fill */
+  --danger-fg: #f87171;
+  --danger-soft: rgb(220 38 38 / 0.14);
+  --danger-line: rgb(239 68 68 / 0.5);
+
+  --success-fg: #34d399;
+  --success-soft: rgb(16 185 129 / 0.12);
+  --success-line: rgb(16 185 129 / 0.45);
+
+  --info-fg: #60a5fa;
+  --info-soft: rgb(59 130 246 / 0.12);
+  --info-line: rgb(59 130 246 / 0.45);
+
+  --dot-grid: rgb(255 255 255 / 0.035);
+  color-scheme: dark;
+}
+
+.theme-light {
+  --canvas: #f3f4f6;
+  --surface: #ffffff;
+  --raised: #f8fafc;
+  --inset: #eef1f5;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+
+  --fg: #0f172a;
+  --fg-2: #334155;
+  --muted: #64748b;
+  --faint: #94a3b8;
+
+  --accent: #facc15;
+  --accent-fg: #a16207;
+  --accent-soft: #fef9c3;
+  --accent-line: #eab308;
+
+  --danger: #dc2626;
+  --danger-fg: #b91c1c;
+  --danger-soft: #fee2e2;
+  --danger-line: #f87171;
+
+  --success-fg: #047857;
+  --success-soft: #d1fae5;
+  --success-line: #34d399;
+
+  --info-fg: #1d4ed8;
+  --info-soft: #dbeafe;
+  --info-line: #60a5fa;
+
+  --dot-grid: rgb(15 23 42 / 0.05);
+  color-scheme: light;
+}
+
+/* Photo scenes and full-screen modals stay dark in both themes */
+.theme-light .theme-dark-scope {
+  --canvas: #080b11;
+  --surface: #0e131e;
+  --raised: #151b29;
+  --inset: #05070c;
+  --line: #232a3a;
+  --line-strong: #364056;
+  --fg: #f4f4f5;
+  --fg-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --accent-fg: #facc15;
+  --accent-soft: rgb(250 204 21 / 0.12);
+  --accent-line: rgb(250 204 21 / 0.55);
+  --danger-fg: #f87171;
+  --danger-soft: rgb(220 38 38 / 0.14);
+  --danger-line: rgb(239 68 68 / 0.5);
+  --success-fg: #34d399;
+  --success-soft: rgb(16 185 129 / 0.12);
+  --success-line: rgb(16 185 129 / 0.45);
+  --info-fg: #60a5fa;
+  --info-soft: rgb(59 130 246 / 0.12);
+  --info-line: rgb(59 130 246 / 0.45);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-inset: var(--inset);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-success-fg: var(--success-fg);
+  --color-success-soft: var(--success-soft);
+  --color-success-line: var(--success-line);
+  --color-info-fg: var(--info-fg);
+  --color-info-soft: var(--info-soft);
+  --color-info-line: var(--info-line);
+
+  --font-sans: var(--font-sans-loaded), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-loaded), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: var(--font-display-loaded), var(--font-sans-loaded), sans-serif;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: #080B11;
-  color: #F3F4F6;
+  background-color: var(--canvas);
+  color: var(--fg);
   min-height: 100vh;
-  background-image: 
-    radial-gradient(ellipse at 50% 0%, rgba(220, 38, 38, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 85% 20%, rgba(250, 204, 21, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.035) 1px, transparent 0);
+}
+
+/* Root game container background: subtle brand glow + dot grid */
+.app-backdrop {
+  background-color: var(--canvas);
+  color: var(--fg);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgb(220 38 38 / 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 20%, rgb(250 204 21 / 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 1px 1px, var(--dot-grid) 1px, transparent 0);
   background-size: 100% 100%, 100% 100%, 24px 24px;
 }
 
@@ -28,6 +162,7 @@ body {
 
 .font-display {
   font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 
 /* Tactical Yellow and Black Caution Stripes */
@@ -62,11 +197,10 @@ body {
   font-weight: 700;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
-  color: #EF4444;
-  background-color: rgba(220, 38, 38, 0.15);
-  border: 1.5px solid #EF4444;
+  color: var(--danger-fg);
+  background-color: var(--danger-soft);
+  border: 1.5px solid var(--danger-line);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
 }
 
 .stamp-yellow {
@@ -79,11 +213,10 @@ body {
   font-weight: 700;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
-  color: #FACC15;
-  background-color: rgba(250, 204, 21, 0.15);
-  border: 1.5px solid #FACC15;
+  color: var(--accent-fg);
+  background-color: var(--accent-soft);
+  border: 1.5px solid var(--accent-line);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(250, 204, 21, 0.25);
 }
 
 .stamp-black {
@@ -96,32 +229,32 @@ body {
   font-weight: 700;
   font-size: 0.65rem;
   letter-spacing: 0.08em;
-  color: #E2E8F0;
-  background-color: #0A0A0A;
-  border: 1.5px solid #3F3F46;
+  color: var(--fg-2);
+  background-color: var(--inset);
+  border: 1.5px solid var(--line-strong);
   border-radius: 2px;
 }
 
 /* Highlighters */
 .highlight-yellow {
-  background: rgba(250, 204, 21, 0.2);
-  color: #FDE047;
-  border-left: 2px solid #FACC15;
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+  border-left: 2px solid var(--accent);
   padding: 0.1rem 0.35rem;
 }
 
 .highlight-red {
-  background: rgba(239, 68, 68, 0.2);
-  color: #FCA5A5;
-  border-left: 2px solid #EF4444;
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+  border-left: 2px solid var(--danger);
   padding: 0.1rem 0.35rem;
 }
 
 /* Tactical Pinboard Texture */
 .evidence-pinboard {
-  background-color: #0D121D;
-  background-image: 
-    radial-gradient(#1E293B 1.5px, transparent 1.5px),
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(var(--line-strong) 1.5px, transparent 1.5px),
     linear-gradient(to right, rgba(239, 68, 68, 0.03) 1px, transparent 1px);
   background-size: 20px 20px, 120px 120px;
 }
@@ -144,7 +277,7 @@ body {
 
 /* Secondary newspaper grain accent */
 .aged-document-grain {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 0);
+  background-image: radial-gradient(var(--dot-grid) 1px, transparent 0);
   background-size: 3px 3px;
 }
 
@@ -163,90 +296,33 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: var(--canvas);
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272A;
+  background: var(--line-strong);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #DC2626;
 }
 
-/* =========================================
-   LIGHT / WHITE EDITORIAL PRINT THEME
-   ========================================= */
-.theme-light {
-  background-color: #F8F9FA !important;
-  color: #0F172A !important;
-  background-image: 
-    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.04) 1px, transparent 0) !important;
-  background-size: 24px 24px !important;
-}
-
 .theme-light .noise-tactical-layer {
-  opacity: 0.045;
+  opacity: 0.03;
   mix-blend-mode: multiply;
 }
 
-/* Light theme card transformations for crisp editorial document look */
-.theme-light [class*="bg-[#0C101A]"],
-.theme-light [class*="bg-[#0E1320]"],
-.theme-light [class*="bg-[#080B11]"],
-.theme-light [class*="bg-[#0A0D15]"],
-.theme-light [class*="bg-[#0A0E17]"] {
-  background-color: #FFFFFF !important;
-  border-color: #CBD5E1 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+/* Horizontal scrollers (tab bars, chip rows): hide the scrollbar, keep scrolling */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
-.theme-light [class*="bg-[#121624]"],
-.theme-light [class*="bg-[#121622]"],
-.theme-light [class*="bg-[#0F1420]"] {
-  background-color: #F1F5F9 !important;
-  border-color: #CBD5E1 !important;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-.theme-light [class*="bg-black/60"],
-.theme-light [class*="bg-black/80"],
-.theme-light [class*="bg-black/90"],
-.theme-light .bg-black:not(button):not(.caution-stripes) {
-  background-color: #F8FAFC !important;
-  border-color: #E2E8F0 !important;
-}
-
-.theme-light [class*="text-white"],
-.theme-light [class*="text-zinc-100"],
-.theme-light [class*="text-zinc-200"],
-.theme-light [class*="text-zinc-300"] {
-  color: #0F172A !important;
-}
-
-.theme-light [class*="text-zinc-400"],
-.theme-light [class*="text-zinc-500"] {
-  color: #64748B !important;
-}
-
-.theme-light [class*="border-zinc-800"],
-.theme-light [class*="border-zinc-700"] {
-  border-color: #E2E8F0 !important;
-}
-
-.theme-light .evidence-pinboard {
-  background-color: #F8FAFC !important;
-  background-image: 
-    radial-gradient(#CBD5E1 1.5px, transparent 1.5px),
-    linear-gradient(to right, rgba(239, 68, 68, 0.05) 1px, transparent 1px) !important;
-}
-
-.theme-light ::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-.theme-light ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-}
-.theme-light ::-webkit-scrollbar-thumb:hover {
-  background: #DC2626;
-}
-
-

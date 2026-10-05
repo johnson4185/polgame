@@ -19,23 +19,23 @@ export function HistoricalArchiveView() {
     <div className="space-y-4">
       
       {/* Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-zinc-800 bg-[#0E1320] p-4 shadow-lg">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-[#EF4444] flex items-center gap-1.5 bg-red-950/40 px-2 py-0.5 rounded-xs border border-red-900/60">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
               <span className="stamp-red text-[9px]">OFFICIAL RECORD</span>
               <span>VERIFIED HISTORICAL ARCHIVE (TARGET CUTOFF: 30 SEP 2026)</span>
             </span>
-            <span className="text-zinc-600">|</span>
-            <span className="text-xs text-zinc-300">Public Records & Citations</span>
+            <span className="text-faint">|</span>
+            <span className="text-xs text-fg-2">Public Records & Citations</span>
           </div>
-          <h2 className="font-tactical text-xl font-black text-white mt-1">
+          <h2 className="font-display text-xl font-bold text-fg mt-1">
             CJI Remark Context, Student Mobilization, CJP Genesis &amp; Court Records
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-tactical">
-          <span className="text-zinc-400 font-bold">FILTER:</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-tactical">
+          <span className="text-muted font-bold">FILTER:</span>
           {['ALL', 'DOCUMENTED_FACT', 'COURT_RECORD', 'OFFICIAL_PROCEEDING'].map((f) => (
             <button
               key={f}
@@ -45,8 +45,8 @@ export function HistoricalArchiveView() {
               }}
               className={`px-3 py-1 rounded-xs border font-black transition-all ${
                 filterStatus === f
-                  ? 'border-[#FACC15] bg-[#FACC15] text-black shadow-xs'
-                  : 'border-zinc-800 bg-[#121624] text-zinc-400 hover:text-white hover:border-zinc-600'
+                  ? 'border-accent bg-[#FACC15] text-black shadow-xs'
+                  : 'border-line bg-raised text-muted hover:text-fg hover:border-line-strong'
               }`}
             >
               {f.replace(/_/g, ' ')}
@@ -56,8 +56,8 @@ export function HistoricalArchiveView() {
       </div>
 
       {/* Archive Disclaimer Notice */}
-      <div className="rounded-xs border border-zinc-800 bg-[#0C101A] p-3.5 text-xs text-zinc-300 leading-relaxed font-sans shadow-md">
-        <strong className="text-[#FACC15] font-tactical">HISTORICAL INTEGRITY POLICY: </strong>
+      <div className="rounded-xs border border-line bg-surface p-3.5 text-xs text-fg-2 leading-relaxed font-sans shadow-md">
+        <strong className="text-accent-fg font-tactical">HISTORICAL INTEGRITY POLICY: </strong>
         Events in this archive reflect verified public reporting, Supreme Court hearing transcripts, and official press bulletins from 2024 to 2026. Private operational conversations and daily simulation variables in the game are labeled as dramatization and simulated values.
       </div>
 
@@ -66,22 +66,22 @@ export function HistoricalArchiveView() {
         {filteredArchive.map((dispatch) => (
           <div
             key={dispatch.id}
-            className="rounded-xs border-2 border-zinc-800 bg-[#0C101A] p-4 text-xs space-y-2.5 shadow-md hover:border-zinc-700 transition-colors"
+            className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-2.5 shadow-md hover:border-line-strong transition-colors"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-zinc-800 pb-2 font-tactical">
-              <div className="flex items-center gap-2">
-                <span className="font-black text-[#FACC15] flex items-center gap-1.5 bg-black px-2 py-0.5 rounded-xs border border-zinc-800">
-                  <Calendar className="h-3.5 w-3.5 text-[#DC2626]" />
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-line pb-2 font-tactical">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-black text-accent-fg flex items-center gap-1.5 bg-inset px-2 py-0.5 rounded-xs border border-line">
+                  <Calendar className="h-3.5 w-3.5 text-danger-fg" />
                   {dispatch.historicalDate}
                 </span>
-                <span className="text-zinc-600">·</span>
-                <span className="font-bold text-white">{dispatch.sourcePublication}</span>
+                <span className="text-faint">·</span>
+                <span className="font-bold text-fg">{dispatch.sourcePublication}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className={`rounded-xs px-2 py-0.5 text-[9px] font-black tracking-wider ${
-                  dispatch.verificationStatus === 'DOCUMENTED_FACT' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' :
-                  dispatch.verificationStatus === 'COURT_RECORD' ? 'bg-blue-950 text-blue-400 border border-blue-800' : 'bg-purple-950 text-purple-400 border border-purple-800'
+                  dispatch.verificationStatus === 'DOCUMENTED_FACT' ? 'bg-success-soft text-success-fg border border-success-line' :
+                  dispatch.verificationStatus === 'COURT_RECORD' ? 'bg-info-soft text-info-fg border border-info-line' : 'bg-info-soft text-purple-400 border border-info-line'
                 }`}>
                   {dispatch.verificationStatus.replace(/_/g, ' ')}
                 </span>
@@ -90,7 +90,7 @@ export function HistoricalArchiveView() {
                   href={dispatch.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1 text-[#DC2626] hover:text-[#FACC15] text-[10px] font-bold transition-colors"
+                  className="flex items-center gap-1 text-danger-fg hover:text-accent-fg text-[10px] font-bold transition-colors"
                 >
                   <span>Verified Source</span>
                   <ExternalLink className="h-3 w-3" />
@@ -98,15 +98,15 @@ export function HistoricalArchiveView() {
               </div>
             </div>
 
-            <h3 className="font-tactical text-sm font-black text-white">{dispatch.title}</h3>
-            <p className="text-zinc-300 leading-relaxed font-sans">{dispatch.summary}</p>
+            <h3 className="font-tactical text-sm font-black text-fg">{dispatch.title}</h3>
+            <p className="text-fg-2 leading-relaxed font-sans">{dispatch.summary}</p>
 
-            <div className="border-t border-zinc-800 pt-2 flex flex-wrap items-center justify-between text-[11px] font-tactical text-zinc-400">
+            <div className="border-t border-line pt-2 flex flex-wrap items-center justify-between text-[11px] font-tactical text-muted">
               <div>
-                <span className="text-zinc-500">PEOPLE MENTIONED: </span>
-                <span className="text-zinc-200">{dispatch.peopleMentioned.join(', ')}</span>
+                <span className="text-faint">PEOPLE MENTIONED: </span>
+                <span className="text-fg">{dispatch.peopleMentioned.join(', ')}</span>
               </div>
-              <div className="text-[10px] text-[#FACC15] font-mono">
+              <div className="text-[10px] text-accent-fg font-mono">
                 Relevance: {dispatch.relevanceToCJP}
               </div>
             </div>
