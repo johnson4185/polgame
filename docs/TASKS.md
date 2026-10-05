@@ -93,7 +93,25 @@ Claude's and run in sequence with it. They must not touch Codex-owned files: `li
 (C1), `lib/game/data/media.ts` (C5), `components/map/**` (C4). S1, S2 and S5 are big changes:
 plan first, owner approval before code.
 
-### S1. Story event system — Claude (plan → approval → build)
+### S1. Story event system — Claude · IN PROGRESS `claude/s1-story-events`
+**Plan (self-approved, autonomous run):**
+- Types: `StoryEvent` (id, ISO date or follow-up only, act, title, description, location, optional
+  speaker, art label, `kind` EVENT/SETPIECE, `sensitive`, 2–4 `StoryChoice`s, `historicalChoice`,
+  `source`) and `StoryChoice` (label, description, `effects`, optional `cost` gate, `next` follow-up
+  with `nextDelayDays`, `outcome` text).
+- State `story`: act, startedOn, fired ids, choice per event, follow-up queue, active event,
+  divergence count (non-historical choices). Save version 4 migration.
+- Engine: `pumpStory` activates the next due event (dated events on/after the campaign start, then
+  queued follow-ups); runs after each day advance, after the prologue, and after each choice. The
+  day can't advance while an event is open; story events pre-empt the random crisis roll.
+  `RESOLVE_STORY_CHOICE` checks the cost, applies effects through the existing helpers, journals the
+  choice (noting the historical one), queues the follow-up.
+- Registry `lib/game/data/story/index.ts` + a seed batch in `act1-may.ts` (S3 fills the rest).
+- UI `components/game/StoryEventDialog.tsx`: modal card with art, speaker, 2–4 ChoiceCards with
+  effect chips; after choosing, a result panel with the outcome and "What really happened" + source.
+- Tests: fires once on its date, same-day events queue, follow-ups (immediate and delayed), cost
+  gate, divergence, day advance blocked, migration.
+
 Files: `lib/game/types.ts`, `lib/game/simulation/engine.ts`, `lib/game/simulation/engine.test.ts`,
 new `lib/game/data/story/index.ts`.
 - `StoryEvent` type: id, date, act, title, description (1–3 sentences), location, choices
