@@ -18,6 +18,15 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 | Everything | Claude — autonomous run (5 Oct 2026). Codex tasks C1, C4, C5 taken over by Claude with the owner's permission; no other agent is active. |
 
 ## In progress
+Save manager — Codex, `codex/save-manager`, separate worktree `C:/Aurliqlabs/polgame-codex-saves`,
+based on the completed statistics branch. Owner approved named saves, previews and easier backups.
+Scope: `components/game/SaveLoadModal.tsx`, `components/saves/**`,
+`lib/game/simulation/persistence.ts`, `saveValidation.ts` and persistence tests.
+Implemented; awaiting integration. Typecheck, lint (no warnings), all 39 tests,
+and build:check pass. Preview on port 3002 returns HTTP 200. Visual browser/mobile
+checks remain manual because browser automation is unavailable. Handoff:
+`docs/save-manager.md`. No engine, types or story edits.
+
 Campaign statistics — Codex, `codex/campaign-statistics`: implemented, awaiting integration
 with Claude's work. Resource charts, observed daily history, and journal milestones under
 Chronicle → Statistics. Stored independently in browser storage; old saves begin recording
