@@ -2,96 +2,112 @@
 @import "tw-animate-css";
 
 /* =========================================================================
-   DESIGN TOKENS — "Parchment & Maroon" (single theme)
-   Every colour in the UI comes from these. Components use the semantic
-   utilities (bg-surface, text-muted, border-line, bg-brand, ...), never raw
-   hex. `.theme-dark-scope` keeps a dark palette available for photo overlays.
+   DESIGN TOKENS — "Truck Art Protest Poster" (single theme)
+   Indigo night page, cream poster cards with thick ink outlines and hard
+   sticker shadows, saffron / rani pink / peacock teal / marigold accents.
+   Components use the semantic utilities (bg-surface, text-fg, bg-brand,
+   chunky, pressable, ...) — never raw hex.
    ========================================================================= */
 
 :root {
-  --canvas: #ece2cf;        /* parchment page */
-  --surface: #fbf6ec;       /* cream cards / panels */
-  --raised: #f4ecdd;        /* items nested inside cards */
-  --inset: #e9dec9;         /* wells, inputs, tracks */
-  --line: #dccbb0;          /* default borders */
-  --line-strong: #bfa98a;   /* emphasized borders */
+  --ink: #1a1033;           /* outlines, shadows, text on cards */
 
-  --fg: #2a201b;            /* ink */
-  --fg-2: #4a3d33;
-  --muted: #74665a;
-  --faint: #a29380;
+  --canvas: #1d1747;        /* indigo page */
+  --canvas-2: #262061;      /* sunburst ray */
+  --on-canvas: #fff4dc;     /* text placed directly on the page */
+  --on-canvas-muted: #c9bfe8;
 
-  --brand: #8b1e24;         /* maroon: primary actions, active tabs, logo */
-  --brand-hover: #6d151a;
-  --brand-fg: #8b1e24;      /* maroon as text */
-  --brand-soft: #f3dfda;
-  --brand-line: #d6a39c;
+  --surface: #fff4dc;       /* cream poster card */
+  --raised: #ffe9bd;        /* nested items, hover */
+  --inset: #f6dfae;         /* wells, inputs, bar tracks */
+  --line: #1a1033;          /* outlines are ink */
+  --line-strong: #1a1033;
+  --line-soft: #e3c992;     /* hairline dividers inside cards */
 
-  --accent: #e8a93a;        /* gold: highlights, sticky notes, coins */
-  --accent-fg: #8a5a00;
-  --accent-soft: #f8e9c8;
-  --accent-line: #d9a441;
+  --fg: #1a1033;
+  --fg-2: #3d2f5c;
+  --muted: #6b5a85;
+  --faint: #9a8cb0;
 
-  --danger: #b3261e;
-  --danger-fg: #a61b1b;
-  --danger-soft: #f6dcd6;
-  --danger-line: #d9877c;
+  --brand: #ff6b1a;         /* saffron: primary actions, active tab */
+  --brand-hover: #f25a05;
+  --brand-ink: #1a1033;     /* text on saffron */
+  --brand-fg: #c2410c;      /* saffron as text on cream */
+  --brand-soft: #ffd9bf;
+  --brand-line: #ff6b1a;
 
-  --success: #2f8a57;
-  --success-fg: #24704a;
-  --success-soft: #dcebdd;
-  --success-line: #7fb894;
+  --pink: #e8247c;          /* rani pink: events, alerts, highlights */
+  --teal: #0fa3a3;          /* peacock teal */
+  --accent: #ffc93c;        /* marigold */
+  --accent-fg: #a15c00;
+  --accent-soft: #ffeab0;
+  --accent-line: #e0a400;
 
-  --info-fg: #2d5a8c;
-  --info-soft: #dde6f0;
-  --info-line: #8aa7c7;
+  --danger: #e11d48;
+  --danger-fg: #be123c;
+  --danger-soft: #ffd6de;
+  --danger-line: #e11d48;
 
-  --note: #fbe7a1;          /* sticky-note yellow */
-  --ink-shadow: 0 1px 0 rgb(255 255 255 / 0.6), 0 2px 6px rgb(60 35 20 / 0.12);
+  --success: #0f9d58;
+  --success-fg: #0b7a44;
+  --success-soft: #c9f2dc;
+  --success-line: #0f9d58;
+
+  --info-fg: #1d4ed8;
+  --info-soft: #d6e2ff;
+  --info-line: #3b6cf0;
+
+  --note: #ffe066;
+  --shadow-sticker: 5px 5px 0 var(--ink);
+  --shadow-sticker-sm: 3px 3px 0 var(--ink);
   color-scheme: light;
 }
 
-/* Dark palette for text laid over photos / illustrations */
+/* Text laid over photos / illustrations */
 .theme-dark-scope {
-  --canvas: #120c0a;
-  --surface: #1c1412;
-  --raised: #261b18;
-  --inset: #0d0907;
-  --line: #3a2c27;
-  --line-strong: #56423a;
-  --fg: #fbf6ec;
-  --fg-2: #ecdfca;
-  --muted: #c2b29c;
-  --faint: #8f7f6c;
-  --brand-fg: #f19a92;
-  --brand-soft: rgb(139 30 36 / 0.35);
-  --accent-fg: #f4c15d;
-  --accent-soft: rgb(232 169 58 / 0.18);
-  --danger-fg: #f19a92;
-  --danger-soft: rgb(179 38 30 / 0.25);
-  --success-fg: #7fd3a3;
-  --success-soft: rgb(47 138 87 / 0.25);
-  --info-fg: #9cc2ec;
-  --info-soft: rgb(45 90 140 / 0.3);
+  --surface: #241d4f;
+  --raised: #2e2763;
+  --inset: #160f36;
+  --line-soft: #3a3275;
+  --fg: #fff4dc;
+  --fg-2: #ecdfc4;
+  --muted: #c9bfe8;
+  --faint: #8f84b8;
+  --brand-fg: #ff9a5c;
+  --accent-fg: #ffd66b;
+  --accent-soft: rgb(255 201 60 / 0.18);
+  --danger-fg: #ff7aa2;
+  --danger-soft: rgb(225 29 72 / 0.25);
+  --success-fg: #5fe0a0;
+  --success-soft: rgb(15 157 88 / 0.25);
+  --info-fg: #9fb8ff;
+  --info-soft: rgb(59 108 240 / 0.25);
   color-scheme: dark;
 }
 
 @theme inline {
+  --color-ink: var(--ink);
   --color-canvas: var(--canvas);
+  --color-on-canvas: var(--on-canvas);
+  --color-on-canvas-muted: var(--on-canvas-muted);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
   --color-inset: var(--inset);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-line-soft: var(--line-soft);
   --color-fg: var(--fg);
   --color-fg-2: var(--fg-2);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
+  --color-brand-ink: var(--brand-ink);
   --color-brand-fg: var(--brand-fg);
   --color-brand-soft: var(--brand-soft);
   --color-brand-line: var(--brand-line);
+  --color-pink: var(--pink);
+  --color-teal: var(--teal);
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
@@ -109,45 +125,78 @@
   --color-info-line: var(--info-line);
   --color-note: var(--note);
 
+  /* Display font falls back to Baloo 2 for Devanagari (Bungee is Latin-only) */
   --font-sans: var(--font-body-loaded), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-loaded), 'Arial Narrow', sans-serif;
+  --font-display: var(--font-display-loaded), var(--font-body-loaded), sans-serif;
   --font-hand: var(--font-hand-loaded), cursive;
 
-  --shadow-card: var(--ink-shadow);
+  --shadow-card: var(--shadow-sticker);
+  --shadow-sticker: var(--shadow-sticker);
+  --shadow-sticker-sm: var(--shadow-sticker-sm);
+}
+
+/* Chunky poster piece: ink outline + hard offset shadow */
+@utility chunky {
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sticker);
+}
+@utility chunky-sm {
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: var(--shadow-sticker-sm);
+}
+/* Lifts on hover, physically presses down on click */
+@utility pressable {
+  transition: transform 90ms ease, box-shadow 90ms ease, background-color 120ms ease;
+  &:hover:not(:disabled) {
+    transform: translate(-1px, -2px);
+  }
+  &:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 var(--ink);
+  }
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--canvas);
-  color: var(--fg);
+  color: var(--on-canvas);
   min-height: 100vh;
 }
 
-/* Parchment page: warm vignette + faint paper fibre */
+/* Indigo sunburst page with saffron and pink glows */
 .app-backdrop {
+  color: var(--on-canvas);
   background-color: var(--canvas);
-  color: var(--fg);
   background-image:
-    radial-gradient(ellipse at 50% -10%, rgb(255 250 240 / 0.7) 0%, transparent 55%),
-    radial-gradient(ellipse at 100% 100%, rgb(139 30 36 / 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 1px 1px, rgb(90 60 30 / 0.05) 1px, transparent 0);
-  background-size: 100% 100%, 100% 100%, 5px 5px;
+    radial-gradient(circle at 12% 8%, rgb(255 107 26 / 0.28) 0 10%, transparent 30%),
+    radial-gradient(circle at 92% 85%, rgb(232 36 124 / 0.25) 0 10%, transparent 32%),
+    repeating-conic-gradient(from 0deg at 50% 115%, var(--canvas-2) 0 7deg, var(--canvas) 7deg 14deg);
+  background-attachment: fixed;
 }
 
-/* Former monospace "tactical" style: now condensed UI labels with tabular figures */
+/* Former monospace "tactical" style: bold rounded labels with tabular figures */
 .font-tactical {
-  font-family: var(--font-label-loaded), var(--font-sans);
+  font-family: var(--font-body-loaded), var(--font-sans);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
 }
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0.005em;
+  font-weight: 400; /* Bungee has a single weight; avoid synthetic bold */
+  letter-spacing: 0.01em;
 }
 
 .font-hand {
   font-family: var(--font-hand);
+}
+
+/* Poster text on the indigo page gets a pink drop */
+.poster-title {
+  font-family: var(--font-display);
+  color: var(--on-canvas);
+  text-shadow: 3px 3px 0 var(--pink);
 }
 
 /* Tactical Yellow and Black Caution Stripes */

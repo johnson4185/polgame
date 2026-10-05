@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import type { ActionOutcome } from '@/lib/game/types';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { Zap, Megaphone, Tv, Search, Scale, Coffee, Moon, ShieldAlert, Target, Award, Sparkles } from 'lucide-react';
+import { Zap, Megaphone, Tv, Search, Scale, Coffee, ShieldAlert, Target, Award, Sparkles } from 'lucide-react';
 
 const LEVEL_NAMES = [
   'Grassroots Street Agitators',
@@ -61,11 +61,6 @@ export function GameActionHUD() {
     dispatch({ type: 'FIELD_REST' });
   };
 
-  const handleEndDay = () => {
-    soundManager.playPaper();
-    dispatch({ type: 'ADVANCE_DAY' });
-  };
-
   const handleDayOff = () => {
     soundManager.playPaper();
     dispatch({ type: 'REST_DAY' });
@@ -73,10 +68,10 @@ export function GameActionHUD() {
 
   const today = state.currentDate.year * 10000 + state.currentDate.month * 100 + state.currentDate.day;
   const actions: { label: string; hint: string; icon: React.ElementType; onClick: () => void; disabled?: boolean; title: string }[] = [
-    { label: 'Stage Rally', hint: '1 AP', icon: Megaphone, onClick: handleActionRally, disabled: state.miniGameLastPlayed?.RALLY === today, title: 'Mini-game, once per day. Raises crackdown slightly.' },
+    { label: 'Stage Rally', hint: '1 AP', icon: Megaphone, onClick: handleActionRally, disabled: state.miniGameLastPlayed?.RALLY === today, title: 'Mini-game, once per day. Raises legal heat slightly.' },
     { label: 'TV Debate', hint: '1 AP', icon: Tv, onClick: handleActionDebate, disabled: state.miniGameLastPlayed?.TV_DEBATE === today, title: 'Mini-game, once per day.' },
     { label: 'Whistleblower', hint: '1 AP · ₹8k', icon: Search, onClick: handleActionInvestigate, disabled: !openCase, title: openCase ? `Corroborate evidence: ${openCase.title}` : 'All cases concluded' },
-    { label: 'Legal Writ', hint: '1 AP · ₹10k', icon: Scale, onClick: handleActionLegal, title: 'Crackdown −15' },
+    { label: 'Legal Writ', hint: '1 AP · ₹10k', icon: Scale, onClick: handleActionLegal, title: 'Legal heat −15' },
     { label: 'Chai Break', hint: '1 AP', icon: Coffee, onClick: handleActionRest, title: '+25 energy, −15 stress' },
   ];
   const questPct = activeQuest ? Math.min(100, Math.round((activeQuest.currentProgress / activeQuest.targetProgress) * 100)) : 0;
@@ -127,14 +122,6 @@ export function GameActionHUD() {
             </div>
             <div className="flex flex-col gap-1.5">
               <button
-                onClick={handleEndDay}
-                title="End today and advance to the next day"
-                className="flex h-9 items-center justify-center gap-1.5 rounded-xs bg-[#DC2626] px-4 font-tactical text-xs font-black text-white transition-colors hover:bg-red-700"
-              >
-                <Moon className="h-3.5 w-3.5" aria-hidden="true" />
-                END DAY
-              </button>
-              <button
                 onClick={handleDayOff}
                 title="Spend the whole day resting: +35 energy, −25 stress, +5 health"
                 className="h-7 rounded-xs border border-line px-2 font-tactical text-[10px] font-bold uppercase tracking-wide text-muted transition-colors hover:border-accent hover:text-fg"
@@ -172,7 +159,7 @@ export function GameActionHUD() {
               <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
                 <span className="flex items-center gap-1 text-muted">
                   <ShieldAlert className={`h-3 w-3 ${crackdown > 60 ? 'text-danger-fg' : ''}`} aria-hidden="true" />
-                  Crackdown
+                  Legal heat
                 </span>
                 <span className={`tabular-nums ${crackdown > 60 ? 'text-danger-fg' : 'text-fg'}`}>{crackdown}%</span>
               </div>

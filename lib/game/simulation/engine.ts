@@ -814,7 +814,7 @@ function reduce(state: GameState, action: GameAction): GameState {
       let next = spendFunds(s, BALANCE.legalAidCost, 'Legal', 'Senior counsel fees for bail and anticipatory protection');
       next = adjustCrackdown(next, -15);
       next = addJournal(next, 'High Court Relief Secured', 'Senior advocates secured ad-interim protection for detained volunteers.', 'MINOR', 'OPERATIONS');
-      return withOutcome(next, `Legal aid filed: crackdown −15 (${inr(BALANCE.legalAidCost)}).`);
+      return withOutcome(next, `Legal aid filed: legal heat −15 (${inr(BALANCE.legalAidCost)}).`);
     }
 
     case 'BOOST_CONSTITUENCY': {
@@ -917,7 +917,7 @@ function reduce(state: GameState, action: GameAction): GameState {
       const volunteerGain = next.movement.volunteerCount - state.movement.volunteerCount;
       return withOutcome(
         next,
-        `${kind === 'RALLY' ? 'Rally' : 'Debate'} result: trust ${signed(trustGain)}, ${signed(volunteerGain)} volunteers, +${inr(res.fundsDelta)}${kind === 'RALLY' ? ', crackdown +3' : ''}.`,
+        `${kind === 'RALLY' ? 'Rally' : 'Debate'} result: trust ${signed(trustGain)}, ${signed(volunteerGain)} volunteers, +${inr(res.fundsDelta)}${kind === 'RALLY' ? ', legal heat +3' : ''}.`,
       );
     }
 
@@ -1025,7 +1025,7 @@ function reduce(state: GameState, action: GameAction): GameState {
             trust = 2;
             crackdown = -5;
             log = 'Delegation submitted a compliant perimeter map. Police tension eased.';
-            msg = 'Talks succeeded: police tension −25, crackdown −5.';
+            msg = 'Talks succeeded: police tension −25, legal heat −5.';
           } else {
             u.policeNegotiationTension = Math.min(100, u.policeNegotiationTension + 5);
             log = 'Talks with the station house officer broke down without agreement.';
@@ -1054,7 +1054,7 @@ function reduce(state: GameState, action: GameAction): GameState {
             trust = 8;
             crackdown = 5;
             log = 'Delegation delivered the memorandum to the ministry gate under a full media spotlight.';
-            msg = 'March succeeded: trust +8, media 100, crackdown +5.';
+            msg = 'March succeeded: trust +8, media 100, legal heat +5.';
           } else {
             u.policeNegotiationTension = 90;
             u.policePermissionStatus = 'SECTION_144_WARNING';
@@ -1062,7 +1062,7 @@ function reduce(state: GameState, action: GameAction): GameState {
             trust = -3;
             crackdown = 15;
             log = 'Barricades rushed at Tolstoy Marg. Police issued a formal dispersal warning.';
-            msg = 'March repelled: morale −15, trust −3, crackdown +15.';
+            msg = 'March repelled: morale −15, trust −3, legal heat +15.';
             tone = 'FAILURE';
           }
           break;
@@ -1133,7 +1133,7 @@ function reduce(state: GameState, action: GameAction): GameState {
           trust = 8;
           cred = 6;
           crackdown = -8;
-          msg = 'PIL admitted by the High Court! Trust +8, crackdown −8.';
+          msg = 'PIL admitted by the High Court! Trust +8, legal heat −8.';
         } else {
           u.currentStage = 'LEGAL_REVIEW';
           u.readinessPercentage = Math.max(0, u.readinessPercentage - 30);
@@ -1151,13 +1151,13 @@ function reduce(state: GameState, action: GameAction): GameState {
           trust = -6;
           cred = -8;
           u.outcomeNotes = 'Dossier released early; gaps were picked apart on prime time and a defamation notice followed.';
-          msg = `Exposé backfired: trust −6, credibility −8, crackdown +${crackdown}.`;
+          msg = `Exposé backfired: trust −6, credibility −8, legal heat +${crackdown}.`;
           tone = 'FAILURE';
         } else {
           trust = Math.round(impact / 8);
           cred = Math.round(impact / 10);
           u.outcomeNotes = 'Released the full dossier with banking trails at a Constitution Club press briefing.';
-          msg = `Exposé landed: trust +${trust}, credibility +${cred}, crackdown +${crackdown}.`;
+          msg = `Exposé landed: trust +${trust}, credibility +${cred}, legal heat +${crackdown}.`;
         }
       }
 

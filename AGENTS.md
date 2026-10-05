@@ -98,32 +98,36 @@ Bump `SAVE_VERSION` for breaking changes.
 - Keep simulation deterministic: use `SeededRNG` from state, not `Math.random()`
 - Images are served from `public/images/` (`src/assets/images/` is an unused duplicate)
 
-### Styling ("Parchment & Maroon", single theme)
-Colours come from semantic tokens in `app/globals.css`. **Never use raw hex, `zinc-*`, or
-`black`/`white` for surfaces and text.** Use:
+### Styling ("Truck Art Protest Poster", single theme)
+The game should feel like a game, not software: chunky pieces with thick ink outlines, hard
+"sticker" shadows, buttons that press down, bold Indian truck-art colours. Tokens live in
+`app/globals.css`. **Never use raw hex, `zinc-*`, or `black`/`white` for surfaces and text.**
 
 | Purpose | Classes |
 |---|---|
-| Page / card / nested item / well | `bg-canvas` · `bg-surface` · `bg-raised` · `bg-inset` |
-| Borders | `border-line` · `border-line-strong` |
-| Text | `text-fg` · `text-fg-2` · `text-muted` · `text-faint` |
-| Maroon primary (buttons, active tabs, headings) | `bg-brand` · `hover:bg-brand-hover` · `text-brand-fg` · `bg-brand-soft` |
-| Gold / red / green / blue | `accent` · `danger` · `success` · `info` (each with `-fg`, `-soft`, `-line`) |
+| Indigo page / text on it | `app-backdrop` · `text-on-canvas` · `text-on-canvas-muted` · `poster-title` |
+| Cream card / nested / well | `bg-surface` · `bg-raised` · `bg-inset` (text on them: `text-fg`, `text-fg-2`, `text-muted`) |
+| Outline + shadow | `chunky` (3px ink + 5px shadow) · `chunky-sm` · ink colour `border-ink` |
+| Press feedback | `pressable` (lifts on hover, presses on click) |
+| Saffron primary | `bg-brand text-brand-ink` · `text-brand-fg` on cream |
+| Rani pink / peacock teal / marigold | `bg-pink` · `bg-teal` · `bg-accent` (`text-accent-fg` on cream) |
+| Status | `success` · `danger` · `info` (each with `-fg`, `-soft`, `-line`) |
 
-Text laid over photos or illustrations goes inside `theme-dark-scope`.
+Text over photos/illustrations goes inside `theme-dark-scope`.
 
 **Use the kit, don't hand-roll.** `components/ui/primitives.tsx` (Button, Panel, PanelHeader,
 StatCard, Meter, SegmentMeter, EffectChip, Badge, StickyNote, SpeechBubble, ArtPlaceholder,
 EndTurnButton) and `components/ui/menus.tsx` (Tabs, Menu dropdown, Tooltip, HoverCard, Popover,
-GameDialog, ChoiceCard; all on Radix). Preview everything at `/kit`. Prefer dropdowns, popovers
-and tabs over long vertical lists of options.
+GameDialog, ChoiceCard; Radix-based). Preview at `/kit`. Prefer dropdowns, popovers and tabs
+over long vertical option lists. App frame: `components/shell/` (TopBar, BottomDock, TitleScreen).
 
-Fonts (next/font, `app/layout.tsx`): `font-display` Oswald for headings/buttons/numbers,
-default Barlow for prose, `font-tactical` Barlow Condensed for labels, `font-hand` Kalam for
-handwritten notes (supports Devanagari).
+Fonts (next/font, `app/layout.tsx`): `font-display` **Bungee** for short titles, buttons and
+labels only (it is all-caps and Latin-only; Devanagari falls back to Baloo 2) · default **Baloo 2**
+for everything else, including long headlines · `font-hand` **Kalam** for placards/sticky notes.
 
-Layout: badge/chip rows `flex-wrap`; button groups use a responsive `grid`. Check at 390px —
-no horizontal page scroll.
+Layout: navigation is the bottom dock (4 tabs + More on phones, 6 + More on desktop).
+Badge/chip rows `flex-wrap`; button groups use a responsive `grid`. Check at 390px — no
+horizontal page scroll.
 
 ## Working with multiple agents in parallel
 Claude Code and Codex may both be working on this repo at the same time.

@@ -116,7 +116,7 @@ export function CrisisModal() {
                     <span className={`px-1.5 py-0.5 rounded-xs font-bold ${
                       opt.consequences.crackdownChange < 0 ? 'bg-info-soft text-info-fg border border-info-line' : 'bg-danger-soft text-danger-fg border border-danger-line'
                     }`}>
-                      {opt.consequences.crackdownChange > 0 ? `+${opt.consequences.crackdownChange}` : opt.consequences.crackdownChange}% Crackdown
+                      {opt.consequences.crackdownChange > 0 ? `+${opt.consequences.crackdownChange}` : opt.consequences.crackdownChange}% Legal Heat
                     </span>
                   )}
                   {opt.consequences.stressChange !== undefined && (

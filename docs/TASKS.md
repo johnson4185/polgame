@@ -9,14 +9,14 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 | Files | Owner |
 |-------|-------|
 | `lib/game/data/crises.ts` | Codex — `codex/crisis-deck` |
-| `app/`, `components/game/`, `components/ui/`, `lib/game/**` (except files listed for Codex) | Claude — parchment redesign |
+| `app/`, `components/game/`, `components/ui/`, `lib/game/**` (except files listed for Codex) | Claude — UI redesign |
 | `components/map/**`, `app/kit/map/**`, `public/maps/**` | Codex — `codex/india-map` |
 | `lib/game/data/media.ts` | Codex — `codex/media-content` |
 
 ## In progress
 | Task | Agent | Branch |
 |------|-------|--------|
-| Parchment redesign to match the 5 mockups (see "Redesign plan" below) | Claude | `claude/parchment-*` |
+| UI redesign to match the 5 mockups in Truck Art style (see "Redesign plan" below) | Claude | `claude/*` |
 
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
@@ -53,7 +53,7 @@ Files: `components/map/**`, `app/kit/map/page.tsx`, `public/maps/**` only.
   `renderTooltip?(stateName) => ReactNode` shown in a floating card near the cursor.
 - State names must match `INITIAL_STATES[].name` in `lib/game/data/statesAndConstituencies.ts`.
 - Keyboard: states focusable (tab), Enter selects; `aria-label` per state.
-- Use the parchment tokens (`bg-surface`, `border-line`, `text-fg`…) from `app/globals.css`.
+- Follow the styling rules in AGENTS.md (truck-art tokens, `chunky`, `pressable`).
 - Demo page at `/kit/map` with random values. Do not edit any other file.
 
 ### C5. Media content data — `codex/media-content`
@@ -68,9 +68,11 @@ Files: `lib/game/data/media.ts` only (export types from the same file; don't edi
 
 ## Redesign plan (Claude)
 Source: 5 mockups the user supplied on 2026-10-05 (title, overview, event, protest scene, media room).
-Decisions: real names kept · parchment theme only · placeholder art for now · look first, then mechanics.
-1. [x] Foundation: parchment tokens, Oswald/Barlow/Kalam fonts, Radix-based kit (`components/ui/`), `/kit` preview
-2. [ ] App shell: top stat bar, bottom nav, settings menu, title screen (New / Continue / Settings)
+Decisions: real names kept · Truck Art Poster style · bottom dock · placeholder art for now · look first, then mechanics.
+1. [x] Foundation: tokens, fonts, Radix-based kit (`components/ui/`), `/kit` preview
+   - Restyled same day to **Truck Art Protest Poster** (Bungee + Baloo 2) after the user found
+     parchment too "software"; alternatives kept at `/kit/styles`
+2. [x] App shell: top resource bar, bottom dock + More menu, END TURN, settings menu, title screen
 3. [ ] Screens: Overview (map + feeds) → Event dialog → Protest scene → Media room → People, Finance, Research, Lawsuits, Election
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 

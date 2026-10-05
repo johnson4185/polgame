@@ -49,10 +49,10 @@ export default function KitPage() {
               <StatCard icon={Users} label="Followers" value="20.4M" delta={8.2} />
               <StatCard icon={UserCheck} label="Volunteers" value="85K" delta={12} iconTone="success" />
               <StatCard icon={IndianRupee} label="Funds" value="₹12L" delta={18} iconTone="gold" />
-              <StatCard icon={Star} label="Credibility" value="72%" delta={4} iconTone="brand" />
+              <StatCard icon={Star} label="Credibility" value="72%" delta={4} iconTone="saffron" />
               <Tooltip content="Police and legal pressure on the movement. At 100% your offices are sealed.">
                 <div>
-                  <StatCard icon={Siren} label="Legal Heat" iconTone="brand">
+                  <StatCard icon={Siren} label="Legal Heat" iconTone="pink">
                     <div className="py-1.5"><SegmentMeter value={72} /></div>
                   </StatCard>
                 </div>
@@ -236,10 +236,10 @@ export default function KitPage() {
               <Button>Primary</Button>
               <Button variant="secondary">Secondary</Button>
               <Button variant="ghost">Ghost</Button>
-              <Button variant="danger" icon={AlertTriangle}>Danger</Button>
+              <Button variant="pink" icon={AlertTriangle}>Danger</Button>
               <Button disabled>Disabled</Button>
               <Badge>3</Badge>
-              <Badge tone="accent">LIVE</Badge>
+              <Badge tone="gold">LIVE</Badge>
               <Badge tone="success">Corroborated</Badge>
               <Badge tone="danger">Unverified</Badge>
               <StickyNote>Remember: rest before the march!</StickyNote>

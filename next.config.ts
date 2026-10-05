@@ -2,6 +2,8 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The floating dev badge overlaps the bottom dock; build errors still show as an overlay
+  devIndicators: false,
   eslint: {
     ignoreDuringBuilds: true,
   },

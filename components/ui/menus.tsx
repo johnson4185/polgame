@@ -35,20 +35,20 @@ export function Tabs({
 }) {
   return (
     <RTabs.Root value={value} onValueChange={onValueChange} defaultValue={defaultValue ?? tabs[0]?.value} className={className}>
-      <RTabs.List className="flex gap-1 overflow-x-auto rounded-md border border-line bg-raised p-1 scrollbar-none">
+      <RTabs.List className="chunky-sm flex gap-1 overflow-x-auto bg-raised p-1 scrollbar-none">
         {tabs.map(t => (
           <RTabs.Trigger
             key={t.value}
             value={t.value}
             className={cn(
-              'relative flex flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded font-display font-semibold text-fg-2 transition-colors',
-              'hover:bg-surface data-[state=active]:bg-brand data-[state=active]:text-white',
-              size === 'sm' ? 'h-8 px-2.5 text-sm' : 'h-10 px-3 text-base',
+              'relative flex flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border-2 border-transparent font-display text-fg-2 transition-all',
+              'hover:bg-surface data-[state=active]:-translate-y-0.5 data-[state=active]:border-ink data-[state=active]:bg-brand data-[state=active]:text-brand-ink data-[state=active]:shadow-[2px_2px_0_var(--ink)]',
+              size === 'sm' ? 'h-8 px-2.5 text-[11px]' : 'h-10 px-3 text-xs',
             )}
           >
             {t.label}
             {t.badge ? (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-bold leading-none text-white">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-ink bg-pink px-1 font-sans text-[11px] font-extrabold leading-none text-white">
                 {t.badge}
               </span>
             ) : null}
@@ -95,7 +95,7 @@ export function Menu({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         {trigger ?? (
-          <button className="inline-flex h-10 items-center gap-2 rounded-md border border-line-strong bg-surface px-3 font-display font-semibold uppercase text-fg hover:border-brand data-[state=open]:border-brand">
+          <button className="chunky-sm pressable inline-flex h-10 items-center gap-2 bg-surface px-3 font-display text-xs text-fg data-[state=open]:bg-accent">
             {label}
             <ChevronDown className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -104,10 +104,10 @@ export function Menu({
       <DropdownMenu.Portal>
         <DropdownMenu.Content align={align} sideOffset={6} className={floatingPanel('min-w-56 p-1.5')}>
           {items.map((entry, i) => {
-            if (entry === 'separator') return <DropdownMenu.Separator key={i} className="my-1 h-px bg-line" />;
+            if (entry === 'separator') return <DropdownMenu.Separator key={i} className="my-1 h-0.5 bg-line-soft" />;
             if ('group' in entry) {
               return (
-                <DropdownMenu.Label key={i} className="px-2.5 pb-1 pt-2 font-tactical text-xs font-bold uppercase tracking-wider text-muted">
+                <DropdownMenu.Label key={i} className="px-2.5 pb-1 pt-2 font-display text-[10px] text-muted">
                   {entry.group}
                 </DropdownMenu.Label>
               );
@@ -119,12 +119,12 @@ export function Menu({
                 disabled={entry.disabled}
                 onSelect={entry.onSelect}
                 className={cn(
-                  'flex cursor-pointer select-none items-center gap-2.5 rounded px-2.5 py-2 text-sm font-semibold outline-none',
-                  'data-[highlighted]:bg-brand-soft data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
+                  'flex cursor-pointer select-none items-center gap-2.5 rounded-lg border-2 border-transparent px-2.5 py-2 text-sm font-bold outline-none',
+                  'data-[highlighted]:border-ink data-[highlighted]:bg-accent data-[disabled]:cursor-not-allowed data-[disabled]:opacity-40',
                   entry.danger ? 'text-danger-fg' : 'text-fg',
                 )}
               >
-                {Icon && <Icon className="h-4 w-4 shrink-0 text-brand-fg" aria-hidden="true" />}
+                {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden="true" />}
                 <span className="flex-1">{entry.label}</span>
                 {entry.hint && <span className="font-tactical text-xs text-muted">{entry.hint}</span>}
               </DropdownMenu.Item>
@@ -140,7 +140,7 @@ export function Menu({
 
 const floatingPanel = (extra = '') =>
   cn(
-    'z-[70] rounded-lg border border-line-strong bg-surface text-fg shadow-[0_10px_30px_rgb(60_35_20/0.25)]',
+    'chunky z-[70] bg-surface text-fg',
     'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
     extra,
   );
@@ -155,9 +155,9 @@ export function Tooltip({ content, children, side = 'top' }: { content: React.Re
     <RTooltip.Root>
       <RTooltip.Trigger asChild>{children}</RTooltip.Trigger>
       <RTooltip.Portal>
-        <RTooltip.Content side={side} sideOffset={6} className="z-[80] max-w-xs rounded-md bg-[#2a201b] px-2.5 py-1.5 text-sm font-medium text-[#fbf6ec] shadow-lg">
+        <RTooltip.Content side={side} sideOffset={6} className="z-[80] max-w-xs rounded-lg border-2 border-ink bg-ink px-2.5 py-1.5 text-sm font-semibold text-on-canvas shadow-[3px_3px_0_var(--pink)]">
           {content}
-          <RTooltip.Arrow className="fill-[#2a201b]" />
+          <RTooltip.Arrow className="fill-ink" />
         </RTooltip.Content>
       </RTooltip.Portal>
     </RTooltip.Root>
@@ -172,7 +172,7 @@ export function HoverCard({ trigger, children, side = 'top' }: { trigger: React.
       <RHoverCard.Portal>
         <RHoverCard.Content side={side} sideOffset={8} className={floatingPanel('w-72 p-3')}>
           {children}
-          <RHoverCard.Arrow className="fill-surface" />
+          <RHoverCard.Arrow className="fill-ink" width={14} height={8} />
         </RHoverCard.Content>
       </RHoverCard.Portal>
     </RHoverCard.Root>
@@ -187,7 +187,7 @@ export function Popover({ trigger, children, align = 'center', className }: { tr
       <RPopover.Portal>
         <RPopover.Content align={align} sideOffset={8} className={floatingPanel(cn('w-80 p-4', className))}>
           {children}
-          <RPopover.Arrow className="fill-surface" />
+          <RPopover.Arrow className="fill-ink" width={14} height={8} />
         </RPopover.Content>
       </RPopover.Portal>
     </RPopover.Root>
@@ -222,29 +222,29 @@ export function GameDialog({
   return (
     <Dialog.Root open={open} onOpenChange={dismissible ? onOpenChange : undefined}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[#1a120e]/70 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/75 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
         <Dialog.Content
           onEscapeKeyDown={e => !dismissible && e.preventDefault()}
           onPointerDownOutside={e => !dismissible && e.preventDefault()}
           className={cn(
             'fixed left-1/2 top-1/2 z-50 max-h-[92vh] w-[calc(100vw-1.5rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto',
-            'rounded-xl border-2 border-[#d9c4a0] bg-surface shadow-[0_20px_60px_rgb(30_15_10/0.45)] outline-none',
-            'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+            'chunky bg-surface text-fg shadow-[8px_8px_0_var(--ink)]! outline-none',
+            'duration-300 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-90',
             size === 'lg' ? 'max-w-3xl' : 'max-w-lg',
           )}
         >
-          {art && <div className="relative aspect-[16/7] w-full overflow-hidden rounded-t-[10px] border-b-2 border-[#d9c4a0]">{art}</div>}
+          {art && <div className="relative aspect-[16/7] w-full overflow-hidden rounded-t-[11px] border-b-3 border-ink">{art}</div>}
           {tag && <div className="absolute left-4 top-4 z-10">{tag}</div>}
           {dismissible && (
             <Dialog.Close
-              className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand text-white shadow-lg hover:bg-brand-hover"
+              className="pressable absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border-3 border-ink bg-pink text-white shadow-[3px_3px_0_var(--ink)]"
               aria-label="Close"
             >
-              <X className="h-5 w-5" />
+              <X className="h-5 w-5" strokeWidth={3} />
             </Dialog.Close>
           )}
           <div className="p-4 sm:p-6">
-            <Dialog.Title className="font-display text-3xl font-bold uppercase leading-none text-brand-fg sm:text-4xl">{title}</Dialog.Title>
+            <Dialog.Title className="font-display text-2xl leading-tight text-ink sm:text-4xl"><span className="bg-[linear-gradient(transparent_60%,var(--accent)_60%)]">{title}</span></Dialog.Title>
             <Dialog.Description asChild>
               <div className="mt-3">{children}</div>
             </Dialog.Description>
@@ -281,20 +281,20 @@ export function ChoiceCard({
       disabled={disabled}
       title={disabled ? disabledReason : undefined}
       className={cn(
-        'group grid w-full grid-cols-[auto_1fr] items-center gap-3 overflow-hidden rounded-lg border-2 text-left transition-all sm:grid-cols-[auto_1fr_auto]',
-        'enabled:hover:-translate-y-0.5 enabled:hover:shadow-card disabled:cursor-not-allowed disabled:opacity-50',
-        emphasis ? 'border-brand bg-brand text-white' : 'border-line-strong bg-surface text-fg enabled:hover:border-brand',
+        'chunky-sm pressable group grid w-full grid-cols-[auto_1fr] items-center gap-3 overflow-hidden text-left sm:grid-cols-[auto_1fr_auto]',
+        'disabled:cursor-not-allowed disabled:opacity-50',
+        emphasis ? 'bg-brand text-brand-ink' : 'bg-surface text-fg enabled:hover:bg-raised',
       )}
     >
-      <span className={cn('flex h-full items-center px-3 py-3', emphasis ? 'text-white' : 'text-fg')}>
-        {Icon && <Icon className="h-8 w-8" aria-hidden="true" />}
+      <span className="flex h-full items-center px-3 py-3">
+        {Icon && <Icon className="h-8 w-8" strokeWidth={2.5} aria-hidden="true" />}
       </span>
       <span className="py-3 pr-3">
-        <span className="block font-display text-xl font-bold leading-tight">{title}</span>
-        <span className={cn('mt-0.5 block text-sm leading-snug', emphasis ? 'text-white/85' : 'text-fg-2')}>{description}</span>
+        <span className="block font-display text-base leading-tight sm:text-lg">{title}</span>
+        <span className="mt-0.5 block text-sm font-semibold leading-snug opacity-80">{description}</span>
       </span>
       {effects && (
-        <span className="col-span-2 flex flex-wrap items-center gap-4 border-t border-line bg-raised px-4 py-2 sm:col-span-1 sm:h-full sm:w-64 sm:border-l sm:border-t-0">
+        <span className="col-span-2 flex flex-wrap items-center gap-2 border-t-2 border-ink bg-white/40 px-3 py-2 sm:col-span-1 sm:h-full sm:w-64 sm:border-l-2 sm:border-t-0">
           {effects}
         </span>
       )}
