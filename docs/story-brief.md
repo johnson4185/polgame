@@ -42,8 +42,11 @@ really happened (the "historical choice") and cite the timeline entry they come 
   the US afterwards (a viral claim that he did was fact-checked as false). Model a single
   US-to-India move, not a round trip.
 
-## Open decision
+## Names (decided 5 Oct 2026)
 
-- **Real or parody names.** An earlier brief said to use fictional names for real politicians,
-  parties and institutions, with a mapping kept in `docs/name-map.md`. The game currently uses
-  real names, as chosen during the UI redesign. Decide which applies before writing Act 1 events.
+- **Use real names** for people, parties, institutions and media, as they appear in
+  `docs/cjp-timeline.md`. No parody names and no name map.
+- Because the names are real, what real people say and do in the game must come from the
+  timeline. Quote them only as reported. Invented events (sandbox content, generic crises) use
+  fictional minor characters (officers, reporters, volunteers) rather than putting new words or
+  actions in a real person's mouth.

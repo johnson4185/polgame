@@ -32,7 +32,9 @@ Files: `lib/game/data/crises.ts` only.
 - Each event: 3 options with real trade-offs (no option strictly best). Consequence values
   in the same ranges as existing events (trust ±20, funds ±60000, volunteers ±800,
   crackdown ±25, stress ±20, energy ±25).
-- Unique `id`s prefixed `CRISIS-`. Fictional officials/names only — no real living politicians.
+- Unique `id`s prefixed `CRISIS-`. These are invented (non-historical) events, so use fictional
+  minor characters (officers, reporters, volunteers). Real people may only appear as described in
+  `docs/cjp-timeline.md` (see "Names" in `docs/story-brief.md`).
 
 ### C2. Repo cleanup — `codex/cleanup`
 Files: `src/assets/`, `.eslintrc.json`, `package.json`, `package-lock.json`.
@@ -65,6 +67,77 @@ Files: `lib/game/data/media.ts` only (export types from the same file; don't edi
   mockups (students, the founder, the spokesperson, critics).
 - `HASHTAGS`: 20+ `{ tag, theme: 'EDUCATION' | 'JOBS' | 'DEMOCRACY' | 'GOVERNANCE' | 'HOSTILE' }`.
 - Keep the movement's satirical tone ("Voice of the Lazy & Unemployed"). Hindi/Hinglish welcome.
+
+## Story campaign (Act 1)
+Goal: Act 1 plays out the real CJP arc from `docs/cjp-timeline.md` (16 May → 5 Oct 2026) as dated
+events with choices, then hands over to the sandbox (Act 2). Rules: `docs/story-brief.md`
+(real names; don't invent history; mark anything not in the timeline as fictional).
+
+**Gaps found (timeline vs current game, 5 Oct 2026):**
+- The game starts 1 Jun 2026 with an invented Section 144 prologue; Act 1 starts 16 May (the remark
+  on 15 May, the launch on 16 May).
+- `lib/game/data/historicalArchive.ts` contradicts the timeline but is labelled `DOCUMENTED_FACT`:
+  CJP's genesis is dated 2024-07-18 (real: 16 May 2026), a Jantar Mantar rally is dated 2024, and a
+  "national convention to form a party" (June 2026) doesn't exist in the record.
+- Events are 5 invented crises picked at random; there are no dated events, chains, or "historical
+  choice".
+- Missing systems from the brief: the Followers resource and the government response meter
+  (ignore → block accounts → police action → negotiate). There is no act tracking.
+- The team (`recruits.ts`) is entirely fictional; the real cast (Saurav Das, Ashutosh Ranka, the
+  spokespersons, Sonam Wangchuk as ally) is absent. Investigation cases are fictional but not marked so.
+- Party registration and elections are available in Act 1; in the record CJP had not registered by
+  5 Oct, so registration belongs to Act 2 (or to a choice that deliberately breaks from history).
+- The only operation is a 14-day Jantar Mantar vigil; the real arc has a one-day protest (6 Jun),
+  a city tour, a 36-day sit-in (20 Jun–25 Jul), the Sansad Chalo march (20 Jul), School Thik Karo
+  (from 15 Aug), the Adivasi drive (17 Sep) and the CEC campaign (from 23 Sep).
+
+**Ownership:** these tasks edit `lib/game/**`, which is held by the Claude UI redesign, so they are
+Claude's and run in sequence with it. They must not touch Codex-owned files: `lib/game/data/crises.ts`
+(C1), `lib/game/data/media.ts` (C5), `components/map/**` (C4). S1, S2 and S5 are big changes:
+plan first, owner approval before code.
+
+### S1. Story event system — Claude (plan → approval → build)
+Files: `lib/game/types.ts`, `lib/game/simulation/engine.ts`, `lib/game/simulation/engine.test.ts`,
+new `lib/game/data/story/index.ts`.
+- `StoryEvent` type: id, date, act, title, description (1–3 sentences), location, choices
+  (label, effects on resources, optional `next` event), `historicalChoice`, `source` (timeline heading).
+- Events fire on their date during the day advance; choice chains via `next`; state tracks the
+  current act and which events fired and what was chosen. Save migration for the new fields.
+- Coexists with the random crisis deck (C1) rather than replacing it.
+- Tests: an event fires on its date exactly once, chains resolve, saves migrate.
+
+### S2. Act 1 frame and missing resources — Claude (plan → approval → build)
+Files: `lib/game/types.ts`, `lib/game/simulation/engine.ts`, `lib/game/simulation/balance.sim.test.ts`,
+`components/shell/TopBar.tsx`, `components/game/PrologueModal.tsx`. Depends on S1.
+- Start date 16 May 2026; prologue retold from the 15 May remark and the 16 May launch post.
+- Add Followers and the government response meter; show both in the top bar.
+- Act 1 → Act 2 handover on 5 Oct 2026; party registration locked during Act 1 unless a story
+  choice breaks from history (decide in the S2 plan).
+- Re-run the balance simulation for the new opening.
+
+### S3. Write Act 1 events — Claude, or Codex once S1 merges
+Files: new `lib/game/data/story/act1-*.ts` only (one file per batch). Depends on S1.
+- One month per batch, 10–20 events each: May (16–31) · June · July · August · September ·
+  October (1–5). Each event cites its timeline heading in `source` and marks the historical choice.
+- Quotes only as reported in the timeline. No duplicate of C5 news content; reference it by trigger
+  instead.
+
+### S4. Make existing story content match the record — Claude
+Files: `lib/game/data/historicalArchive.ts`, `lib/game/data/recruits.ts`,
+`lib/game/data/investigations.ts`, `lib/game/types.ts` (only to add a "fictional" flag if needed).
+- Rebuild the Archive from the timeline (correct 2026 dates, sources, no invented entries).
+- Add the real cast (convenors, spokespersons, allies) with roles and dates from the people index;
+  keep or mark fictional recruits clearly as fictional.
+- Mark the investigation cases as fictional sandbox content.
+
+### S5. Campaigns that follow the real arc — Claude (plan → approval → build)
+Files: `lib/game/simulation/engine.ts`, `lib/game/types.ts`, new `lib/game/data/operations.ts`,
+`components/game/JantarMantarScene.tsx` (or its redesign successor), `lib/game/simulation/balance.sim.test.ts`.
+Depends on S1–S2.
+- Operation templates for the real campaigns: one-day protest, city tour, indefinite sit-in,
+  Sansad Chalo march, School Thik Karo, Adivasi School Thik Karo, CEC campaign.
+- Story events launch and end them on their dates; the government response meter escalates with
+  them. Several campaigns can run at once (matches the Overview mockup's "Active Campaigns").
 
 ## Redesign plan (Claude)
 Source: 5 mockups the user supplied on 2026-10-05 (title, overview, event, protest scene, media room).
