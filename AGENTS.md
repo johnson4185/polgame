@@ -14,6 +14,11 @@ from Google AI Studio.
 - Saves live in browser `localStorage` (`lib/game/simulation/persistence.ts`)
 - `@google/genai` is a dependency but is **not used anywhere** yet; `GEMINI_API_KEY` is unused
 
+## Working rules
+- **Propose a plan and wait for the owner's approval before big changes** (new systems,
+  restructures, large rewrites). Small fixes and docs updates don't need approval.
+- **Never delete working systems without asking**, even if you're replacing them.
+
 ## Commands
 
 ```bash
