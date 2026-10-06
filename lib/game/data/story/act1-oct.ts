@@ -123,7 +123,7 @@ export const ACT1_OCT: StoryEvent[] = [
         id: 'chapters',
         label: 'Build state chapters first',
         description: 'Organise on the ground in every state before any election.',
-        effects: { volunteers: 1500 },
+        effects: { volunteers: 1500, chapters: 10 },
         cost: 20000,
         outcome: 'Chapter conveners are named in a dozen states.',
       },

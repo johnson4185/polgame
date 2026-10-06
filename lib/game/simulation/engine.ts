@@ -106,6 +106,17 @@ export function initialStoryState(start: GameDate): StoryState {
   return { act: 1, startedOn: isoDate(start), firedIds: [], choices: {}, queue: [], activeEventId: null, divergence: 0 };
 }
 
+/**
+ * Support for the movement in a state (0–100), for the map: local seat support plus a share of
+ * national trust and the state chapter's strength.
+ */
+export function stateSupport(state: GameState, stateName: string): number {
+  const seats = state.constituencies.filter(c => c.state === stateName);
+  const local = seats.length ? seats.reduce((n, c) => n + c.cjpSupportScore, 0) / seats.length : 0;
+  const chapter = state.states.find(s => s.name === stateName)?.cjpChapterLevel ?? 0;
+  return clamp(Math.round(local * 1.5 + state.movement.publicTrust * 0.3 + chapter * 5), 0, 100);
+}
+
 /** Fresh copy of the archive with entries up to `date` unlocked */
 export function archiveUnlockedBy(date: GameDate) {
   const iso = `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`;
@@ -152,6 +163,15 @@ function startOperation(state: GameState, templateId: string): GameState {
   let next: GameState = { ...state, operations: [...state.operations, op], activeOperationId: op.id };
   next = addJournal(next, `${t.title} Begins`, t.blurb, 'MILESTONE', 'OPERATIONS');
   return next;
+}
+
+/** Grow the CJP chapter (0–3) in each named state */
+function growChapters(state: GameState, names: string[]): GameState {
+  if (!names.length) return state;
+  const states = state.states.map(s =>
+    names.includes(s.name) ? { ...s, cjpChapterLevel: Math.min(3, s.cjpChapterLevel + 1) as 0 | 1 | 2 | 3 } : s,
+  );
+  return { ...state, states, movement: { ...state.movement, stateChaptersCount: states.filter(s => s.cjpChapterLevel > 0).length } };
 }
 
 /** End a running campaign early (story-driven), judged on how it went */
@@ -211,7 +231,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     clockSpeed: 0, // Paused on start
     hasBegun: false,
     isPrologueComplete: false,
-    activeScreen: 'OPERATIONS',
+    activeScreen: 'OVERVIEW',
     theme: 'DARK',
 
     player: {
@@ -306,7 +326,8 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     activeOperationId: null,
     cases: [...INITIAL_CASES],
     constituencies,
-    states: [...INITIAL_STATES],
+    // No chapters on 16 May: they are built through campaigns and the story
+    states: INITIAL_STATES.map(s => ({ ...s, cjpChapterLevel: 0 as const, volunteerStrength: 0 })),
     historicalArchive: archiveUnlockedBy(INITIAL_GAME_DATE),
     newsFeed: initialNews,
     reforms: [...INITIAL_REFORMS],
@@ -1720,6 +1741,10 @@ export function advanceSimulationDay(state: GameState): GameState {
     transactions: transactions.slice(0, 100),
   };
 
+  next = growChapters(
+    next,
+    operations.filter(op => op.status === 'CONCLUDED' && state.operations.find(o => o.id === op.id)?.status === 'ACTIVE').map(op => op.stateName),
+  );
   for (const op of operations) {
     const before = state.operations.find(o => o.id === op.id);
     if (before?.status === 'PREPARATION' && op.status === 'ACTIVE') {
@@ -1815,6 +1840,14 @@ function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
   if (e.govResponse) {
     next = { ...next, govResponse: { pressure: clamp((next.govResponse?.pressure ?? 0) + e.govResponse * 10, 0, 100) } };
   }
+  if (e.chapters) {
+    const strongest = [...next.states]
+      .filter(s => s.cjpChapterLevel < 3)
+      .sort((a, b) => stateSupport(next, b.name) - stateSupport(next, a.name))
+      .slice(0, e.chapters)
+      .map(s => s.name);
+    next = growChapters(next, strongest);
+  }
   if (e.launchOperation) next = startOperation(next, e.launchOperation);
   if (e.endOperation) next = endOperation(next, e.endOperation);
   // Team changes driven by the story (real people join on the day the record says they did)
@@ -1872,6 +1905,24 @@ function resolveStoryChoice(state: GameState, choiceId: string): GameState {
       queue: choice.next ? [...next.story.queue, { eventId: choice.next, due: addDaysIso(today, choice.nextDelayDays ?? 0) }] : next.story.queue,
       divergence: next.story.divergence + (hasHistory && !historical ? 1 : 0),
     },
+  };
+
+  next = {
+    ...next,
+    newsFeed: [
+      {
+        id: uid(next, `NEWS-${ev.id}`),
+        date: { ...state.currentDate },
+        headline: ev.title,
+        sourceName: ev.location,
+        biasTone: 'NEUTRAL_CRITICAL' as const,
+        body: `${choice.label}. ${choice.outcome}`,
+        impactTrust: choice.effects.trust ?? 0,
+        impactTension: choice.effects.legalHeat ?? 0,
+        read: false,
+      },
+      ...next.newsFeed,
+    ].slice(0, 40),
   };
 
   const note = !hasHistory ? '' : historical ? ' (As it really happened.)' : ev.history ? ` In reality: ${ev.history}` : '';

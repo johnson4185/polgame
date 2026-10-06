@@ -24,7 +24,7 @@ export const INITIAL_STATES: StateData[] = [
     regionalMood: 'VOLATILE',
     cjpChapterLevel: 2,
     volunteerStrength: 510,
-    keyLeaders: ['Abhijeet Dipke (Founder/Convenor)', 'Dr. Nilesh Patil (Civic Audit)'],
+    keyLeaders: ['Dr. Nilesh Patil (Civic Audit)'],
   },
   {
     code: 'WB',
@@ -228,7 +228,7 @@ export const INITIAL_STATES: StateData[] = [
     regionalMood: 'REFORM_RECEPTIVE',
     cjpChapterLevel: 3,
     volunteerStrength: 850,
-    keyLeaders: ['Abhijeet Dipke (Jantar Mantar Coordinator)', 'Advocate Meera Tandon'],
+    keyLeaders: ['Advocate Meera Tandon'],
   },
   {
     code: 'JK',

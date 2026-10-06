@@ -9,6 +9,24 @@ _None yet._
 
 ---
 
+## R1–R2 · The map and the new home screen (6 Oct 2026)
+
+**What changed**
+- A real **interactive map of India**: every state and UT coloured by your support, hover for a quick
+  card, click for a state card with issues, seats and a "Grassroots blitz" action. Boundaries follow
+  the Survey of India's official depiction (DataMeet data, CC BY 4.0).
+- A new **Home** screen like your Overview mockup: you (energy, stress, rank), running campaigns, the
+  map in the middle, and News / Intel / Tasks tabs. Story outcomes now appear in the News tab.
+- The long row of action buttons is gone. Daily actions now live in four **menus — Organise, Media,
+  Legal, Politics** — on every screen, next to your action points and the government meter.
+- Results of every action pop up as a coloured toast (green good, yellow warning, red refused).
+- **State chapters** start at zero and grow when a campaign in that state completes (or through the
+  5 October "build chapters" choice). Map flags show where you have chapters.
+
+**What a player will notice**
+- The game opens on the map. The bottom dock now starts with Home.
+- Fewer buttons on screen; everything is a tap away in a menu.
+
 ## S5 · Campaigns (6 Oct 2026)
 
 **What changed**

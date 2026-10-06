@@ -510,3 +510,19 @@ describe('campaigns (S5)', () => {
     expect(s.operations.find(o => o.templateId === 'audit-drive')!.status).toBe('ACTIVE');
   });
 });
+
+describe('chapters and overview (R2)', () => {
+  it('starts with no state chapters and builds one when a campaign there completes', () => {
+    let s = { ...begin(), movement: { ...begin().movement, movementFunds: 100000 } };
+    expect(s.states.every(x => x.cjpChapterLevel === 0)).toBe(true);
+    s = gameReducer(s, { type: 'LAUNCH_OPERATION', templateId: 'jan-yatra' }); // Uttar Pradesh, 7 days
+    s = passDays(s, 8);
+    expect(s.states.find(x => x.name === 'Uttar Pradesh')!.cjpChapterLevel).toBe(1);
+    expect(s.movement.stateChaptersCount).toBe(1);
+  });
+
+  it('puts story outcomes in the news feed', () => {
+    const s = begin();
+    expect(s.newsFeed[0].headline).not.toBe('CJI says he was misquoted; the label sticks anyway');
+  });
+});

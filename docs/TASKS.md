@@ -39,7 +39,7 @@ Files: `src/assets/`, `.eslintrc.json`, `package.json`, `package-lock.json`.
 - Delete legacy `.eslintrc.json` (flat `eslint.config.mjs` is the active config); confirm `npm run lint` still passes.
 - Run `npm audit fix` (non-breaking only, no `--force`); confirm build passes.
 
-### C4. Interactive India map component — `codex/india-map`
+### C4. Interactive India map component — ✅ done by Claude (R1)
 Files: `components/map/**`, `app/kit/map/page.tsx`, `public/maps/**` only.
 - Build `components/map/IndiaMap.tsx`: an SVG choropleth of India's states/UTs.
 - **Boundaries must follow the official Survey of India depiction** (full J&K and Ladakh).
@@ -204,7 +204,9 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
    - Restyled same day to **Truck Art Protest Poster** (Bungee + Baloo 2) after the user found
      parchment too "software"; alternatives kept at `/kit/styles`
 2. [x] App shell: top resource bar, bottom dock + More menu, END TURN, settings menu, title screen
-3. [ ] Screens: Overview (map + feeds) → Event dialog → Protest scene → Media room → People, Finance, Research, Lawsuits, Election
+3. [ ] Screens: ~~Overview (map + feeds)~~ ✅ · ~~Event dialog~~ ✅ (S1) · Protest scene → Media room → People, Finance, Research, Lawsuits, Election
+   - R1 ✅ India map (`components/map/IndiaMap.tsx`, DataMeet CC BY 4.0, Survey of India depiction) — took over C4
+   - R2 ✅ Overview home + ActionBar (Organise · Media · Legal · Politics menus) + global outcome toast
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Backlog

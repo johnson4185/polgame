@@ -15,7 +15,9 @@ import { ElectionNightView } from '@/components/game/ElectionNightView';
 import { GovernanceView } from '@/components/game/GovernanceView';
 import { HistoricalArchiveView } from '@/components/game/HistoricalArchiveView';
 import { JournalEndingsView } from '@/components/game/JournalEndingsView';
-import { GameActionHUD } from '@/components/game/GameActionHUD';
+import { OverviewView } from '@/components/game/OverviewView';
+import { ActionBar } from '@/components/shell/ActionBar';
+import { OutcomeToast } from '@/components/shell/OutcomeToast';
 import { CrisisModal } from '@/components/game/CrisisModal';
 import { RallyMiniGameModal } from '@/components/game/RallyMiniGameModal';
 import { TVDebateMiniGameModal } from '@/components/game/TVDebateMiniGameModal';
@@ -31,9 +33,10 @@ function GameScreenRouter() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-3 py-4 sm:px-5">
-      {/* Daily actions and quest; becomes part of the Overview screen in the redesign */}
-      <GameActionHUD />
+      {/* Daily actions, grouped into menus; on every screen */}
+      <ActionBar />
 
+      {state.activeScreen === 'OVERVIEW' && <OverviewView />}
       {state.activeScreen === 'OPERATIONS' && <CampaignsView />}
       {state.activeScreen === 'PERSONAL' && <PersonalLifeView />}
       {state.activeScreen === 'MAP_543' && <IndiaMapView />}
@@ -64,6 +67,7 @@ function GameAppContainer() {
       </main>
 
       <BottomDock />
+      <OutcomeToast />
 
       <PrologueModal />
       <StoryEventDialog />

@@ -5,6 +5,7 @@ export type CampaignMode = 'ABHIJEET_CJP' | 'CUSTOM_CITIZEN';
 export type CareerRoute = 'CIVIC_FORCE' | 'ELECTORAL_PARTY';
 
 export type ScreenTab =
+  | 'OVERVIEW'
   | 'PERSONAL'
   | 'OPERATIONS'
   | 'MAP_543'
@@ -385,6 +386,8 @@ export interface StoryEffects {
   launchOperation?: string;
   /** End a running campaign (by template id) */
   endOperation?: string;
+  /** Open (or grow) CJP chapters in this many of the strongest states */
+  chapters?: number;
 }
 
 export interface StoryChoice {
