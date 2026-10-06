@@ -25,6 +25,31 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4b · Research screen rebuilt (6 Oct 2026)
+
+**What changed**
+- Research now has two tabs: **Investigations** and **Situation log**.
+- Each case is a card you can pick, showing its stage and readiness.
+- The open case shows its stage, legal risk, impact and a "fictional case" badge. The readiness bar
+  marks the two thresholds: going public at 50% and filing a PIL at 70%.
+- The four actions (File RTIs, Corroborate, File a PIL, Go public) show their cost: 1 AP plus money.
+  When one is blocked, the button says why (for example "Needs 70% readiness" or "Needs ₹25,000 in
+  funds"), and hovering over it explains what it does.
+- Evidence is a list of cards with reliability and type badges, a tick once corroborated, and the
+  source and date.
+
+**What a player will notice:** it is now clear what each action costs and why you can't file a PIL
+yet. Before, the buttons always looked clickable and failed with a toast.
+
+**Checked:** 1440px and 390px, no horizontal scroll, no console errors. A blocked PIL did nothing;
+RTI took readiness from 45% to 58%, and Corroborate took it to 78%. Switching cases and the log tab
+both work. Typecheck, lint, 77 tests and the build all pass.
+
+**Not yet:** the Situation log tab still uses the older card styling. It will be redone with the
+Chronicle screen.
+
+---
+
 ## A4a · People screen rebuilt (6 Oct 2026)
 
 **What changed**

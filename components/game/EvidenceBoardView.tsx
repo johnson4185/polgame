@@ -1,275 +1,194 @@
 'use client';
 
 import React, { useState } from 'react';
+import { FileSearch, FileText, CheckCircle, Scale, Megaphone, ShieldCheck, AlertTriangle, History } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
+import { BALANCE, formatDate } from '@/lib/game/simulation/engine';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { InvestigationCase, EvidenceItem } from '@/lib/game/types';
-import { 
-  FileSearch, 
-  FileText, 
-  Scale, 
-  Share2, 
-  CheckCircle, 
-  AlertTriangle, 
-  HelpCircle, 
-  Layers,
-  Sparkles,
-  Search,
-  Pin,
-  History
-} from 'lucide-react';
-import Image from 'next/image';
+import type { EvidenceItem, InvestigationCase } from '@/lib/game/types';
+import { Badge, Panel, PanelHeader } from '@/components/ui/primitives';
+import { TabPanel, Tabs, Tooltip } from '@/components/ui/menus';
 import { SituationLogView } from './SituationLogView';
 
+type CaseAction = 'RTI_FILING' | 'CORROBORATE_EVIDENCE' | 'LEGAL_PETITION_HC' | 'PUBLIC_EXPOSE';
+
+const STAGE_LABEL: Record<InvestigationCase['currentStage'], string> = {
+  TIP_OFF: 'Tip-off',
+  GATHERING_RECORDS: 'Gathering records',
+  CORROBORATING: 'Corroborating',
+  LEGAL_REVIEW: 'Legal review',
+  FILED_PIL: 'PIL admitted',
+  EXPOSED: 'Exposed',
+};
+const RELIABILITY_TONE: Record<EvidenceItem['reliability'], 'danger' | 'gold' | 'success' | 'teal'> = {
+  RUMOR: 'danger',
+  UNVERIFIED: 'gold',
+  CORROBORATED: 'success',
+  OFFICIAL_DOCUMENT: 'teal',
+};
+const RISK_TONE = { LOW: 'success', MEDIUM: 'gold', SEVERE: 'danger' } as const;
+const words = (s: string) => s.replace(/_/g, ' ').toLowerCase();
+
+const ACTIONS: { id: CaseAction; label: string; hint: string; icon: React.ElementType; cost: number; minReadiness?: number }[] = [
+  { id: 'RTI_FILING', label: 'File RTIs', hint: 'Raises readiness; better with high research.', icon: FileText, cost: 2500 },
+  { id: 'CORROBORATE_EVIDENCE', label: 'Corroborate', hint: 'Verifies the next unchecked lead.', icon: CheckCircle, cost: 8000 },
+  { id: 'LEGAL_PETITION_HC', label: 'File a PIL', hint: 'Can be admitted or dismissed. Riskier on severe cases.', icon: Scale, cost: 25000, minReadiness: BALANCE.pilMinReadiness },
+  { id: 'PUBLIC_EXPOSE', label: 'Go public', hint: 'Can backfire if readiness is under 70%.', icon: Megaphone, cost: 0, minReadiness: BALANCE.exposeMinReadiness },
+];
+
+/** Research: investigations (cases, evidence, court or press) and the situation log. */
 export function EvidenceBoardView() {
+  const { state } = useGame();
+  return (
+    <Panel className="p-3 sm:p-4">
+      <Tabs
+        size="sm"
+        tabs={[
+          { value: 'cases', label: 'Investigations', badge: state.cases.length },
+          { value: 'log', label: 'Situation log' },
+        ]}
+      >
+        <TabPanel value="cases">
+          <Cases />
+        </TabPanel>
+        <TabPanel value="log">
+          <SituationLogView />
+        </TabPanel>
+      </Tabs>
+    </Panel>
+  );
+}
+
+function Cases() {
   const { state, dispatch } = useGame();
-  const [viewMode, setViewMode] = useState<'DOSSIERS' | 'SITUATION_LOG'>('DOSSIERS');
-  const [selectedCaseId, setSelectedCaseId] = useState<string>(state.cases[0]?.id || 'CASE-EXAM-LEAK');
+  const [selectedId, setSelectedId] = useState(state.cases[0]?.id ?? '');
+  const c = state.cases.find(x => x.id === selectedId) ?? state.cases[0];
+  if (!c) return <p className="py-8 text-center text-sm font-semibold text-muted">No investigations in this campaign.</p>;
 
-  const selectedCase = state.cases.find(c => c.id === selectedCaseId) || state.cases[0];
-
-  const handleAction = (action: 'RTI_FILING' | 'CORROBORATE_EVIDENCE' | 'LEGAL_PETITION_HC' | 'PUBLIC_EXPOSE') => {
-    if (!selectedCase) return;
+  const done = c.currentStage === 'FILED_PIL' || c.currentStage === 'EXPOSED';
+  const act = (action: CaseAction) => {
     soundManager.playPaper();
-    dispatch({
-      type: 'INVESTIGATION_ACTION',
-      caseId: selectedCase.id,
-      action,
-    });
+    dispatch({ type: 'INVESTIGATION_ACTION', caseId: c.id, action });
   };
+  const blocker = (a: (typeof ACTIONS)[number]) =>
+    done
+      ? 'This case is concluded.'
+      : a.minReadiness && c.readinessPercentage < a.minReadiness
+        ? `Needs ${a.minReadiness}% readiness.`
+        : state.movement.movementFunds < a.cost
+          ? `Needs ₹${a.cost.toLocaleString('en-IN')} in funds.`
+          : state.actionPoints < 1
+            ? 'No action points left today.'
+            : null;
 
   return (
     <div className="space-y-4">
-      
-      {/* Evidence Board Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
-              <span className="stamp-red text-[9px]">EXHIBIT A</span>
-              <span>FORENSIC INVESTIGATION &amp; RTI WAR ROOM</span>
-            </span>
-            <span className="text-faint">|</span>
-            <span className="text-xs font-bold text-fg-2">Direct Documentary Proof</span>
-          </div>
-          <h2 className="font-display text-xl font-bold text-fg mt-1">
-            Paper Trails, Banking Flows &amp; Whistleblower Dossiers
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs font-tactical">
-          <div className="rounded-xs border border-line-strong bg-inset px-3 py-1.5 font-bold">
-            <span className="text-muted">ACTIVE DOSSIERS: </span>
-            <span className="text-fg tabular-nums">{state.cases.length}</span>
-          </div>
-          <div className="rounded-xs border border-accent-line bg-accent-soft px-3 py-1.5 font-bold text-accent-fg">
-            <span>CASE READINESS: </span>
-            <span className="tabular-nums font-black text-sm">
-              {selectedCase ? `${selectedCase.readinessPercentage}%` : '0%'}
-            </span>
-          </div>
-        </div>
+      {/* Case picker */}
+      <div className="grid gap-2 sm:grid-cols-3" role="list" aria-label="Investigations">
+        {state.cases.map(x => {
+          const on = x.id === c.id;
+          return (
+            <button
+              key={x.id}
+              role="listitem"
+              aria-current={on}
+              onClick={() => {
+                soundManager.playClick();
+                setSelectedId(x.id);
+              }}
+              className={`chunky-sm pressable p-3 text-left ${on ? 'bg-brand text-brand-ink' : 'bg-raised text-fg'}`}
+            >
+              <div className="line-clamp-2 font-display text-xs">{x.title}</div>
+              <div className="mt-1 text-xs font-bold opacity-80">
+                {STAGE_LABEL[x.currentStage]} · {x.readinessPercentage}%
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Primary Navigation Switcher: Dossiers vs. Situation Log */}
-      <div className="flex flex-wrap items-center gap-2 border-b-2 border-line pb-2">
-        <button
-          onClick={() => {
-            soundManager.playClick();
-            setViewMode('DOSSIERS');
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xs font-tactical text-xs font-black transition-all ${
-            viewMode === 'DOSSIERS'
-              ? 'bg-[#DC2626] text-white border-2 border-red-500 shadow-md'
-              : 'bg-surface text-muted border border-line hover:border-accent hover:text-fg'
-          }`}
-        >
-          <Layers className="h-4 w-4" />
-          <span>FORENSIC DOSSIERS &amp; PINBOARD</span>
-          <span className="rounded-xs bg-black/25 px-1.5 py-0.2 font-mono text-[10px]">
-            {state.cases.length}
-          </span>
-        </button>
-
-        <button
-          onClick={() => {
-            soundManager.playPaper();
-            setViewMode('SITUATION_LOG');
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xs font-tactical text-xs font-black transition-all ${
-            viewMode === 'SITUATION_LOG'
-              ? 'bg-[#FACC15] text-black border-2 border-accent-line shadow-md'
-              : 'bg-surface text-muted border border-line hover:border-accent hover:text-fg'
-          }`}
-        >
-          <History className="h-4 w-4" />
-          <span>SITUATION LOG &amp; STRATEGIC CHRONICLE</span>
-          <span className="bg-inset px-1.5 py-0.2 rounded-xs font-mono text-[10px] text-accent-fg border border-line">
-            {(state.journal?.length || 0) + (state.newsFeed?.length || 0)}
-          </span>
-        </button>
-      </div>
-
-      {/* View Mode Branch */}
-      {viewMode === 'SITUATION_LOG' ? (
-        <SituationLogView />
-      ) : (
-        <>
-          {/* Case Selector Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-tactical">
-            {state.cases.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  soundManager.playClick();
-                  setSelectedCaseId(c.id);
-                }}
-                className={`px-4 py-2 rounded-xs border-2 transition-all whitespace-nowrap font-black ${
-                  selectedCaseId === c.id
-                    ? 'border-[#DC2626] bg-inset text-accent-fg shadow-lg ring-1 ring-[#DC2626]'
-                    : 'border-line bg-raised text-muted hover:border-accent hover:text-fg'
-                }`}
-              >
-                {c.title}
-              </button>
-            ))}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+        <div className="chunky-sm bg-surface p-4">
+          <div className="flex flex-wrap gap-1.5">
+            <Badge tone={done ? 'success' : 'saffron'}>{STAGE_LABEL[c.currentStage]}</Badge>
+            <Badge tone={RISK_TONE[c.legalRisk]}>Legal risk: {words(c.legalRisk)}</Badge>
+            <Badge tone="neutral">Impact {c.publicImpactPotential}/100</Badge>
+            {c.isFictional && <Badge tone="neutral">Fictional case</Badge>}
           </div>
+          <h2 className="mt-2 font-display text-lg text-fg">{c.title}</h2>
+          <p className="mt-0.5 text-sm font-semibold text-fg-2">Target: {c.targetMinistryOrEntity}</p>
 
-          {/* Selected Case Overview */}
-          {selectedCase && (
-            <div className="space-y-4">
-          
-          <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-3 shadow-md">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-line pb-2.5">
-              <div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span className="stamp-black text-[10px]">CLASSIFIED DOSSIER</span>
-                  {selectedCase.isFictional && (
-                    <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-muted" title="This case is invented for the game; it is not part of the historical record.">
-                      FICTIONAL CASE
-                    </span>
-                  )}
-                  <h3 className="font-display text-lg font-bold text-fg">{selectedCase.title}</h3>
-                </div>
-                <p className="text-[11px] font-tactical text-muted mt-1">
-                  Target Entity: <span className="font-bold text-fg">{selectedCase.targetMinistryOrEntity}</span> · Legal Exposure: <span className="font-black text-danger-fg">{selectedCase.legalRisk}</span>
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="rounded-xs bg-inset text-fg-2 border border-line-strong px-2 py-0.5 text-[10px] font-tactical font-black">
-                  STAGE: {selectedCase.currentStage.replace(/_/g, ' ')}
-                </span>
-                <span className="rounded-xs bg-accent-soft text-accent-fg border border-accent-line px-2 py-0.5 text-[10px] font-tactical font-black">
-                  IMPACT INDEX: {selectedCase.publicImpactPotential}/100
-                </span>
-              </div>
+          {/* Readiness, with the go-public and PIL thresholds marked */}
+          <div className="mt-4">
+            <div className="flex justify-between text-sm font-extrabold text-fg">
+              <span>Case readiness</span>
+              <span className="tabular-nums">{c.readinessPercentage}%</span>
             </div>
-
-            <p className="text-fg-2 leading-relaxed font-sans">{selectedCase.outcomeNotes}</p>
-
-            {/* Action Bar with Black/Red/Yellow Accent Buttons */}
-            <div className="grid grid-cols-1 gap-2 border-t border-line pt-3 font-tactical sm:grid-cols-2 xl:grid-cols-4 [&>button]:justify-center">
-              <button
-                onClick={() => handleAction('RTI_FILING')}
-                className="flex items-center gap-1.5 rounded-xs border-2 border-line-strong bg-inset px-3.5 py-2 text-xs font-black text-fg hover:border-accent hover:text-accent-fg transition-colors shadow-xs"
-              >
-                <FileText className="h-3.5 w-3.5 text-accent-fg" />
-                <span>File Targeted RTI Application (-₹2,500)</span>
-              </button>
-
-              <button
-                onClick={() => handleAction('CORROBORATE_EVIDENCE')}
-                className="flex items-center gap-1.5 rounded-xs border-2 border-accent-line bg-[#FACC15] px-3.5 py-2 text-xs font-black text-black hover:bg-yellow-300 transition-colors shadow-xs"
-              >
-                <CheckCircle className="h-3.5 w-3.5" />
-                <span>Forensic Corroboration (-₹8,000)</span>
-              </button>
-
-              <button
-                onClick={() => handleAction('LEGAL_PETITION_HC')}
-                className="flex items-center gap-1.5 rounded-xs bg-inset border-2 border-[#EF4444] px-3.5 py-2 text-xs font-black text-fg hover:bg-raised transition-colors shadow-xs"
-              >
-                <Scale className="h-3.5 w-3.5 text-danger-fg" />
-                <span>File PIL in High Court (-₹25,000)</span>
-              </button>
-
-              <button
-                onClick={() => handleAction('PUBLIC_EXPOSE')}
-                className="flex items-center gap-1.5 rounded-xs bg-[#DC2626] border-2 border-red-500 px-3.5 py-2 text-xs font-black text-white hover:bg-red-700 transition-colors shadow-xs"
-              >
-                <Share2 className="h-3.5 w-3.5 text-accent-fg" />
-                <span>Publish 48-Page National Media Dossier</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Interactive Evidence Clue Cards (Pinboard Grid) */}
-          <div className="rounded-xs border-2 border-line-strong evidence-pinboard p-5 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b-2 border-line pb-2 mb-4 bg-inset p-2.5 rounded-xs">
-              <h4 className="font-tactical font-black text-xs text-fg flex items-center gap-2">
-                <Layers className="h-4 w-4 text-danger-fg" />
-                <span>FORENSIC EVIDENCE PINBOARD ({selectedCase.evidenceItems.length} CLUES DISCOVERED)</span>
-              </h4>
-              <span className="font-tactical text-[10px] font-black text-accent-fg flex items-center gap-1.5">
-                <span className="h-1.5 w-6 bg-[#DC2626] inline-block shadow-[0_0_8px_#DC2626]" />
-                <span>CRIMSON THREAD CONNECTOR MATRIX</span>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedCase.evidenceItems.map((item, idx) => (
-                <div
-                  key={item.id}
-                  className="rounded-xs border-2 border-line-strong bg-raised p-4 text-xs space-y-2 relative shadow-xl hover:border-accent transition-all"
-                >
-                  {/* Adhesive Tape Accent in Yellow & Red Pushpin */}
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 h-4 w-14 bg-[#FACC15]/90 border border-accent-line shadow-md rotate-1" />
-                  <div className="absolute top-2.5 right-2.5 h-3.5 w-3.5 rounded-full bg-[#DC2626] border-2 border-white shadow-md animate-pulse" />
-
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="font-tactical font-black text-sm text-fg">{item.title}</span>
-                    <span className="stamp-red text-[8px]">CLUE #{idx + 1}</span>
-                  </div>
-
-                  <p className="text-[11px] text-fg-2 leading-relaxed font-sans">
-                    {item.summary.includes('68 matched') ? (
-                      <>
-                        <span className="highlight-yellow">68 matched questions</span> identical to the main examination booklet recovered from a playschool premises where 35 students memorized keys 24h before exam.
-                      </>
-                    ) : item.summary.includes('₹40 Lakh') ? (
-                      <>
-                        Sequential RTGS transactions made from 12 candidates’ parents to an entity incorporated with <span className="highlight-red">zero actual tech revenue</span>.
-                      </>
-                    ) : (
-                      item.summary
-                    )}
-                  </p>
-
-                  <div className="border-t-2 border-line pt-2 space-y-1 font-tactical text-[10px]">
-                    <div className="text-muted">
-                      <span className="text-faint font-bold">SOURCE: </span>{item.provenance}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-fg font-bold">TARGET: {item.linkedTarget}</span>
-                      <span className={`font-black px-2 py-0.5 rounded-xs ${
-                        item.reliability === 'OFFICIAL_DOCUMENT' ? 'bg-success-soft text-success-fg border border-success-line' :
-                        item.reliability === 'CORROBORATED' ? 'bg-accent-soft text-accent-fg border border-accent-line' : 'bg-danger-soft text-danger-fg border border-danger-line'
-                      }`}>
-                        {item.reliability.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <div className="relative mt-1 h-5 overflow-hidden rounded-full border-2 border-ink bg-inset">
+              <div className="h-full bg-brand transition-all duration-500" style={{ width: `${c.readinessPercentage}%` }} />
+              {[BALANCE.exposeMinReadiness, BALANCE.pilMinReadiness].map(t => (
+                <span key={t} className="absolute top-0 h-full w-0.5 bg-ink" style={{ left: `${t}%` }} aria-hidden="true" />
               ))}
             </div>
+            <div className="relative mt-1 h-4 text-[11px] font-bold text-muted" aria-hidden="true">
+              <span className="absolute -translate-x-1/2" style={{ left: `${BALANCE.exposeMinReadiness}%` }}>Go public</span>
+              <span className="absolute -translate-x-1/2" style={{ left: `${BALANCE.pilMinReadiness}%` }}>PIL</span>
+            </div>
           </div>
 
-        </div>
-      )}
-        </>
-      )}
+          {c.outcomeNotes && <p className="mt-3 border-l-4 border-pink pl-3 text-sm font-semibold text-fg-2">{c.outcomeNotes}</p>}
 
+          <div className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-4">
+            {ACTIONS.map(a => {
+              const reason = blocker(a);
+              return (
+                <Tooltip key={a.id} content={reason ?? a.hint}>
+                  <button
+                    // aria-disabled rather than disabled, so the tooltip still explains why
+                    onClick={() => !reason && act(a.id)}
+                    aria-disabled={!!reason}
+                    className={`chunky-sm pressable flex flex-col items-start gap-0.5 bg-raised p-2.5 text-left ${reason ? 'cursor-not-allowed opacity-55' : ''}`}
+                  >
+                    <a.icon className="h-5 w-5 text-brand-fg" strokeWidth={2.5} aria-hidden="true" />
+                    <span className="font-display text-xs text-fg">{a.label}</span>
+                    <span className="text-[11px] font-bold text-muted">1 AP{a.cost ? ` · ₹${(a.cost / 1000).toLocaleString('en-IN')}K` : ' · free'}</span>
+                    {reason && <span className="text-[11px] font-bold leading-tight text-danger-fg">{reason}</span>}
+                  </button>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="chunky-sm bg-surface p-4">
+          <PanelHeader title={`Evidence (${c.evidenceItems.length})`} icon={FileSearch} />
+          <ul className="mt-3 max-h-[32rem] space-y-2.5 overflow-y-auto pr-1">
+            {c.evidenceItems.map(e => (
+              <li key={e.id} className="chunky-sm bg-raised p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-display text-xs leading-tight text-fg">{e.title}</span>
+                  {e.isCorroborated ? (
+                    <ShieldCheck className="h-5 w-5 shrink-0 text-success" aria-label="Corroborated" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5 shrink-0 text-accent-fg" aria-label="Not yet corroborated" />
+                  )}
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  <Badge tone={RELIABILITY_TONE[e.reliability]}>{words(e.reliability)}</Badge>
+                  <Badge tone="neutral">{words(e.category)}</Badge>
+                </div>
+                <p className="mt-1.5 text-sm font-semibold text-fg-2">{e.summary}</p>
+                <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-muted">
+                  <History className="h-3 w-3 shrink-0" aria-hidden="true" /> {e.provenance} · {formatDate(e.discoveryDate)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      {state.cases.some(x => x.isFictional) && (
+        <p className="text-xs font-semibold text-muted">Cases marked fictional are invented for the game and are not part of the historical record.</p>
+      )}
     </div>
   );
 }
