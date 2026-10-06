@@ -1,9 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION } from './engine';
+import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION, govStage } from './engine';
 import type { GameState } from '../types';
 import { STORY_EVENTS } from '../data/story';
 
-const begin = () => gameReducer(createInitialState('ABHIJEET_CJP', 42), { type: 'FINISH_PROLOGUE' });
+// Start a campaign and answer the opening story event (16 May launch) the way history went
+const begin = (): GameState => {
+  let s = gameReducer(createInitialState('ABHIJEET_CJP', 42), { type: 'FINISH_PROLOGUE' });
+  while (s.story.activeEventId) {
+    const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: ev.choices[ev.historicalChoice ?? 0].id });
+  }
+  return s;
+};
+
+// Jump the clock and restart the story from that date (so earlier events don't flood in)
+const at = (s: GameState, date: GameState['currentDate']): GameState => ({
+  ...s,
+  currentDate: date,
+  story: { ...s.story, startedOn: `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`, queue: [], activeEventId: null },
+});
 
 const run = (state: GameState, ...actions: GameAction[]) => actions.reduce(gameReducer, state);
 
@@ -30,7 +45,7 @@ describe('purity', () => {
       deepFreeze(s);
       s = gameReducer(s, a);
     }
-    expect(s.currentDate.day).toBe(3);
+    expect(s.currentDate.day).toBeGreaterThan(16);
   });
 
   it('is deterministic for the same seed and actions', () => {
@@ -78,7 +93,7 @@ describe('day advance', () => {
 
   it('rolls into the next month and charges the burn rate', () => {
     let s = begin();
-    s = { ...s, currentDate: { year: 2026, month: 6, day: 30 } };
+    s = at(s, { year: 2026, month: 6, day: 30 });
     const before = s.movement.movementFunds;
     s = gameReducer(s, { type: 'ADVANCE_DAY' });
     expect(s.currentDate).toEqual({ year: 2026, month: 7, day: 1 });
@@ -109,9 +124,11 @@ describe('investigations', () => {
 });
 
 describe('party and election', () => {
+  // Act 2 (party registration open) with a large, rich movement
   const richMovement = (s: GameState): GameState => ({
     ...s,
     movement: { ...s.movement, volunteerCount: 20000, movementFunds: 5_000_000 },
+    story: { ...s.story, act: 2 },
   });
 
   it('requires volunteers to register the party', () => {
@@ -210,7 +227,7 @@ describe('historical record (S4)', () => {
 
   it('unlocks entries dated on or before the start date', () => {
     const s = createInitialState();
-    const start = '2026-06-01';
+    const start = '2026-05-16';
     for (const d of s.historicalArchive) expect(d.isUnlocked).toBe(d.historicalDate <= start);
   });
 
@@ -248,7 +265,11 @@ describe('story events (S1)', () => {
   // A campaign that starts the day before the 16 May launch, prologue done
   const fromMay = (): GameState => {
     const s = begin();
-    return { ...s, currentDate: { year: 2026, month: 5, day: 15 }, story: { ...s.story, startedOn: '2026-05-15' } };
+    return {
+      ...s,
+      currentDate: { year: 2026, month: 5, day: 15 },
+      story: { ...s.story, startedOn: '2026-05-15', firedIds: [], choices: {}, queue: [], activeEventId: null, divergence: 0 },
+    };
   };
   const advanceTo = (s: GameState, iso: string) => {
     for (let i = 0; i < 200 && isoDateOf(s) < iso; i++) {
@@ -307,8 +328,8 @@ describe('story events (S1)', () => {
   });
 
   it('never fires events dated before the campaign started', () => {
-    const s = advanceTo(begin(), '2026-06-05');
-    expect(s.story.firedIds.some(id => id.startsWith('evt_05'))).toBe(false);
+    const s = advanceTo(at(begin(), { year: 2026, month: 6, day: 1 }), '2026-06-05');
+    expect(s.story.firedIds.some(id => id.startsWith('evt_05') && id !== 'evt_0516_launch')).toBe(false);
   });
 
   it('every event in the registry is well formed', () => {
@@ -319,5 +340,55 @@ describe('story events (S1)', () => {
       for (const c of e.choices) if (c.next) expect(ids.has(c.next)).toBe(true);
       if (e.act === 1 && !e.fictional) expect(e.source?.startsWith('docs/cjp-timeline.md#')).toBe(true);
     }
+  });
+});
+
+describe('Act 1 frame (S2)', () => {
+  it('opens on 16 May with the launch event right after the prologue', () => {
+    const s = gameReducer(createInitialState('ABHIJEET_CJP', 1), { type: 'FINISH_PROLOGUE', focus: 'EXAMS' });
+    expect(s.currentDate).toEqual({ year: 2026, month: 5, day: 16 });
+    expect(s.story.activeEventId).toBe('evt_0516_launch');
+    expect(s.movement.followers).toBe(0);
+    // EXAMS focus: +6 credibility over the starting 40
+    expect(s.movement.mediaCredibility).toBe(46);
+  });
+
+  it('story effects move followers and the government response meter', () => {
+    const s = begin(); // launch: "post" adds followers
+    expect(s.movement.followers).toBeGreaterThan(0);
+    let x = at(s, { year: 2026, month: 5, day: 20 });
+    x = gameReducer(x, { type: 'ADVANCE_DAY' }); // 21 May: X block
+    expect(x.story.activeEventId).toBe('evt_0521_x_block');
+    const before = x.govResponse.pressure;
+    x = gameReducer(x, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'back' });
+    expect(x.govResponse.pressure).toBe(before + 10);
+  });
+
+  it('maps pressure to government stages', () => {
+    expect(govStage(0)).toBe('IGNORE');
+    expect(govStage(30)).toBe('BLOCK_ACCOUNTS');
+    expect(govStage(60)).toBe('POLICE_ACTION');
+    expect(govStage(90)).toBe('NEGOTIATE');
+  });
+
+  it('starts the sit-in on 20 June', () => {
+    let s = at(begin(), { year: 2026, month: 6, day: 19 });
+    expect(s.operations[0].status).toBe('PREPARATION');
+    s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    expect(s.operations[0].status).toBe('ACTIVE');
+    expect(s.operations[0].currentDay).toBe(1);
+  });
+
+  it('locks party registration in Act 1 and opens it on 5 October', () => {
+    let s = { ...begin(), movement: { ...begin().movement, volunteerCount: 20000, movementFunds: 1_000_000 } };
+    const locked = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
+    expect(locked.party.isFormed).toBe(false);
+    s = at(s, { year: 2026, month: 10, day: 4 });
+    s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    expect(s.story.act).toBe(2);
+    expect(s.story.activeEventId).toBe('evt_1005_record_ends');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'party' });
+    const open = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
+    expect(open.party.isFormed).toBe(true);
   });
 });

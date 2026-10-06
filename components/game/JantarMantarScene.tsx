@@ -55,7 +55,11 @@ export function JantarMantarScene() {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
               <span className="h-2 w-2 rounded-full bg-[#EF4444] animate-ping" />
-              Active Ground Set-Piece · Day {activeOp.currentDay} of {activeOp.durationDays}
+              {activeOp.status === 'PREPARATION'
+                ? `Planned · starts ${activeOp.startDate.day}/${activeOp.startDate.month}/${activeOp.startDate.year}`
+                : activeOp.status === 'CONCLUDED'
+                  ? `Concluded after ${activeOp.durationDays} days`
+                  : `Active Ground Set-Piece · Day ${activeOp.currentDay} of ${activeOp.durationDays}`}
             </span>
             <span className="text-faint">|</span>
             <span className="text-xs font-bold text-fg flex items-center gap-1">

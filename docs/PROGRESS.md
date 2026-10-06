@@ -9,6 +9,30 @@ _None yet._
 
 ---
 
+## S2 · Act 1 opens on 16 May (6 Oct 2026)
+
+**What changed**
+- The campaign now starts on **16 May 2026**, the day after the "cockroach" remark, with a new
+  three-step prologue: the remark (attributed), the exam crisis (with the helpline), and you in
+  Boston. Your prologue choice (Exam justice / Jobs / The right to speak) now gives a real starting edge.
+- You start as a joke that hasn't launched: 0 followers, ₹40,000, no paid staff. The launch event
+  fires straight after the prologue.
+- New **Followers** resource (top bar): grows with trust and levels off near CJP's real peak reach;
+  brings volunteers and donations. Rallies and TV debates now add followers too.
+- New **government response meter** (action panel): Ignore → Block accounts → Police action →
+  Negotiate. Reach, trust and street protests push it up; blocks slow follower growth, police action
+  raises legal heat daily, negotiation eases it.
+- The Jantar Mantar operation is now the real **indefinite sit-in**: planned for 20 June, 36 days.
+- **5 October** hands over to **Act 2** with a "Where the record ends" event. Party registration (and
+  so elections) is locked in Act 1, as in the record.
+- The roadmap (click the date) follows the real arc: Go Viral → Offline → The Long Sit-in → School
+  Thik Karo → The Election Commission → Act 2.
+
+**What a player will notice**
+- A much more grounded opening and slower start: you build from zero.
+- The sit-in screen says "Planned · starts 20/6/2026" until then.
+- Trying to register the party before 5 October explains why you can't.
+
 ## S1 · Story events (6 Oct 2026)
 
 **What changed**

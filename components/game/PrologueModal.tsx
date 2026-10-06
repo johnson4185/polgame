@@ -1,194 +1,123 @@
 'use client';
 
 import React, { useState } from 'react';
+import { GraduationCap, Briefcase, Megaphone, Zap, Moon, Siren, BookOpen } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
+import { PROLOGUE_FOCUS, PrologueFocus } from '@/lib/game/simulation/engine';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { Radio, PhoneCall, AlertTriangle, ShieldCheck, FileText, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
-import Image from 'next/image';
+import { ArtPlaceholder, Button } from '@/components/ui/primitives';
+import { ChoiceCard, GameDialog } from '@/components/ui/menus';
+import { EffectChips } from './StoryEventDialog';
 
+const FOCUS_ICONS: Record<PrologueFocus, React.ElementType> = { EXAMS: GraduationCap, JOBS: Briefcase, SPEECH: Megaphone };
+
+/** Three-step opening: the remark (15 May), the crisis + your focus, then Boston on 16 May. */
 export function PrologueModal() {
   const { state, dispatch } = useGame();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedResponse, setSelectedResponse] = useState<number | null>(null);
+  const [focus, setFocus] = useState<PrologueFocus | null>(null);
 
   if (state.isPrologueComplete) return null;
 
-  const handleNextStep = () => {
+  const next = () => {
     soundManager.playClick();
-    if (step < 3) {
-      setStep((step + 1) as 1 | 2 | 3);
-    } else {
-      soundManager.playGavel();
-      dispatch({ type: 'FINISH_PROLOGUE' });
-    }
+    setStep(s => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s));
+  };
+  const begin = () => {
+    soundManager.playChime();
+    dispatch({ type: 'FINISH_PROLOGUE', focus: focus ?? undefined });
   };
 
-  return (
-    <div className="theme-dark-scope fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-      <div className="w-full max-w-2xl rounded-xs border-2 border-line-strong bg-surface p-6 shadow-2xl space-y-4">
-        
-        {/* Step Indicator in Black, Red, Yellow */}
-        <div className="flex items-center justify-between border-b-2 border-line pb-3 text-xs font-tactical">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="stamp-red text-[10px]">PROLOGUE</span>
-            <span className="text-faint">|</span>
-            <span className="text-fg font-bold">June 2026 · The Spark in Delhi &amp; Pune</span>
-          </div>
-          <span className="text-accent-fg font-black bg-inset px-2 py-0.5 rounded-xs border border-line-strong">
-            Phase {step} of 3
-          </span>
+  const tag = (
+    <span className="inline-flex -rotate-3 items-center gap-1.5 rounded-lg border-3 border-ink bg-pink px-3 py-1 font-display text-sm text-white shadow-[3px_3px_0_var(--ink)]">
+      Prologue · {step}/3
+    </span>
+  );
+
+  if (step === 1) {
+    return (
+      <GameDialog open dismissible={false} tag={tag} title="15 May 2026 · Supreme Court" art={<ArtPlaceholder label="Supreme Court of India, a news ticker crawling below" className="h-full w-full" />}>
+        <p className="text-base font-semibold leading-relaxed text-fg">
+          A bench of Chief Justice Surya Kant and Justice Joymalya Bagchi refuses to hear a contempt plea. Rebuking the petitioner&apos;s counsel, the
+          Chief Justice compares unemployed youth who turn to media, social media and RTI activism to:
+        </p>
+        <blockquote className="chunky-sm my-4 -rotate-1 bg-white px-4 py-3 text-center font-display text-2xl text-ink">
+          &ldquo;cockroaches&rdquo; and &ldquo;parasites of society&rdquo;
+        </blockquote>
+        <p className="text-sm font-semibold text-muted">
+          The context was fake law degrees. The next day he said he had been misquoted. The label stuck anyway.
+        </p>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={next}>Next</Button>
         </div>
+      </GameDialog>
+    );
+  }
 
-        {/* Phase 1: Modest Personal Environment & News Notification */}
-        {step === 1 && (
-          <div className="space-y-4">
-            <div className="relative h-52 w-full overflow-hidden rounded-xs border-2 border-line-strong bg-inset">
-              <Image
-                src="/images/hero_cjp_protest_1790774314550.jpg"
-                alt="Jantar Mantar Student Rally"
-                fill
-                priority
-                className="object-cover opacity-70 filter contrast-125"
-                referrerPolicy="no-referrer"
+  if (step === 2) {
+    return (
+      <GameDialog open dismissible={false} tag={tag} title="A Country of Angry Students" art={<ArtPlaceholder label="Exam hall, empty desks, a 'cancelled' stamp" className="h-full w-full" />}>
+        <p className="text-base font-semibold leading-relaxed text-fg">
+          NEET-UG 2026 has been cancelled over a paper leak and the CBI is investigating. CBSE&apos;s on-screen marking has left thousands waiting for
+          results. Organisers would later say more than 20 students died by suicide amid the turmoil; their families are at the heart of what comes next.
+        </p>
+        <p className="mt-2 text-xs font-semibold text-muted">If you or someone you know is struggling, call Tele-MANAS on 14416 (free, 24×7, India).</p>
+
+        <h3 className="mt-5 font-display text-base text-ink">What do you lead with?</h3>
+        <div className="mt-2 space-y-2.5">
+          {(Object.keys(PROLOGUE_FOCUS) as PrologueFocus[]).map(k => {
+            const f = PROLOGUE_FOCUS[k];
+            return (
+              <ChoiceCard
+                key={k}
+                icon={FOCUS_ICONS[k]}
+                emphasis={focus === k}
+                title={f.label}
+                description={f.blurb}
+                effects={<EffectChips effects={f.effects} />}
+                onSelect={() => {
+                  soundManager.playStamp();
+                  setFocus(k);
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-4 flex flex-col justify-end">
-                <span className="text-[11px] font-tactical font-black text-accent-fg uppercase tracking-wider flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse" />
-                  <span>Breaking National Dispatch · Verified Archive</span>
-                </span>
-                <h3 className="text-base font-bold text-fg font-display mt-0.5">
-                  Supreme Court Hearings on Public Examinations &amp; The &ldquo;Cockroach&rdquo; Metaphor
-                </h3>
-              </div>
-            </div>
+            );
+          })}
+        </div>
+        <div className="mt-5 flex justify-end">
+          <Button onClick={next} disabled={!focus}>
+            Next
+          </Button>
+        </div>
+      </GameDialog>
+    );
+  }
 
-            <div className="rounded-xs border border-line bg-inset p-4 text-xs space-y-2.5 leading-relaxed text-fg-2 font-sans">
-              <p>
-                You sit at your small laminate desk in a modest rented room. On your cracked smartphone screen, hundreds of student group messages flood in simultaneously.
-              </p>
-              <p>
-                A high-profile courtroom remark describing ordinary citizens surviving like stubborn insects amidst deep bureaucratic inertia has touched a raw nerve. For months, millions of students who studied through heatwaves in Kota, Patna, and Prayagraj watched examination papers leak on encrypted apps while coaching libraries flooded.
-              </p>
-              <p className="font-bold text-accent-fg italic font-serif">
-                &ldquo;They think we are insects who will scatter when stepped on. But a cockroach survives radiation, floods, and poison. We will become uncrushable.&rdquo;
-              </p>
-            </div>
+  return (
+    <GameDialog open dismissible={false} tag={tag} title="16 May 2026 · Boston" art={<ArtPlaceholder label="A small Boston apartment at night, laptop open, phone glowing" className="h-full w-full" />}>
+      <p className="text-base font-semibold leading-relaxed text-fg">
+        You are <strong>Abhijeet Dipke</strong>: journalism graduate from Pune, MS in Public Relations from Boston University, once on AAP&apos;s
+        social media team. You are job-hunting in the US. You have a phone, a joke, and a very angry country.
+      </p>
 
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleNextStep}
-                className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-5 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5"
-              >
-                <span>Answer Urgent Call</span>
-                <ArrowRight className="h-4 w-4 text-accent-fg" />
-              </button>
-            </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {[
+          { icon: Zap, text: 'Each day you get action points. Spend them on rallies, TV debates, legal moves and more.' },
+          { icon: Moon, text: 'Press END TURN to move to the next day. Nothing happens until you do.' },
+          { icon: BookOpen, text: 'Real events arrive on their real dates. Follow history or rewrite it.' },
+          { icon: Siren, text: 'Watch Legal Heat and the government response. At 100% heat your offices are sealed.' },
+        ].map(t => (
+          <div key={t.text} className="chunky-sm flex items-start gap-2 bg-raised p-2.5 text-sm font-semibold text-fg">
+            <t.icon className="mt-0.5 h-4 w-4 shrink-0 text-brand-fg" strokeWidth={2.5} />
+            {t.text}
           </div>
-        )}
-
-        {/* Phase 2: High-Stakes Conversation with Fellow Organiser */}
-        {step === 2 && (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 rounded-xs border-2 border-line bg-inset p-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xs bg-[#DC2626] text-white">
-                <PhoneCall className="h-5 w-5 text-accent-fg animate-bounce" />
-              </div>
-              <div className="text-xs space-y-1.5">
-                <div className="flex items-center gap-2 font-tactical">
-                  <span className="font-black text-fg text-sm">Kunal Verma</span>
-                  <span className="text-accent-fg text-[10px] font-mono">[Patna Aspirants Forum]</span>
-                </div>
-                <p className="text-fg-2 leading-relaxed font-sans">
-                  &ldquo;Abhijeet, police in Delhi just issued Section 144 around Parliament Street, but more than 1,500 students from UP and Haryana are already on trains to New Delhi railway station. If we don’t set up water, legal representation, and an authorized perimeter at Jantar Mantar right now, this will either collapse into chaos or get brutally dispersed.&rdquo;
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="font-tactical font-black text-fg text-xs block">
-                CHOOSE YOUR OPERATIONAL POSTURE:
-              </span>
-              {[
-                {
-                  text: 'Take personal responsibility. Organize legal permissions, medical aid, and sound permits at Jantar Mantar.',
-                  tag: 'DISCIPLINED CIVIC RESISTANCE',
-                },
-                {
-                  text: 'File immediate High Court RTI appeals and petition benches while students hold the ground.',
-                  tag: 'LEGAL & INSTITUTIONAL COMBAT',
-                },
-                {
-                  text: 'Call for widespread nationwide student assemblies across state capitals simultaneously.',
-                  tag: 'MAXIMUM MOBILIZATION',
-                },
-              ].map((resp, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedResponse(idx)}
-                  className={`w-full text-left p-3.5 rounded-xs border-2 transition-all font-tactical ${
-                    selectedResponse === idx
-                      ? 'border-accent bg-inset text-fg font-black ring-1 ring-accent'
-                      : 'border-line bg-raised text-fg-2 hover:border-line-strong'
-                  }`}
-                >
-                  <div className="text-xs text-fg">{resp.text}</div>
-                  <span className="stamp-red text-[8px] mt-1 inline-block">{resp.tag}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                disabled={selectedResponse === null}
-                onClick={handleNextStep}
-                className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-5 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 disabled:bg-line-strong disabled:border-line-strong disabled:text-faint transition-all shadow-md"
-              >
-                <span>Commit Priorities &amp; Launch Campaign</span>
-                <ArrowRight className="h-4 w-4 text-accent-fg" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Phase 3: Immediate Briefing & Field Deployment */}
-        {step === 3 && (
-          <div className="space-y-4">
-            <div className="rounded-xs border-2 border-line bg-inset p-5 space-y-3">
-              <div className="flex items-center gap-2 font-tactical">
-                <CheckCircle2 className="h-5 w-5 text-accent-fg" />
-                <h3 className="font-black text-fg text-base">THE MOVEMENT TAKES FORM</h3>
-              </div>
-              <p className="text-xs text-fg-2 leading-relaxed font-sans">
-                You have stepped outside the role of an onlooker. You are now the driving force behind the Jantar Mantar vigil and the newly formed Cockroach Janta Party movement.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-3 pt-2 font-tactical text-xs">
-                <div className="border border-line bg-raised p-3 rounded-xs">
-                  <span className="text-muted text-[10px]">INITIAL TREASURY:</span>
-                  <div className="text-lg font-black text-accent-fg mt-0.5">₹1,50,000</div>
-                  <p className="text-[10px] text-faint font-sans">Crowdfunded via micro-UPI donations</p>
-                </div>
-                <div className="border border-line bg-raised p-3 rounded-xs">
-                  <span className="text-muted text-[10px]">FIRST MISSION:</span>
-                  <div className="text-lg font-black text-danger-fg mt-0.5">Jantar Mantar Ground</div>
-                  <p className="text-[10px] text-faint font-sans">Sustain crowd against heatwave and police pressure</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={handleNextStep}
-                className="flex items-center gap-2 rounded-xs bg-[#FACC15] border-2 border-accent-line px-6 py-3 font-tactical text-sm font-black text-black hover:bg-yellow-300 transition-all shadow-xl active:translate-y-0.5"
-              >
-                <span>ENTER REPUBLIC: 543</span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
+        ))}
       </div>
-    </div>
+
+      <div className="mt-5 flex justify-end">
+        <Button size="lg" onClick={begin}>
+          Begin
+        </Button>
+      </div>
+    </GameDialog>
   );
 }

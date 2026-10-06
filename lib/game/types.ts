@@ -57,6 +57,8 @@ export interface PlayerStats {
 
 export interface MovementStats {
   name: string;
+  /** Social media followers across platforms */
+  followers: number;
   publicTrust: number; // 0 - 100
   mediaCredibility: number; // 0 - 100
   volunteerCount: number;
@@ -526,6 +528,9 @@ export interface GameState {
 
   // Dated story events (Act 1 follows docs/cjp-timeline.md)
   story: StoryState;
+
+  /** Government response meter: pressure 0–100 → Ignore / Block accounts / Police action / Negotiate */
+  govResponse: { pressure: number };
 
   // Active dialogue or notification alert
   activeDialogue: {

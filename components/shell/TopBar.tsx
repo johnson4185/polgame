@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { UserCheck, IndianRupee, Award, Star, Siren, CalendarDays, Settings, Save, Volume2, VolumeX, LogOut, Map as MapIcon } from 'lucide-react';
+import { Users, UserCheck, IndianRupee, Award, Star, Siren, CalendarDays, Settings, Save, Volume2, VolumeX, LogOut, Map as MapIcon } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { formatDate } from '@/lib/game/simulation/engine';
 import { soundManager } from '@/lib/game/simulation/sound';
@@ -10,8 +10,11 @@ import { Menu, Tooltip } from '@/components/ui/menus';
 import { SaveLoadModal } from '@/components/game/SaveLoadModal';
 import { CampaignRoadmapDialog, dayNumber } from './CampaignRoadmap';
 
-const compact = (n: number) =>
+// Rupees in lakh/crore; everything else in K/M
+const compactInr = (n: number) =>
   n >= 1e7 ? `${(n / 1e7).toFixed(1)}Cr` : n >= 1e5 ? `${(n / 1e5).toFixed(1)}L` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`;
+const compact = (n: number) =>
+  n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : `${n}`;
 
 /** Logo + resources + day + settings. Resources are live engine values. */
 export function TopBar({ onQuitToTitle }: { onQuitToTitle: () => void }) {
@@ -36,22 +39,25 @@ export function TopBar({ onQuitToTitle }: { onQuitToTitle: () => void }) {
           <div className="text-base text-accent sm:text-lg">Janta Party</div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 max-xl:order-last max-xl:basis-full sm:grid-cols-3 xl:flex-1 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 max-xl:order-last max-xl:basis-full sm:grid-cols-4 xl:flex-1 xl:grid-cols-7">
+          <Tooltip content="Followers across social media. Grows with trust; account blocks slow it down. Followers bring volunteers and donations.">
+            <div><StatCard icon={Users} label="Followers" value={compact(m.followers)} iconTone="pink" /></div>
+          </Tooltip>
           <Tooltip content="People actively working for the movement. Grows with public trust; a share drifts away every day.">
             <div><StatCard icon={UserCheck} label="Volunteers" value={compact(m.volunteerCount)} iconTone="teal" /></div>
           </Tooltip>
           <Tooltip content={`Movement fund. Monthly burn: ₹${m.monthlyBurnRate.toLocaleString('en-IN')}. Two missed payrolls end the campaign.`}>
-            <div><StatCard icon={IndianRupee} label="Funds" value={`₹${compact(m.movementFunds)}`} iconTone="success" /></div>
+            <div><StatCard icon={IndianRupee} label="Funds" value={`₹${compactInr(m.movementFunds)}`} iconTone="success" /></div>
           </Tooltip>
           <Tooltip content="Public trust in the movement. Drives donations, volunteers and votes. Fades if you stop acting.">
-            <div><StatCard icon={Award} label="Public Trust" value={`${m.publicTrust}%`} iconTone="pink" /></div>
+            <div><StatCard icon={Award} label="Public Trust" value={`${m.publicTrust}%`} iconTone="saffron" /></div>
           </Tooltip>
           <Tooltip content="How seriously the media takes your claims. Raised by corroborated evidence.">
             <div><StatCard icon={Star} label="Credibility" value={`${m.mediaCredibility}%`} iconTone="gold" /></div>
           </Tooltip>
           <Tooltip content={`Police and legal pressure: ${crackdown}%. At 100% your offices are sealed. Legal writs bring it down.`}>
             <div>
-              <StatCard icon={Siren} label="Legal Heat" iconTone="saffron">
+              <StatCard icon={Siren} label="Legal Heat" iconTone="ink">
                 <div className="py-1"><SegmentMeter value={crackdown} /></div>
               </StatCard>
             </div>

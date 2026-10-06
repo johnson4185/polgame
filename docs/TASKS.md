@@ -121,7 +121,7 @@ new `lib/game/data/story/index.ts`.
 - Coexists with the random crisis deck (C1) rather than replacing it.
 - Tests: an event fires on its date exactly once, chains resolve, saves migrate.
 
-### S2. Act 1 frame and missing resources — Claude · IN PROGRESS `claude/s2-act1-frame`
+### S2. Act 1 frame and missing resources — Claude · ✅ DONE (merged 6 Oct 2026)
 **Plan (self-approved, autonomous run):**
 - Start 16 May 2026. Prologue retold from the 15 May remark and the exam crisis; its focus choice
   (Exams / Jobs / Free speech) gives a small real starting bonus (closes the "prologue choice" backlog item).
@@ -207,6 +207,7 @@ Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
 - [ ] Manifesto pledges and cabinet ministries are display-only; wire them to reforms/trust.
 - [ ] Election realism: candidates in boosted strongholds win almost every time — add more
       local variance / incumbency effects (verify with `npx vitest run balance.sim`).
+      After S2 the balanced sim wins 5/5 with every candidate winning: needs tightening (planned in S5).
 
 Features:
 - [ ] Gemini-generated dynamic news headlines via a server route (keeps `GEMINI_API_KEY` secret)

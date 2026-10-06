@@ -26,7 +26,7 @@ import { CRISIS_EVENT_DECK } from '../data/crises';
 import { SeededRNG } from './random';
 import { STORY_EVENTS, getStoryEvent } from '../data/story';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -37,6 +37,10 @@ export const BALANCE = {
   quest1Volunteers: 5000,
   partyVolunteersRequired: 15000,
   dailyVolunteerAttrition: 0.01,
+  /** Followers level off near this (roughly CJP's real peak reach) */
+  followerCap: 25_000_000,
+  /** Share of followers who become volunteers each day */
+  followerToVolunteer: 0.00001,
   partyRegistrationCost: 50000,
   securityDepositGeneral: 25000,
   securityDepositReserved: 12500,
@@ -54,11 +58,26 @@ const INITIAL_CORROBORATED = INITIAL_CASES.reduce(
   0,
 );
 
+/** Act 1 opens the day after the "cockroach" remark (docs/story-brief.md) */
 export const INITIAL_GAME_DATE: GameDate = {
   year: 2026,
-  month: 6,
-  day: 1,
+  month: 5,
+  day: 16,
 };
+
+/** The record ends here; Act 2 (sandbox) begins */
+export const ACT2_START = '2026-10-05';
+
+export type GovStage = 'IGNORE' | 'BLOCK_ACCOUNTS' | 'POLICE_ACTION' | 'NEGOTIATE';
+export const GOV_STAGES: { stage: GovStage; label: string; from: number; effect: string }[] = [
+  { stage: 'IGNORE', label: 'Ignore', from: 0, effect: 'The government pretends you don\'t exist.' },
+  { stage: 'BLOCK_ACCOUNTS', label: 'Block accounts', from: 25, effect: 'Accounts get withheld: follower growth slows.' },
+  { stage: 'POLICE_ACTION', label: 'Police action', from: 50, effect: 'Detentions and barricades: legal heat rises every day.' },
+  { stage: 'NEGOTIATE', label: 'Negotiate', from: 75, effect: 'Ministers come to the table: legal heat eases.' },
+];
+export function govStage(pressure: number): GovStage {
+  return [...GOV_STAGES].reverse().find(g => pressure >= g.from)!.stage;
+}
 
 export function getDaysInMonth(year: number, month: number): number {
   if (month === 2) {
@@ -95,69 +114,66 @@ export function archiveUnlockedBy(date: GameDate) {
 export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: number = 20260601): GameState {
   const constituencies = generateFull543Constituencies();
 
+  // The real indefinite sit-in (20 June → 25 July 2026: 36 days). Starts on its date.
   const initialOperation: OperationState = {
     id: 'OP-JANTAR-MANTAR',
-    title: 'Civic Resilience Demonstration at Jantar Mantar',
+    title: 'Indefinite Sit-in at Jantar Mantar',
     type: 'JANTAR_MANTAR_PROTEST',
     location: 'Jantar Mantar Road, Connaught Place',
     stateName: 'NCT of Delhi',
-    status: 'ACTIVE',
-    startDate: { year: 2026, month: 6, day: 1 },
-    durationDays: 14,
-    currentDay: 1,
+    status: 'PREPARATION',
+    startDate: { year: 2026, month: 6, day: 20 },
+    durationDays: 36,
+    currentDay: 0,
     budgetAllocated: 75000,
-    crowdSize: 1850,
-    crowdMorale: 82,
-    suppliesWaterFood: 85,
-    medicalReadiness: 70,
-    legalSupportOnSite: true,
-    policePermissionStatus: 'GRANTED',
-    policeNegotiationTension: 35,
-    mediaCoverageLevel: 58,
-    speakerStageStatus: 'ACTIVE',
+    crowdSize: 800,
+    crowdMorale: 80,
+    suppliesWaterFood: 70,
+    medicalReadiness: 50,
+    legalSupportOnSite: false,
+    policePermissionStatus: 'PENDING',
+    policeNegotiationTension: 40,
+    mediaCoverageLevel: 40,
+    speakerStageStatus: 'STANDBY',
     weatherCondition: 'HEATWAVE',
-    assignedStaffIds: ['REC-001', 'REC-002', 'REC-004'],
-    dailyLog: [
-      'Day 1: Crowd gathered by 9:00 AM. Sound permit verified with Parliament Street Police Station.',
-      'Emergency water distribution counter established behind Stage 1.',
-      'Advocate Meera Tandon stationed near media gate with certified permission orders.',
-    ],
+    assignedStaffIds: [],
+    dailyLog: ['Planned for 20 June: stay at Jantar Mantar until the Education Minister resigns.'],
   };
 
   const initialNews: NewsArticle[] = [
     {
       id: 'NEWS-INIT-01',
-      date: { year: 2026, month: 6, day: 1 },
-      headline: 'Students & Civic Groups Gather at Jantar Mantar Over Exam Accountability',
-      sourceName: 'The National Dispatch',
+      date: { year: 2026, month: 5, day: 15 },
+      headline: 'CJI compares unemployed youth to "cockroaches"',
+      sourceName: 'Court reporting',
       biasTone: 'NEUTRAL_CRITICAL',
-      body: 'Hundreds of young students, parents, and civil society members led by Abhijeet Dipke assembled this morning at Jantar Mantar demanding systemic overhaul of public exam security and strict prosecution of coaching center building violations.',
-      impactTrust: 5,
-      impactTension: 2,
+      body: 'Rebuking a counsel in a case about senior-advocate designation, CJI Surya Kant compared unemployed youth who turn to media, social media and RTI activism to "cockroaches" and "parasites of society". The context was fake law degrees.',
+      impactTrust: 0,
+      impactTension: 0,
       read: false,
     },
     {
       id: 'NEWS-INIT-02',
-      date: { year: 2026, month: 6, day: 1 },
-      headline: 'Administration Deploys Multi-tier Barricades; Traffic Diverted Around Tolstoy Marg',
-      sourceName: 'Delhi Traffic & City Chronicle',
-      biasTone: 'GOVERNMENT_LINE',
-      body: 'Delhi Police has placed multi-layer metal barricades around Jantar Mantar Road, emphasizing that protests must remain confined within the designated boundary without marching towards Sansad Marg.',
+      date: { year: 2026, month: 5, day: 16 },
+      headline: 'CJI says he was misquoted; the label sticks anyway',
+      sourceName: 'Court reporting',
+      biasTone: 'NEUTRAL_CRITICAL',
+      body: 'Kant said he meant people entering "noble professions" on fake degrees, and that he held India\'s youth in high regard.',
       impactTrust: 0,
-      impactTension: 8,
+      impactTension: 0,
       read: false,
-    }
+    },
   ];
 
   const initialJournal: JournalEntry[] = [
     {
       id: 'JOURNAL-001',
-      date: { year: 2026, month: 6, day: 1 },
-      title: 'The Outrage Becomes Action',
-      text: 'We began with anger on our screens—the court remarks, the leaked papers, the drownings in coaching basements. Today we stand under the scorching sun of Jantar Mantar. We have water, a sound system, and our voices. We cannot afford to back down.',
+      date: { year: 2026, month: 5, day: 16 },
+      title: 'The Remark',
+      text: 'On 15 May, in the Supreme Court, the Chief Justice compared unemployed youth to "cockroaches". NEET-UG has been cancelled over a paper leak and thousands of students are waiting on results. The clip is everywhere.',
       significance: 'HISTORIC_TURNING_POINT',
-      associatedScreen: 'OPERATIONS',
-    }
+      associatedScreen: 'JOURNAL',
+    },
   ];
 
   return {
@@ -188,25 +204,27 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
       personalSavings: 65000,
       personalDebt: 0,
       monthlyLivingCost: 18000,
-      employmentStatus: 'LEAVE_OF_ABSENCE',
+      employmentStatus: 'FULL_TIME_ACTIVISM',
       salaryMonthly: 42000,
       familySupport: 75,
       burnoutRisk: false,
     },
 
+    // Before the launch post: a joke with no followers, little money and no paid staff
     movement: {
-      name: 'Cockroach Janta Party (Civic Vigil)',
-      publicTrust: 68,
-      mediaCredibility: 62,
-      volunteerCount: 1420,
-      coreStaffCount: 4,
-      stateChaptersCount: 6,
-      movementFunds: 185000,
-      monthlyBurnRate: 48000,
+      name: 'Cockroach Janta Party',
+      followers: 0,
+      publicTrust: 35,
+      mediaCredibility: 40,
+      volunteerCount: 100,
+      coreStaffCount: 0,
+      stateChaptersCount: 0,
+      movementFunds: 40000,
+      monthlyBurnRate: 10000,
       reformistLoyalty: 88,
       grassrootsLoyalty: 85,
       tacticalPragmatistsLoyalty: 70,
-      hasJantarMantarHeld: true,
+      hasJantarMantarHeld: false,
       hasFormedParty: false,
       isBannedOrSealed: false,
     },
@@ -253,30 +271,8 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
       isOppositionLead: false,
     },
 
-    people: [...INITIAL_RECRUITS],
-    transactions: [
-      {
-        id: 'TXN-001',
-        date: { year: 2026, month: 6, day: 1 },
-        account: 'MOVEMENT',
-        type: 'INCOME',
-        category: 'Small Crowdfunding',
-        amount: 85000,
-        description: 'UPI citizen micro-donations (avg ₹250) for Jantar Mantar drinking water & tent stage',
-        verified: true,
-      },
-      {
-        id: 'TXN-002',
-        date: { year: 2026, month: 6, day: 1 },
-        account: 'MOVEMENT',
-        type: 'EXPENSE',
-        category: 'Logistics',
-        amount: 32000,
-        description: 'Sound system, generator diesel, 200 water jars and portable bio-toilets permit fee',
-        verified: true,
-      }
-    ],
-
+    people: INITIAL_RECRUITS.map(p => ({ ...p, isHired: false, currentAssignment: null })),
+    transactions: [] as GameState['transactions'],
     operations: [initialOperation],
     activeOperationId: 'OP-JANTAR-MANTAR',
     cases: [...INITIAL_CASES],
@@ -303,16 +299,16 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     // Turn & Action Point Game Mechanics
     actionPoints: 3,
     maxActionPoints: 3,
-    crackdownLevel: 15,
-    movementXP: 320,
+    crackdownLevel: 0,
+    movementXP: 0,
     movementLevel: 1,
     activeQuests: [
       {
         id: 'QUEST-1',
         chapter: 1,
-        title: 'The Jantar Mantar Vigil',
-        description: 'Sustain ground resistance against Delhi heat & police intimidation. Mobilize 5,000 citizens to make the movement too large to crush.',
-        currentProgress: 1420,
+        title: 'The Cockroaches Come Together',
+        description: 'Turn a joke into a movement: recruit 5,000 volunteers.',
+        currentProgress: 100,
         targetProgress: BALANCE.quest1Volunteers,
         unit: 'Volunteers',
         rewardXP: 500,
@@ -322,7 +318,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
         id: 'QUEST-2',
         chapter: 1,
         title: 'Expose the Mining Paper-Trail',
-        description: 'File RTIs and corroborate evidence to complete the Port Infrastructure Dossier before the Supreme Court recess.',
+        description: 'File RTIs and corroborate evidence in the investigation cases (fictional sandbox content).',
         currentProgress: 0,
         targetProgress: 3,
         unit: 'Corroborations',
@@ -333,7 +329,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
         id: 'QUEST-3',
         chapter: 2,
         title: 'Road to 272: Form the People’s Party',
-        description: `Reach ${BALANCE.partyVolunteersRequired.toLocaleString('en-IN')} volunteers, file a PIL or expose a case, then register the party with the ECI.`,
+        description: `From 5 October (Act 2): reach ${BALANCE.partyVolunteersRequired.toLocaleString('en-IN')} volunteers, win a PIL or exposé, then register the party with the ECI.`,
         currentProgress: 0,
         targetProgress: 3,
         unit: 'Milestones',
@@ -357,6 +353,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     insolventMonths: 0,
     gameOver: null,
     story: initialStoryState(INITIAL_GAME_DATE),
+    govResponse: { pressure: 0 },
   };
 }
 
@@ -392,9 +389,17 @@ export type GameAction =
   | { type: 'LOBBY_REFORM'; reformId: string }
   | { type: 'DISMISS_DIALOGUE' }
   | { type: 'LOAD_STATE'; state: GameState }
-  | { type: 'FINISH_PROLOGUE' }
+  | { type: 'FINISH_PROLOGUE'; focus?: PrologueFocus }
   | { type: 'LOG_JOURNAL'; entry: JournalEntry }
   | { type: 'RESOLVE_STORY_CHOICE'; choiceId: string };
+
+/** The issue the player leads with in the prologue; each gives a small starting edge */
+export type PrologueFocus = 'EXAMS' | 'JOBS' | 'SPEECH';
+export const PROLOGUE_FOCUS: Record<PrologueFocus, { label: string; effects: StoryEffects; blurb: string }> = {
+  EXAMS: { label: 'Exam justice', effects: { credibility: 6, trust: 4 }, blurb: 'Students and parents trust you: +6 credibility, +4 trust.' },
+  JOBS: { label: 'Jobs for the young', effects: { volunteers: 400, trust: 2 }, blurb: 'Job-seekers sign up early: +400 volunteers, +2 trust.' },
+  SPEECH: { label: 'The right to speak', effects: { followers: 25000, legalHeat: 3 }, blurb: 'Free-speech crowd amplifies you: +25K followers, +3 legal heat.' },
+};
 
 // Actions still allowed after the campaign has ended
 const POST_GAME_ACTIONS = new Set<GameAction['type']>([
@@ -748,6 +753,9 @@ export function migrateState(saved: GameState): GameState {
     gameOver: saved.gameOver ?? null,
     // v4: story events. Old saves start the story from their current date so past events don't flood in.
     story: saved.story ?? initialStoryState(saved.currentDate ?? fresh.currentDate),
+    // v5: followers and the government response meter
+    movement: { ...saved.movement, followers: saved.movement?.followers ?? 0 },
+    govResponse: saved.govResponse ?? { pressure: 0 },
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
@@ -799,7 +807,12 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'FINISH_PROLOGUE':
       // Turn-based by default: the player ends each day; auto-advance is opt-in via the clock
-      return pumpStory({ ...state, hasBegun: true, isPrologueComplete: true, clockSpeed: 0 });
+      return pumpStory(
+        applyStoryEffects(
+          { ...state, hasBegun: true, isPrologueComplete: true, clockSpeed: 0 },
+          action.focus ? PROLOGUE_FOCUS[action.focus].effects : {},
+        ),
+      );
 
     case 'RESOLVE_STORY_CHOICE':
       return resolveStoryChoice(state, action.choiceId);
@@ -943,6 +956,9 @@ function reduce(state: GameState, action: GameAction): GameState {
         funds: res.fundsDelta,
         volunteers: res.volunteersDelta,
       });
+      // TV reaches far more people than a rally; both spread online
+      const followerGain = Math.max(0, Math.round(res.volunteersDelta * (kind === 'TV_DEBATE' ? 150 : 50)));
+      next = { ...next, movement: { ...next.movement, followers: next.movement.followers + followerGain } };
       if (kind === 'RALLY') next = adjustCrackdown(next, 3);
       next = {
         ...next,
@@ -1035,6 +1051,7 @@ function reduce(state: GameState, action: GameAction): GameState {
     case 'OPERATION_DECISION': {
       const op = state.operations.find(o => o.id === action.operationId);
       if (!op) return state;
+      if (op.status === 'PREPARATION') return fail(state, `${op.title} hasn't started yet (from ${formatDate(op.startDate)}).`);
       if (op.status !== 'ACTIVE') return fail(state, 'This operation has concluded.');
 
       const cost = action.choice === 'SUPPLIES' ? 15000 : action.choice === 'MEDICAL_AID' ? 10000 : 0;
@@ -1211,6 +1228,9 @@ function reduce(state: GameState, action: GameAction): GameState {
     // ── Party & election ──
     case 'FORM_PARTY': {
       if (state.party.isFormed) return state;
+      if ((state.story?.act ?? 1) === 1) {
+        return fail(state, 'In the record CJP had not registered as a party by 5 October 2026. Registration opens in Act 2.');
+      }
       if (state.movement.volunteerCount < BALANCE.partyVolunteersRequired) {
         return fail(state, `ECI registration needs ${BALANCE.partyVolunteersRequired.toLocaleString('en-IN')} volunteers (you have ${state.movement.volunteerCount.toLocaleString('en-IN')}).`);
       }
@@ -1504,9 +1524,9 @@ export function advanceSimulationDay(state: GameState): GameState {
     }
   }
 
-  // Daily micro-crowdfunding scales with trust and shrinks under crackdown
+  // Daily micro-crowdfunding scales with trust (and the follower base) and shrinks under crackdown
   if (rng.next() < 0.7) {
-    const donation = Math.floor(m.publicTrust * 60 * (0.8 + rng.next() * 0.4) * (1 - crackdown / 200));
+    const donation = Math.floor((m.publicTrust * 60 + m.followers * 0.0004) * (0.8 + rng.next() * 0.4) * (1 - crackdown / 200));
     movementFunds += donation;
     if (donation > 3000 && rng.next() > 0.7) {
       txn('TXN-DONATION', 'MOVEMENT', 'INCOME', 'Crowdfunding', donation, `Citizen UPI micro-donations, ${formatDate(nextDate)}`);
@@ -1517,6 +1537,10 @@ export function advanceSimulationDay(state: GameState): GameState {
   let opVolunteers = 0;
   let newCrackdown = crackdown;
   const operations = state.operations.map(op => {
+    // Planned operations begin on their start date
+    if (op.status === 'PREPARATION') {
+      return dateKey(nextDate) >= dateKey(op.startDate) ? { ...op, status: 'ACTIVE' as const, currentDay: 1 } : op;
+    }
     if (op.status !== 'ACTIVE') return op;
     const currentDay = op.currentDay + 1;
     const suppliesWaterFood = Math.max(0, op.suppliesWaterFood - 6);
@@ -1567,9 +1591,24 @@ export function advanceSimulationDay(state: GameState): GameState {
     const decay = (m.publicTrust - 45) / 20;
     trustDelta -= Math.floor(decay) + (rng.next() < decay % 1 ? 1 : 0);
   }
+  // Government response: pressure builds with reach, trust and street protests, eases when quiet
+  const pressure = state.govResponse?.pressure ?? 0;
+  const stage = govStage(pressure);
+  const activeOps = operations.filter(o => o.status === 'ACTIVE').length;
+  const reach = m.followers > 0 ? Math.max(0, Math.log10(m.followers) - 5) * 0.4 : 0;
+  const newPressure = clamp(pressure + reach + activeOps * 1.2 + (m.publicTrust > 60 ? 0.4 : 0) - 1.1, 0, 100);
+  if (stage === 'POLICE_ACTION') newCrackdown += 1;
+  if (stage === 'NEGOTIATE' && newCrackdown > 0) newCrackdown -= 1;
+
+  // Followers grow with trust (shrink when it's low) and level off near the cap; account blocks slow growth
+  const saturation = Math.max(0, 1 - m.followers / BALANCE.followerCap);
+  const rawRate = clamp((m.publicTrust - 40) / 1500, -0.02, 0.03);
+  const growthRate = (rawRate > 0 ? rawRate * saturation : rawRate) * (stage === 'BLOCK_ACCOUNTS' ? 0.6 : 1);
+  const followers = Math.max(0, Math.round(m.followers * (1 + growthRate)));
+
   const attrition = m.volunteerCount > 2000 ? Math.floor(m.volunteerCount * BALANCE.dailyVolunteerAttrition) : 0;
   const volunteerCount = clamp(
-    m.volunteerCount + Math.floor((m.publicTrust - 40) * 1.2) + opVolunteers - attrition,
+    m.volunteerCount + Math.floor((m.publicTrust - 40) * 1.2) + Math.floor(m.followers * BALANCE.followerToVolunteer) + opVolunteers - attrition,
     100,
     500000,
   );
@@ -1620,10 +1659,12 @@ export function advanceSimulationDay(state: GameState): GameState {
     },
     movement: {
       ...m,
+      followers,
       movementFunds,
       volunteerCount,
       publicTrust: clamp(m.publicTrust + trustDelta, 0, 100),
     },
+    govResponse: { pressure: Math.round(newPressure * 10) / 10 },
     operations,
     historicalArchive,
     people,
@@ -1632,11 +1673,27 @@ export function advanceSimulationDay(state: GameState): GameState {
 
   for (const op of operations) {
     const before = state.operations.find(o => o.id === op.id);
+    if (before?.status === 'PREPARATION' && op.status === 'ACTIVE') {
+      next = addJournal(next, `${op.title} Begins`, op.dailyLog[0] ?? op.title, 'MILESTONE', 'OPERATIONS');
+      next = { ...next, activeOperationId: op.id };
+    }
     if (before?.status === 'ACTIVE' && op.status === 'CONCLUDED') {
       next = addJournal(next, `${op.title} Concluded`, op.outcomeSummary ?? '', 'HISTORIC_TURNING_POINT', 'OPERATIONS');
     }
   }
   if (warning) next = withOutcome(next, warning, 'WARNING');
+
+  // The record ends on 5 Oct: Act 2 (sandbox) begins
+  if (next.story.act === 1 && isoDate(nextDate) >= ACT2_START) {
+    next = { ...next, story: { ...next.story, act: 2 } };
+    next = addJournal(
+      next,
+      'Act 2: History Is Yours',
+      `The record ends on 5 October 2026. You followed history in ${Object.keys(next.story.choices).length - next.story.divergence} of ${Object.keys(next.story.choices).length} big decisions. From here the story is yours: party registration is now open.`,
+      'HISTORIC_TURNING_POINT',
+      'JOURNAL',
+    );
+  }
 
   // Dated story events fire on their day and take priority over a freshly rolled random crisis
   next = pumpStory(next);
@@ -1680,11 +1737,18 @@ export function describeEffects(e: StoryEffects): string {
   if (e.legalHeat) parts.push(`legal heat ${signed(e.legalHeat)}`);
   if (e.energy) parts.push(`energy ${signed(e.energy)}`);
   if (e.stress) parts.push(`stress ${signed(e.stress)}`);
+  if (e.govResponse) parts.push(e.govResponse > 0 ? 'government escalates' : 'government eases off');
   return parts.join(', ');
 }
 
 function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
   let next = adjustMovement(state, { trust: e.trust, credibility: e.credibility, volunteers: e.volunteers, funds: e.funds });
+  if (e.followers) {
+    next = { ...next, movement: { ...next.movement, followers: Math.max(0, next.movement.followers + e.followers) } };
+  }
+  if (e.govResponse) {
+    next = { ...next, govResponse: { pressure: clamp((next.govResponse?.pressure ?? 0) + e.govResponse * 10, 0, 100) } };
+  }
   if (e.legalHeat) next = adjustCrackdown(next, e.legalHeat);
   if (e.energy || e.stress) {
     next = {

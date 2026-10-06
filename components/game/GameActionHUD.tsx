@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import type { ActionOutcome } from '@/lib/game/types';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
+import { GOV_STAGES, govStage } from '@/lib/game/simulation/engine';
+import { Tooltip } from '@/components/ui/menus';
 import { Zap, Megaphone, Tv, Search, Scale, Coffee, ShieldAlert, Target, Award, Sparkles } from 'lucide-react';
 
 const LEVEL_NAMES = [
@@ -20,7 +22,9 @@ export function GameActionHUD() {
 
   const ap = state.actionPoints ?? 3;
   const maxAp = state.maxActionPoints ?? 3;
-  const crackdown = state.crackdownLevel ?? 15;
+  const stage = govStage(state.govResponse?.pressure ?? 0);
+  const stageIndex = GOV_STAGES.findIndex(g => g.stage === stage);
+  const stageLabel = GOV_STAGES[stageIndex].label;
   const level = state.movementLevel ?? 1;
   const xp = state.movementXP ?? 0;
   const activeQuest = state.activeQuests?.find(q => !q.isCompleted) ?? state.activeQuests?.[state.activeQuests.length - 1];
@@ -155,21 +159,26 @@ export function GameActionHUD() {
 
           {/* Pressure + rank */}
           <div className="grid grid-cols-2 gap-2 lg:w-56 lg:grid-cols-1">
-            <div className="rounded-xs border border-line bg-inset p-2">
-              <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
-                <span className="flex items-center gap-1 text-muted">
-                  <ShieldAlert className={`h-3 w-3 ${crackdown > 60 ? 'text-danger-fg' : ''}`} aria-hidden="true" />
-                  Legal heat
-                </span>
-                <span className={`tabular-nums ${crackdown > 60 ? 'text-danger-fg' : 'text-fg'}`}>{crackdown}%</span>
+            <Tooltip content={GOV_STAGES.find(g => g.stage === stage)!.effect}>
+              <div className="rounded-xs border border-line bg-inset p-2" aria-label={`Government response: ${stageLabel}`}>
+                <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
+                  <span className="flex items-center gap-1 text-muted">
+                    <ShieldAlert className="h-3 w-3" aria-hidden="true" />
+                    Government
+                  </span>
+                  <span className="text-fg">{stageLabel}</span>
+                </div>
+                <div className="mt-1.5 grid grid-cols-4 gap-0.5">
+                  {GOV_STAGES.map((g, i) => (
+                    <span
+                      key={g.stage}
+                      title={g.label}
+                      className={`h-2 rounded-sm border border-ink ${i <= stageIndex ? ['bg-teal', 'bg-accent', 'bg-danger', 'bg-pink'][i] : 'bg-transparent'}`}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
-                <div
-                  className={`h-full rounded-full transition-all ${crackdown > 60 ? 'bg-[#DC2626]' : crackdown > 35 ? 'bg-orange-500' : 'bg-[#FACC15]'}`}
-                  style={{ width: `${crackdown}%` }}
-                />
-              </div>
-            </div>
+            </Tooltip>
             <div className="rounded-xs border border-line bg-inset p-2">
               <div className="flex items-center justify-between font-tactical text-[10px] font-bold uppercase tracking-wide">
                 <span className="flex items-center gap-1 text-accent-fg">
