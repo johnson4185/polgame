@@ -25,6 +25,15 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A3 · Protests outside Delhi look like it (6 Oct 2026)
+
+**What changed**
+- The protest scene now reads from the campaign: the right state police, the state's capital, a
+  permit code with the state's code and date, the season's weather, and a march on the State
+  Secretariat instead of Sansad Marg. Delhi street names only appear for Delhi protests.
+- Sandbox campaigns now name real places (Jaipur Secretariat, Gaya district, Prayagraj).
+- The police station text no longer names a fictional lawyer who might not be on your team.
+
 ## A2 · Act 2 gets a story (6 Oct 2026)
 
 **What changed**

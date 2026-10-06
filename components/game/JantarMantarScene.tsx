@@ -22,6 +22,14 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
+// Season-appropriate weather label for the scene
+const WEATHER: Record<string, { label: string; temp: string }> = {
+  HEATWAVE: { label: 'Heatwave', temp: '41°C' },
+  MONSOON_RAIN: { label: 'Monsoon rain', temp: '29°C' },
+  SMOG_DELHI: { label: 'Smog', temp: '18°C' },
+  SUNNY: { label: 'Clear skies', temp: '27°C' },
+};
+
 export function JantarMantarScene() {
   const { state, dispatch } = useGame();
   const [selectedStation, setSelectedStation] = useState<'STAGE' | 'WATER' | 'MEDICAL' | 'POLICE' | 'MEDIA' | null>(null);
@@ -45,6 +53,21 @@ export function JantarMantarScene() {
       </div>
     );
   }
+
+  const isDelhi = activeOp.stateName === 'NCT of Delhi';
+  const stateInfo = state.states.find(s => s.name === activeOp.stateName);
+  // The city named in the scene: Delhi for Jantar Mantar, otherwise the state's capital
+  const city = isDelhi ? 'New Delhi' : stateInfo?.capital ?? activeOp.stateName;
+  const place = {
+    city,
+    police: isDelhi ? 'DELHI POLICE · PARLIAMENT STREET CORRIDOR' : `${activeOp.stateName.toUpperCase()} POLICE · PROTEST ZONE`,
+    permit: `${stateInfo?.code ?? 'IN'}-${activeOp.startDate.year}-${String(activeOp.startDate.month).padStart(2, '0')}${String(activeOp.startDate.day).padStart(2, '0')}`,
+    target: isDelhi ? 'Sansad Marg' : 'the State Secretariat',
+    barricades: isDelhi
+      ? 'Delhi Police have set up triple-tier iron barricades at Tolstoy Marg.'
+      : `Police have barricaded the roads around the protest site in ${city}.`,
+  };
+  const weather = WEATHER[activeOp.weatherCondition] ?? WEATHER.SUNNY;
 
   return (
     <div className="space-y-4">
@@ -79,7 +102,7 @@ export function JantarMantarScene() {
         <div className="flex items-center gap-2 text-xs font-tactical">
           <div className="flex items-center gap-1.5 rounded-xs border border-accent-line bg-accent-soft px-3 py-1 font-bold text-accent-fg">
             <Sun className="h-3.5 w-3.5 text-accent-fg" />
-            <span>Heatwave · 41°C</span>
+            <span>{weather.label} · {weather.temp}</span>
           </div>
           <div className={`flex items-center gap-1.5 rounded-xs border px-3 py-1 font-bold ${
             activeOp.policePermissionStatus === 'GRANTED'
@@ -155,15 +178,15 @@ export function JantarMantarScene() {
       <div className="theme-dark-scope relative h-96 w-full max-sm:flex max-sm:h-auto max-sm:flex-col max-sm:gap-2 max-sm:px-3 max-sm:pb-14 max-sm:pt-16 overflow-hidden rounded-xs border-2 border-line-strong bg-inset shadow-2xl">
         {/* Top Caution Barricade Strip */}
         <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between caution-stripes px-3 py-1 font-tactical text-[10px] font-black text-black tracking-wider uppercase">
-          <span className="bg-inset text-accent-fg px-1 rounded-xs">DELHI POLICE · PARLIAMENT STREET CORRIDOR</span>
-          <span className="hidden sm:inline bg-inset text-fg px-1 rounded-xs">SECTION 144 RESTRICTED ZONE</span>
-          <span className="bg-[#DC2626] text-white px-1 rounded-xs">CIVILIAN VIGIL PERMIT #DL-2026-JM</span>
+          <span className="bg-inset text-accent-fg px-1 rounded-xs">{place.police}</span>
+          <span className="hidden sm:inline bg-inset text-fg px-1 rounded-xs">PROHIBITORY ORDERS IN FORCE</span>
+          <span className="bg-[#DC2626] text-white px-1 rounded-xs">PERMIT #{place.permit}</span>
         </div>
 
         {/* Atmospheric Backdrop Photo with Dramatic Lighting */}
         <Image
           src="/images/hero_cjp_protest_1790774314550.jpg"
-          alt="Jantar Mantar Gathering"
+          alt={`Protest at ${activeOp.location}`}
           fill
           priority
           className="object-cover opacity-45 filter contrast-125"
@@ -345,7 +368,7 @@ export function JantarMantarScene() {
                   className="rounded-xs border-2 border-accent bg-inset px-4 py-2 font-tactical font-black text-accent-fg hover:bg-[#FACC15] hover:text-black transition-colors shadow-md flex items-center gap-1.5"
                 >
                   <AlertTriangle className="h-3.5 w-3.5 text-danger-fg" />
-                  <span>Authorize March to Sansad Marg (High Risk)</span>
+                  <span>Authorize March to {place.target} (High Risk)</span>
                 </button>
               </div>
             </div>
@@ -354,7 +377,10 @@ export function JantarMantarScene() {
           {selectedStation === 'WATER' && (
             <div className="space-y-3 text-xs">
               <p className="text-fg-2 leading-relaxed font-sans">
-                With Delhi temperatures reaching 41°C, water scarcity is dangerous. If tankers run dry, students faint and panic ensues. Costs ₹15,000 from movement funds.
+                {weather.label === 'Heatwave'
+                  ? `With temperatures in ${place.city} reaching ${weather.temp}, water scarcity is dangerous. If tankers run dry, students faint and panic ensues.`
+                  : `Food, water and dry shelter keep the crowd here. If supplies run out, people go home.`}{' '}
+                Costs ₹15,000 from movement funds.
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
@@ -396,7 +422,7 @@ export function JantarMantarScene() {
           {selectedStation === 'POLICE' && (
             <div className="space-y-3 text-xs">
               <p className="text-fg-2 leading-relaxed font-sans">
-                Delhi Police officers have set up triple-tier iron barricades at Tolstoy Marg. Advocate Meera Tandon can present our approved permission copy to prevent sudden Section 144 lathi-charges.
+                {place.barricades} Your legal team can present the permission papers and negotiate to prevent a sudden lathi-charge.
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
                 <button

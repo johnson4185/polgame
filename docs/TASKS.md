@@ -227,7 +227,9 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
 - Rules: fictional minor characters; real people only as already on record; no invented deeds.
 - Tests: requirements gate firing; all Act 2 events are marked fictional and fire in a playthrough.
 
-### A3. Location-aware protest scene — after A2
+### A3. Location-aware protest scene — Claude · ✅ DONE
+Scene text comes from the campaign: police force, march target, permit code, weather and
+temperature by season; no Delhi street names outside Delhi; no named fictional lawyer.
 ### A4. Rebuild older screens with the kit (People, Research, Ledgers first) — after A3
 
 ## Still open (after the autonomous run)
