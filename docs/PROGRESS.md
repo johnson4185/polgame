@@ -25,6 +25,15 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4a · People screen rebuilt (6 Oct 2026)
+
+**What changed**
+- Tabs for **Team / Real people / Fictional / All**, a grid of person cards, and a profile pop-up with
+  morale, loyalty, workload (and integrity for fictional characters only).
+- **Assign to…** dropdown with your running campaigns and desks (Legal, Media room, Research,
+  Fundraising, Volunteers), or type your own task.
+- Real people show when they join ("Joins 03 Jun 2026") and can't be recruited before then.
+
 ## A3 · Protests outside Delhi look like it (6 Oct 2026)
 
 **What changed**
