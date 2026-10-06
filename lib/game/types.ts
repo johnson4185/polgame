@@ -6,6 +6,7 @@ export type CareerRoute = 'CIVIC_FORCE' | 'ELECTORAL_PARTY';
 
 export type ScreenTab =
   | 'OVERVIEW'
+  | 'MEDIA'
   | 'PERSONAL'
   | 'OPERATIONS'
   | 'MAP_543'
@@ -391,6 +392,10 @@ export interface StoryEffects {
   endOperation?: string;
   /** Open (or grow) CJP chapters in this many of the strongest states */
   chapters?: number;
+  /** A platform withholds the movement's account */
+  blockPlatform?: Platform;
+  /** A hashtag starts trending */
+  trend?: string;
 }
 
 export interface StoryChoice {
@@ -448,6 +453,26 @@ export interface StoryState {
   activeEventId: string | null;
   /** Number of choices that differ from what really happened */
   divergence: number;
+}
+
+export type Platform = 'X' | 'INSTAGRAM' | 'YOUTUBE' | 'TELEGRAM' | 'WHATSAPP';
+export type MediaActionKind = 'MEME' | 'HASHTAG' | 'LIVE' | 'DEBUNK';
+
+export interface SocialPost {
+  id: string;
+  author: string;
+  handle: string;
+  text: string;
+  likes: number;
+  date: GameDate;
+}
+
+export interface MediaState {
+  /** Share of the national conversation (0–100). Mainstream media is the remainder. */
+  narrative: { movement: number; government: number };
+  trending: { tag: string; posts: number }[];
+  platforms: Record<Platform, 'ACTIVE' | 'WITHHELD'>;
+  feed: SocialPost[];
 }
 
 export interface ActionOutcome {
@@ -552,6 +577,8 @@ export interface GameState {
 
   /** Government response meter: pressure 0–100 → Ignore / Block accounts / Police action / Negotiate */
   govResponse: { pressure: number };
+
+  media: MediaState;
 
   // Active dialogue or notification alert
   activeDialogue: {

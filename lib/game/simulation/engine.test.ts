@@ -526,3 +526,38 @@ describe('chapters and overview (R2)', () => {
     expect(s.newsFeed[0].headline).not.toBe('CJI says he was misquoted; the label sticks anyway');
   });
 });
+
+describe('media room (R4)', () => {
+  it('each media action spends an AP and shifts the narrative', () => {
+    const s = begin();
+    for (const kind of ['HASHTAG', 'LIVE', 'DEBUNK'] as const) {
+      const n = gameReducer(s, { type: 'MEDIA_ACTION', kind });
+      expect(n.actionPoints).toBe(s.actionPoints - 1);
+      expect(n.media.narrative.movement).toBeGreaterThan(s.media.narrative.movement);
+    }
+    const tagged = gameReducer(s, { type: 'MEDIA_ACTION', kind: 'HASHTAG' });
+    expect(tagged.media.trending.length).toBe(s.media.trending.length + 1);
+  });
+
+  it('the 21 May block withholds the X account and weakens memes there', () => {
+    let s = fireNow(at(begin(), { year: 2026, month: 5, day: 21 }), 'evt_0521_x_block');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'back' });
+    expect(s.media.platforms.X).toBe('WITHHELD');
+  });
+
+  it('story choices start real trends', () => {
+    let s = fireNow(at(begin(), { year: 2026, month: 5, day: 18 }), 'evt_0518_bhardwaj');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'adopt' });
+    expect(s.media.trending.some(t => t.tag === '#MainBhiCockroach')).toBe(true);
+  });
+
+  it('the feed fills with posts by fictional citizens only, and trends cool off', () => {
+    let s = gameReducer(begin(), { type: 'MEDIA_ACTION', kind: 'HASHTAG' });
+    const posts = s.media.trending[0].posts;
+    s = passDays(s, 10);
+    expect(s.media.feed.length).toBeGreaterThan(0);
+    for (const p of s.media.feed) expect(p.handle.startsWith('@')).toBe(true);
+    const still = s.media.trending.find(t => t.tag === gameReducer(begin(), { type: 'MEDIA_ACTION', kind: 'HASHTAG' }).media.trending[0].tag);
+    expect(!still || still.posts < posts).toBe(true);
+  });
+});

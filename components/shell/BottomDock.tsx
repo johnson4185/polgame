@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useSyncExternalStore } from 'react';
-import { Home, Megaphone, Map as MapIcon, Users, Search, Vote, Trophy, Landmark, User, Wallet, BookOpen, ScrollText, LayoutGrid } from 'lucide-react';
+import { Home, Tv, Megaphone, Map as MapIcon, Users, Search, Vote, Trophy, Landmark, User, Wallet, BookOpen, ScrollText, LayoutGrid } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
@@ -45,12 +45,13 @@ export function BottomDock() {
     { id: 'OVERVIEW', label: 'Home', icon: Home, mobile: true },
     { id: 'OPERATIONS', label: 'Campaigns', icon: Megaphone, badge: state.operations.filter(o => o.status === 'ACTIVE').length || undefined, mobile: true },
     { id: 'MAP_543', label: 'Map', icon: MapIcon, mobile: true },
+    { id: 'MEDIA', label: 'Media', icon: Tv, mobile: true },
     { id: 'PEOPLE', label: 'People', icon: Users },
-    { id: 'EVIDENCE', label: 'Research', icon: Search, badge: openCases || undefined, mobile: true },
-    { id: 'PARTY_ECI', label: state.party.isFormed ? state.party.abbreviation : 'Party', icon: Vote },
+    { id: 'EVIDENCE', label: 'Research', icon: Search, badge: openCases || undefined },
     { id: 'ELECTION_NIGHT', label: 'Election', icon: Trophy, badge: state.electionLiveState.isCountingUnderway ? 'LIVE' : undefined },
   ];
   const more: DockItem[] = [
+    { id: 'PARTY_ECI', label: state.party.isFormed ? `${state.party.abbreviation} party` : 'Party & ECI', icon: Vote },
     { id: 'PERSONAL', label: 'Personal life', icon: User },
     { id: 'FINANCE', label: 'Ledgers', icon: Wallet },
     { id: 'GOVERNMENT', label: 'Parliament', icon: Landmark },

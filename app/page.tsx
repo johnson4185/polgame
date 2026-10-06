@@ -16,6 +16,7 @@ import { GovernanceView } from '@/components/game/GovernanceView';
 import { HistoricalArchiveView } from '@/components/game/HistoricalArchiveView';
 import { JournalEndingsView } from '@/components/game/JournalEndingsView';
 import { OverviewView } from '@/components/game/OverviewView';
+import { MediaView } from '@/components/game/MediaView';
 import { ActionBar } from '@/components/shell/ActionBar';
 import { OutcomeToast } from '@/components/shell/OutcomeToast';
 import { CrisisModal } from '@/components/game/CrisisModal';
@@ -37,6 +38,7 @@ function GameScreenRouter() {
       <ActionBar />
 
       {state.activeScreen === 'OVERVIEW' && <OverviewView />}
+      {state.activeScreen === 'MEDIA' && <MediaView />}
       {state.activeScreen === 'OPERATIONS' && <CampaignsView />}
       {state.activeScreen === 'PERSONAL' && <PersonalLifeView />}
       {state.activeScreen === 'MAP_543' && <IndiaMapView />}

@@ -465,7 +465,7 @@ export const ACT1_JUN: StoryEvent[] = [
         id: 'nationwide',
         label: 'Launch the campaign and four new spokespersons',
         description: 'Vaishnavi Gaur, Aafreen Nawaz, Deepak Baliyan and Ratna Singh.',
-        effects: { recruit: ['CJP-VAISHNAVI-GAUR', 'CJP-AAFREEN-NAWAZ', 'CJP-DEEPAK-BALIYAN', 'CJP-RATNA-SINGH'], volunteers: 1500, govResponse: 1 },
+        effects: { recruit: ['CJP-VAISHNAVI-GAUR', 'CJP-AAFREEN-NAWAZ', 'CJP-DEEPAK-BALIYAN', 'CJP-RATNA-SINGH'], volunteers: 1500, govResponse: 1, trend: '#PradhanGoBack' },
         outcome: 'Posters go up in a dozen cities. The new faces are on TV by evening.',
       },
       {

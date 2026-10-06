@@ -72,6 +72,10 @@ export function ActionBar() {
       disabled: noAp || !activeOp,
       onSelect: () => activeOp && dispatch({ type: 'OPERATION_DECISION', operationId: activeOp.id, choice: 'MEDIA_SPEECH' }),
     },
+    'separator',
+    { label: 'Post a meme', icon: Newspaper, hint: '1 AP', disabled: noAp, onSelect: () => dispatch({ type: 'MEDIA_ACTION', kind: 'MEME' }) },
+    { label: 'Launch a hashtag', icon: Newspaper, hint: '1 AP', disabled: noAp, onSelect: () => dispatch({ type: 'MEDIA_ACTION', kind: 'HASHTAG' }) },
+    { label: 'Media room…', icon: Tv, onSelect: () => go('MEDIA') },
   ];
   const legal: MenuEntry[] = [
     { group: 'Legal' },

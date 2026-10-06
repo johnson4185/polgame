@@ -55,7 +55,7 @@ Files: `components/map/**`, `app/kit/map/page.tsx`, `public/maps/**` only.
 - Follow the styling rules in AGENTS.md (truck-art tokens, `chunky`, `pressable`).
 - Demo page at `/kit/map` with random values. Do not edit any other file.
 
-### C5. Media content data — `codex/media-content`
+### C5. Media content data — ✅ done by Claude (R4), posts by fictional citizens only
 Files: `lib/game/data/media.ts` only (export types from the same file; don't edit `types.ts`).
 - `NEWS_TEMPLATES`: 40+ headlines with `{ id, outlet, headline, summary, tone: 'SYMPATHETIC' | 'NEUTRAL' | 'HOSTILE', trigger: string }`
   where `trigger` names the game event that should surface it (e.g. `'PROTEST_DAY'`, `'CRACKDOWN_HIGH'`,
@@ -208,6 +208,7 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
    - R1 ✅ India map (`components/map/IndiaMap.tsx`, DataMeet CC BY 4.0, Survey of India depiction) — took over C4
    - R2 ✅ Overview home + ActionBar (Organise · Media · Legal · Politics menus) + global outcome toast
    - R3 ✅ Crisis deck 5 → 21 (fictional minor characters), crises as event cards, pacing and idle penalties
+   - R4 ✅ Media room: narrative battle, trending, platforms, social feed, 4 media actions
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Backlog

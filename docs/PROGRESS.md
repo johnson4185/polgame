@@ -9,6 +9,28 @@ _None yet._
 
 ---
 
+## R4 · The Media room (6 Oct 2026)
+
+**What changed**
+- A new **Media** tab (your fifth mockup): a social feed, an "On air" TV wall of the latest headlines, the
+  **narrative battle** (the movement vs the government vs mainstream media), trending hashtags and
+  platform status.
+- Four **media actions** (1 AP each): Post a meme (can backfire), Launch a hashtag (the government
+  notices), Go live (followers and volunteers, some legal heat), Counter fake news (₹5,000, wins back
+  credibility). They're also in the Media menu on every screen.
+- Winning the narrative makes followers grow faster. It drifts toward your public trust; government
+  pressure pulls it back. Hostile hashtags (#CockroachForeignAgent…) appear once the government starts
+  pushing back.
+- **Real moments show up**: the 21 May block marks X as "withheld in India" (memes and hashtags reach
+  less there), and #MainBhiCockroach, #PradhanGoBack, #SchoolThikKaro and #GyaneshItsDoneBro trend when
+  the story reaches them.
+- Social posts are written by fictional citizens with invented handles, so no words are put in real
+  people's mouths.
+
+**What a player will notice**
+- The dock now reads Home · Campaigns · Map · Media · People · Research · Election · More
+  (Party & ECI moved into More and the Politics menu).
+
 ## R3 · Crises and pacing (6 Oct 2026)
 
 **What changed**

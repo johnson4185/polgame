@@ -113,7 +113,7 @@ export const ACT1_AUG: StoryEvent[] = [
         id: 'fee_cap',
         label: 'Inspect, then demand a cap on private school fees',
         description: 'Fix public schools and stop private ones gouging parents.',
-        effects: { volunteers: 2500, trust: 5, govResponse: 1 },
+        effects: { volunteers: 2500, trust: 5, govResponse: 1, trend: '#SchoolThikKaro' },
         outcome: '#SchoolThikKaro trends. CJP says it is "overwhelmed".',
       },
       {
@@ -449,7 +449,7 @@ export const ACT1_SEP: StoryEvent[] = [
         id: 'post',
         label: 'Post: "Gyanesh, it\'s done bro!"',
         description: 'Take on the Chief Election Commissioner.',
-        effects: { followers: 800000, govResponse: 2, legalHeat: 6 },
+        effects: { followers: 800000, govResponse: 2, legalHeat: 6, trend: '#GyaneshItsDoneBro' },
         outcome: 'The line becomes a slogan overnight.',
       },
       {

@@ -16,6 +16,9 @@ import {
   StoryEvent,
   StoryEffects,
   StoryState,
+  MediaState,
+  MediaActionKind,
+  Platform,
 } from '../types';
 import { INITIAL_STATES, generateFull543Constituencies } from '../data/statesAndConstituencies';
 import { HISTORICAL_ARCHIVE } from '../data/historicalArchive';
@@ -26,8 +29,9 @@ import { CRISIS_EVENT_DECK } from '../data/crises';
 import { SeededRNG } from './random';
 import { STORY_EVENTS, getStoryEvent } from '../data/story';
 import { getOperationTemplate, type OperationTemplate } from '../data/operations';
+import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -104,6 +108,22 @@ function addDaysIso(iso: string, days: number): string {
   return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
 }
 
+export function initialMediaState(): MediaState {
+  return {
+    narrative: { movement: 5, government: 45 },
+    trending: [],
+    platforms: { X: 'ACTIVE', INSTAGRAM: 'ACTIVE', YOUTUBE: 'ACTIVE', TELEGRAM: 'ACTIVE', WHATSAPP: 'ACTIVE' },
+    feed: [],
+  };
+}
+
+export const MEDIA_ACTIONS: Record<MediaActionKind, { label: string; blurb: string; cost: number }> = {
+  MEME: { label: 'Post a meme', blurb: 'Followers and narrative up; might backfire.', cost: 0 },
+  HASHTAG: { label: 'Launch a hashtag', blurb: 'Start a trend. The government notices.', cost: 0 },
+  LIVE: { label: 'Go live', blurb: 'Big reach and volunteers, some legal heat.', cost: 0 },
+  DEBUNK: { label: 'Counter fake news', blurb: 'Win back the narrative and credibility.', cost: 5000 },
+};
+
 export function initialStoryState(start: GameDate): StoryState {
   return { act: 1, startedOn: isoDate(start), firedIds: [], choices: {}, queue: [], activeEventId: null, divergence: 0 };
 }
@@ -154,6 +174,38 @@ export function operationFromTemplate(t: OperationTemplate, start: GameDate, seq
     assignedStaffIds: [],
     dailyLog: [`Day 1: ${t.blurb}`],
   };
+}
+
+/** Add or boost a trending hashtag */
+function trendTag(state: GameState, tag: string, posts: number): GameState {
+  const others = state.media.trending.filter(t => t.tag !== tag);
+  const prev = state.media.trending.find(t => t.tag === tag)?.posts ?? 0;
+  const trending = [{ tag, posts: prev + Math.round(posts) }, ...others].sort((a, b) => b.posts - a.posts).slice(0, 8);
+  return { ...state, media: { ...state.media, trending } };
+}
+
+/** Add a post by a fictional citizen to the feed */
+function addPost(state: GameState, trigger: string, rng: SeededRNG): GameState {
+  const pool = POST_TEMPLATES.filter(p => p.trigger === trigger || p.trigger === 'any');
+  if (!pool.length) return state;
+  const t = pool[Math.floor(rng.next() * pool.length)];
+  const tag = state.media.trending[0]?.tag ?? '#MainBhiCockroach';
+  const post = {
+    id: uid(state, `POST-${state.media.feed.length}`),
+    author: t.author,
+    handle: t.handle,
+    text: t.text.replace('{tag}', tag),
+    likes: Math.round((state.movement.followers * 0.002 + 50) * (0.5 + rng.next())),
+    date: { ...state.currentDate },
+  };
+  return { ...state, media: { ...state.media, feed: [post, ...state.media.feed].slice(0, 30) } };
+}
+
+/** Move the narrative split; the two shares never exceed 100 together */
+function shiftNarrative(state: GameState, movement: number, government: number): GameState {
+  const m = clamp(state.media.narrative.movement + movement, 0, 90);
+  const g = clamp(state.media.narrative.government + government, 0, 100 - m);
+  return { ...state, media: { ...state.media, narrative: { movement: m, government: g } } };
 }
 
 /** Start a campaign (no cost here; LAUNCH_OPERATION charges the player) */
@@ -406,6 +458,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     gameOver: null,
     story: initialStoryState(INITIAL_GAME_DATE),
     govResponse: { pressure: 0 },
+    media: initialMediaState(),
   };
 }
 
@@ -445,7 +498,8 @@ export type GameAction =
   | { type: 'LOG_JOURNAL'; entry: JournalEntry }
   | { type: 'RESOLVE_STORY_CHOICE'; choiceId: string }
   | { type: 'LAUNCH_OPERATION'; templateId: string }
-  | { type: 'SET_ACTIVE_OPERATION'; operationId: string };
+  | { type: 'SET_ACTIVE_OPERATION'; operationId: string }
+  | { type: 'MEDIA_ACTION'; kind: MediaActionKind };
 
 /** The issue the player leads with in the prologue; each gives a small starting edge */
 export type PrologueFocus = 'EXAMS' | 'JOBS' | 'SPEECH';
@@ -813,6 +867,8 @@ export function migrateState(saved: GameState): GameState {
     movement: { ...saved.movement, followers: saved.movement?.followers ?? 0 },
     govResponse: saved.govResponse ?? { pressure: 0 },
     activeOperationId: saved.activeOperationId ?? saved.operations?.[0]?.id ?? null,
+    // v7: media room
+    media: saved.media ?? initialMediaState(),
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
@@ -873,6 +929,55 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'RESOLVE_STORY_CHOICE':
       return resolveStoryChoice(state, action.choiceId);
+
+    case 'MEDIA_ACTION': {
+      const def = MEDIA_ACTIONS[action.kind];
+      if (state.movement.movementFunds < def.cost) return fail(state, `${def.label} needs ${inr(def.cost)}.`);
+      const spent = spendAction(state);
+      if (typeof spent === 'string') return fail(state, spent);
+      const rng = rngFor(state, 19);
+      // A withheld X account cuts the reach of memes and hashtags
+      const reach = state.media.platforms.X === 'WITHHELD' ? 0.7 : 1;
+      const f = state.movement.followers;
+      let next = def.cost ? spendFunds(spent, def.cost, 'Media', def.label) : spent;
+      let msg = '';
+      let tone: ActionOutcome['tone'] = 'SUCCESS';
+      if (action.kind === 'MEME') {
+        if (rng.next() < 0.15) {
+          next = applyStoryEffects(next, { trust: -2 });
+          next = shiftNarrative(next, -2, 3);
+          msg = 'The meme was misread and went viral for the wrong reasons: trust −2.';
+          tone = 'WARNING';
+        } else {
+          const gain = Math.round(Math.max(20000, f * 0.02) * reach);
+          next = applyStoryEffects(next, { followers: gain });
+          next = shiftNarrative(next, 4, -1);
+          msg = `The meme lands: +${Math.round(gain / 1000)}K followers, narrative +4.`;
+        }
+        next = addPost(next, 'MEME', rng);
+      } else if (action.kind === 'HASHTAG') {
+        const used = new Set(next.media.trending.map(t => t.tag));
+        const pool = HASHTAGS.filter(h => h.theme !== 'HOSTILE' && !h.real && !used.has(h.tag));
+        const tag = (pool.length ? pool : HASHTAGS.filter(h => h.theme !== 'HOSTILE'))[Math.floor(rng.next() * Math.max(1, pool.length))].tag;
+        next = trendTag(next, tag, Math.max(5000, f * 0.04) * reach);
+        next = applyStoryEffects(next, { followers: Math.round(f * 0.01 * reach), govResponse: 0.5 });
+        next = shiftNarrative(next, 6, 1);
+        next = addPost(next, HASHTAGS.find(h => h.tag === tag)!.theme, rng);
+        msg = `${tag} is trending. Narrative +6; the government is watching.`;
+      } else if (action.kind === 'LIVE') {
+        const gain = Math.round(Math.max(30000, f * 0.04));
+        next = applyStoryEffects(next, { followers: gain, volunteers: 200, legalHeat: 4 });
+        next = shiftNarrative(next, 5, 0);
+        next = addPost(next, 'LIVE', rng);
+        msg = `You went live: +${Math.round(gain / 1000)}K followers, +200 volunteers, legal heat +4.`;
+      } else {
+        next = applyStoryEffects(next, { credibility: 3 });
+        next = shiftNarrative(next, 3, -6);
+        next = addPost(next, 'DEBUNK', rng);
+        msg = 'Fake news debunked: credibility +3, the government loses ground in the narrative.';
+      }
+      return withOutcome(next, msg, tone);
+    }
 
     case 'SET_ACTIVE_OPERATION':
       return state.operations.some(o => o.id === action.operationId) ? { ...state, activeOperationId: action.operationId } : state;
@@ -1677,11 +1782,15 @@ export function advanceSimulationDay(state: GameState): GameState {
   if (stage === 'POLICE_ACTION') newCrackdown += 1;
   if (stage === 'NEGOTIATE' && newCrackdown > 0) newCrackdown -= 1;
 
+  // Narrative: a winning narrative boosts follower growth; computed from yesterday's split
+  const nar = state.media?.narrative ?? { movement: 0, government: 50 };
+  const narrativeBoost = (nar.movement - nar.government) / 4000;
+
   // Followers grow with trust (shrink when it's low) and level off near the cap; account blocks slow growth
   const saturation = Math.max(0, 1 - m.followers / BALANCE.followerCap);
   const rawRate = clamp((m.publicTrust - 40) / 1500, -0.02, 0.03);
   // Attention decays every day: the feed moves on unless you keep giving it reasons to follow
-  const growthRate = (rawRate > 0 ? rawRate * saturation : rawRate) * (stage === 'BLOCK_ACCOUNTS' ? 0.6 : 1) - BALANCE.followerDecay;
+  const growthRate = (rawRate > 0 ? rawRate * saturation : rawRate) * (stage === 'BLOCK_ACCOUNTS' ? 0.6 : 1) - BALANCE.followerDecay + narrativeBoost;
   const followers = Math.max(0, Math.round(m.followers * (1 + growthRate)));
 
   const attrition = m.volunteerCount > 2000 ? Math.floor(m.volunteerCount * BALANCE.dailyVolunteerAttrition) : 0;
@@ -1766,6 +1875,25 @@ export function advanceSimulationDay(state: GameState): GameState {
   }
   if (warning) next = withOutcome(next, warning, 'WARNING');
 
+  // Media: the narrative drifts toward what trust and government pressure support; trends cool off
+  {
+    const media = next.media ?? initialMediaState();
+    const mTarget = next.movement.publicTrust * 0.6;
+    const gTarget = 30 + (next.govResponse?.pressure ?? 0) * 0.3;
+    const movementShare = clamp(media.narrative.movement + (mTarget - media.narrative.movement) * 0.08, 0, 90);
+    const governmentShare = clamp(media.narrative.government + (gTarget - media.narrative.government) * 0.08, 0, 100 - movementShare);
+    const trending = media.trending.map(t => ({ ...t, posts: Math.round(t.posts * 0.82) })).filter(t => t.posts > 2000);
+    next = { ...next, media: { ...media, narrative: { movement: Math.round(movementShare * 10) / 10, government: Math.round(governmentShare * 10) / 10 }, trending } };
+    // Hostile trends appear when the government is pushing back
+    if (stage !== 'IGNORE' && rng.next() < 0.12) {
+      const hostile = HASHTAGS.filter(h => h.theme === 'HOSTILE');
+      next = trendTag(next, hostile[Math.floor(rng.next() * hostile.length)].tag, Math.max(10000, next.movement.followers * 0.02));
+      next = addPost(next, 'HOSTILE', rng);
+    } else if (next.movement.followers > 0 && rng.next() < 0.6) {
+      next = addPost(next, ['EDUCATION', 'JOBS', 'DEMOCRACY', 'any'][Math.floor(rng.next() * 4)], rng);
+    }
+  }
+
   // The record ends on 5 Oct: Act 2 (sandbox) begins
   if (next.story.act === 1 && isoDate(nextDate) >= ACT2_START) {
     next = { ...next, story: { ...next.story, act: 2 } };
@@ -1834,6 +1962,8 @@ export function describeEffects(e: StoryEffects): string {
   if (e.energy) parts.push(`energy ${signed(e.energy)}`);
   if (e.stress) parts.push(`stress ${signed(e.stress)}`);
   if (e.govResponse) parts.push(e.govResponse > 0 ? 'government escalates' : 'government eases off');
+  if (e.blockPlatform) parts.push(`${e.blockPlatform} account withheld`);
+  if (e.trend) parts.push(`${e.trend} trends`);
   if (e.launchOperation) parts.push(`starts ${getOperationTemplate(e.launchOperation)?.title ?? 'a campaign'}`);
   if (e.endOperation) parts.push(`ends ${getOperationTemplate(e.endOperation)?.title ?? 'a campaign'}`);
   if (e.recruit?.length) parts.push(`${e.recruit.length} join${e.recruit.length === 1 ? 's' : ''} the team`);
@@ -1857,6 +1987,10 @@ function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
       .map(s => s.name);
     next = growChapters(next, strongest);
   }
+  if (e.blockPlatform) {
+    next = { ...next, media: { ...next.media, platforms: { ...next.media.platforms, [e.blockPlatform]: 'WITHHELD' } } };
+  }
+  if (e.trend) next = trendTag(next, e.trend, Math.max(20000, next.movement.followers * 0.05));
   if (e.launchOperation) next = startOperation(next, e.launchOperation);
   if (e.endOperation) next = endOperation(next, e.endOperation);
   // Team changes driven by the story (real people join on the day the record says they did)
