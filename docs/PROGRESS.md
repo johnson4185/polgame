@@ -5,7 +5,23 @@ Newest first.
 
 ## Questions for Johnson
 
-_None yet._
+1. **Art.** Every illustration is still a striped placeholder (title key art, event cards, portraits,
+   TV wall). Shall I generate them with Higgsfield in the Truck Art style, or will you supply them?
+   The slots are labelled with what each picture should show.
+2. **Difficulty.** In the headless simulation, a player who follows history and plays sensibly wins the
+   long game in all 5 test seeds (about day 265, by passing 3 laws). Reckless and passive play lose
+   quickly. Do you want the "sensible" path to fail sometimes (e.g. 1 in 3)?
+3. **Act 3.** The brief describes a governing act with a "Clean India Index". Today the game ends in
+   victory when 3 reforms pass. Should Act 3 become a full phase of its own (integrity vs speed policy
+   choices), or is the current ending enough for now?
+4. **Protest visuals.** Every protest campaign reuses the Jantar Mantar scene and photo (Delhi banners
+   even for a protest in Rajasthan). Fine as is, or do you want location-specific scenes once art exists?
+
+## Status after the autonomous run (6 Oct 2026)
+
+All of S1–S5 and R1–R6 are merged to `main`. 53 automated tests, lint, typecheck and the
+production build pass; every screen was checked at 1440px and 390px with no horizontal scroll and
+no console errors after a 12-day scripted playthrough.
 
 ---
 

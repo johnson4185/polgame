@@ -13,7 +13,6 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 ## In progress
 | Task | Agent | Branch |
 |------|-------|--------|
-| Autonomous run: S4 → S1 → S2 → S3 → S5 → redesign + backlog (plans below, progress in `docs/PROGRESS.md`) | Claude | `claude/*` (one branch per task) |
 
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
@@ -214,6 +213,13 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
      poster styling applied to the older screens (People, Research, Ledgers, Party, Election,
      Parliament, Archive, Chronicle, Personal, Map detail)
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
+
+## Still open (after the autonomous run)
+- [ ] Illustrations for every `ArtPlaceholder` (waiting on the owner — see PROGRESS "Questions")
+- [ ] Location-aware protest scene (currently Jantar Mantar visuals for every protest)
+- [ ] Act 3 as a full governing phase with the Clean India Index (owner to decide scope)
+- [ ] Difficulty pass if the owner wants sensible play to lose sometimes
+- [ ] Rebuild the older screens fully with the kit (they now share the poster styling via CSS)
 
 ## Backlog
 Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
