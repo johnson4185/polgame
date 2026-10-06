@@ -9,6 +9,22 @@ _None yet._
 
 ---
 
+## S1 · Story events (6 Oct 2026)
+
+**What changed**
+- A new story-event system: real events fire on their real dates as big modal cards with 2–4 choices.
+  Each choice shows its effects as stickers, can cost money, and can lead to a follow-up event days
+  later. The game records which choice matches what really happened and counts how far you've
+  strayed from history.
+- After you choose, the card shows the result and a "What really happened" note with its source.
+- Story events take priority over random crises, and the day can't end while one is open.
+- Three May events and the 6 June first protest are in as a seed; S3 writes the full calendar.
+
+**What a player will notice**
+- On day 6 (6 June) a "Big Moment" card: the first Jantar Mantar protest, with three ways to play it.
+- Picking the historical option says "Just like it really happened"; picking another tells you what
+  actually happened instead. Both are logged in the Chronicle.
+
 ## S4 · The real record (5 Oct 2026)
 
 **What changed**

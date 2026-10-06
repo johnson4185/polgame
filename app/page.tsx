@@ -20,6 +20,7 @@ import { CrisisModal } from '@/components/game/CrisisModal';
 import { RallyMiniGameModal } from '@/components/game/RallyMiniGameModal';
 import { TVDebateMiniGameModal } from '@/components/game/TVDebateMiniGameModal';
 import { GameOverModal } from '@/components/game/GameOverModal';
+import { StoryEventDialog } from '@/components/game/StoryEventDialog';
 import { TooltipProvider } from '@/components/ui/menus';
 import { TopBar } from '@/components/shell/TopBar';
 import { BottomDock } from '@/components/shell/BottomDock';
@@ -65,6 +66,7 @@ function GameAppContainer() {
       <BottomDock />
 
       <PrologueModal />
+      <StoryEventDialog />
       <CrisisModal />
       <RallyMiniGameModal />
       <TVDebateMiniGameModal />

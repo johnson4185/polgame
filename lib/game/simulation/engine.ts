@@ -13,6 +13,9 @@ import {
   CrisisEvent,
   GameEnding,
   ActionOutcome,
+  StoryEvent,
+  StoryEffects,
+  StoryState,
 } from '../types';
 import { INITIAL_STATES, generateFull543Constituencies } from '../data/statesAndConstituencies';
 import { HISTORICAL_ARCHIVE } from '../data/historicalArchive';
@@ -21,8 +24,9 @@ import { INITIAL_CASES } from '../data/investigations';
 import { INITIAL_REFORMS, INITIAL_CABINET } from '../data/reforms';
 import { CRISIS_EVENT_DECK } from '../data/crises';
 import { SeededRNG } from './random';
+import { STORY_EVENTS, getStoryEvent } from '../data/story';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -66,6 +70,20 @@ export function getDaysInMonth(year: number, month: number): number {
 export function formatDate(date: GameDate): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${date.day.toString().padStart(2, '0')} ${months[date.month - 1]} ${date.year}`;
+}
+
+export function isoDate(d: GameDate): string {
+  return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
+}
+
+function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + days));
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
+}
+
+export function initialStoryState(start: GameDate): StoryState {
+  return { act: 1, startedOn: isoDate(start), firedIds: [], choices: {}, queue: [], activeEventId: null, divergence: 0 };
 }
 
 /** Fresh copy of the archive with entries up to `date` unlocked */
@@ -338,6 +356,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     idCounter: 0,
     insolventMonths: 0,
     gameOver: null,
+    story: initialStoryState(INITIAL_GAME_DATE),
   };
 }
 
@@ -374,7 +393,8 @@ export type GameAction =
   | { type: 'DISMISS_DIALOGUE' }
   | { type: 'LOAD_STATE'; state: GameState }
   | { type: 'FINISH_PROLOGUE' }
-  | { type: 'LOG_JOURNAL'; entry: JournalEntry };
+  | { type: 'LOG_JOURNAL'; entry: JournalEntry }
+  | { type: 'RESOLVE_STORY_CHOICE'; choiceId: string };
 
 // Actions still allowed after the campaign has ended
 const POST_GAME_ACTIONS = new Set<GameAction['type']>([
@@ -726,6 +746,8 @@ export function migrateState(saved: GameState): GameState {
     idCounter: saved.idCounter ?? 0,
     insolventMonths: saved.insolventMonths ?? 0,
     gameOver: saved.gameOver ?? null,
+    // v4: story events. Old saves start the story from their current date so past events don't flood in.
+    story: saved.story ?? initialStoryState(saved.currentDate ?? fresh.currentDate),
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
@@ -777,15 +799,18 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'FINISH_PROLOGUE':
       // Turn-based by default: the player ends each day; auto-advance is opt-in via the clock
-      return { ...state, hasBegun: true, isPrologueComplete: true, clockSpeed: 0 };
+      return pumpStory({ ...state, hasBegun: true, isPrologueComplete: true, clockSpeed: 0 });
+
+    case 'RESOLVE_STORY_CHOICE':
+      return resolveStoryChoice(state, action.choiceId);
 
     // ── Time ──
     case 'ADVANCE_DAY':
-      if (state.activeCrisis || state.activeMiniGame) return state;
+      if (state.activeCrisis || state.activeMiniGame || state.story?.activeEventId) return state;
       return advanceSimulationDay(state);
 
     case 'REST_DAY': {
-      if (state.activeCrisis || state.activeMiniGame) return state;
+      if (state.activeCrisis || state.activeMiniGame || state.story?.activeEventId) return state;
       const rested = advanceSimulationDay({
         ...state,
         player: {
@@ -1612,5 +1637,104 @@ export function advanceSimulationDay(state: GameState): GameState {
     }
   }
   if (warning) next = withOutcome(next, warning, 'WARNING');
+
+  // Dated story events fire on their day and take priority over a freshly rolled random crisis
+  next = pumpStory(next);
+  if (next.story.activeEventId && !state.activeCrisis) next = { ...next, activeCrisis: null };
   return next;
+}
+
+// ─── Story events ───────────────────────────────────────────────────────────
+
+/**
+ * Activate the next due story event if none is open: queued follow-ups and dated events
+ * (on or after the campaign start) whose date has arrived, earliest first.
+ */
+export function pumpStory(state: GameState, registry: StoryEvent[] = STORY_EVENTS): GameState {
+  const st = state.story;
+  if (!st || st.activeEventId || !state.hasBegun || state.gameOver) return state;
+  const today = isoDate(state.currentDate);
+
+  const candidates: { id: string; due: string; queued: boolean }[] = [
+    ...st.queue.filter(q => q.due <= today).map(q => ({ id: q.eventId, due: q.due, queued: true })),
+    ...registry
+      .filter(e => e.date && e.date >= st.startedOn && e.date <= today && !st.firedIds.includes(e.id))
+      .map(e => ({ id: e.id, due: e.date!, queued: false })),
+  ].sort((a, b) => a.due.localeCompare(b.due) || Number(b.queued) - Number(a.queued));
+
+  const pick = candidates[0];
+  if (!pick) return state;
+  const queue = pick.queued ? st.queue.filter(q => !(q.eventId === pick.id && q.due === pick.due)) : st.queue;
+  return { ...state, story: { ...st, queue, activeEventId: pick.id, firedIds: [...st.firedIds, pick.id] } };
+}
+
+/** Human-readable effect list, e.g. "+300K followers, legal heat +6" */
+export function describeEffects(e: StoryEffects): string {
+  const short = (n: number) => (Math.abs(n) >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : Math.abs(n) >= 1e3 ? `${Math.round(n / 1e3)}K` : `${n}`);
+  const parts: string[] = [];
+  if (e.followers) parts.push(`${e.followers > 0 ? '+' : ''}${short(e.followers)} followers`);
+  if (e.volunteers) parts.push(`${signed(e.volunteers)} volunteers`);
+  if (e.funds) parts.push(`funds ${e.funds > 0 ? '+' : '−'}${inr(Math.abs(e.funds))}`);
+  if (e.trust) parts.push(`trust ${signed(e.trust)}`);
+  if (e.credibility) parts.push(`credibility ${signed(e.credibility)}`);
+  if (e.legalHeat) parts.push(`legal heat ${signed(e.legalHeat)}`);
+  if (e.energy) parts.push(`energy ${signed(e.energy)}`);
+  if (e.stress) parts.push(`stress ${signed(e.stress)}`);
+  return parts.join(', ');
+}
+
+function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
+  let next = adjustMovement(state, { trust: e.trust, credibility: e.credibility, volunteers: e.volunteers, funds: e.funds });
+  if (e.legalHeat) next = adjustCrackdown(next, e.legalHeat);
+  if (e.energy || e.stress) {
+    next = {
+      ...next,
+      player: {
+        ...next.player,
+        energy: clamp(next.player.energy + (e.energy ?? 0), 0, 100),
+        stress: clamp(next.player.stress + (e.stress ?? 0), 0, 100),
+      },
+    };
+  }
+  return next;
+}
+
+function resolveStoryChoice(state: GameState, choiceId: string): GameState {
+  const st = state.story;
+  const ev = st?.activeEventId ? getStoryEvent(st.activeEventId) : undefined;
+  if (!ev) return state;
+  const choice = ev.choices.find(c => c.id === choiceId);
+  if (!choice) return state;
+  if (choice.cost && state.movement.movementFunds < choice.cost) {
+    return fail(state, `"${choice.label}" needs ${inr(choice.cost)} in movement funds.`);
+  }
+
+  let next = choice.cost ? spendFunds(state, choice.cost, 'Campaign', `${ev.title}: ${choice.label}`) : state;
+  next = applyStoryEffects(next, choice.effects);
+
+  const hasHistory = ev.historicalChoice !== undefined;
+  const historical = hasHistory && ev.choices[ev.historicalChoice!]?.id === choice.id;
+  const today = isoDate(state.currentDate);
+  next = {
+    ...next,
+    story: {
+      ...next.story,
+      activeEventId: null,
+      choices: { ...next.story.choices, [ev.id]: choice.id },
+      queue: choice.next ? [...next.story.queue, { eventId: choice.next, due: addDaysIso(today, choice.nextDelayDays ?? 0) }] : next.story.queue,
+      divergence: next.story.divergence + (hasHistory && !historical ? 1 : 0),
+    },
+  };
+
+  const note = !hasHistory ? '' : historical ? ' (As it really happened.)' : ev.history ? ` In reality: ${ev.history}` : '';
+  next = addJournal(
+    next,
+    ev.title,
+    `${choice.label}. ${choice.outcome}${note}`,
+    ev.kind === 'SETPIECE' ? 'HISTORIC_TURNING_POINT' : 'MILESTONE',
+    'JOURNAL',
+  );
+  const fx = describeEffects(choice.effects);
+  next = withOutcome(next, `${choice.label}${fx ? `: ${fx}` : ''}.`, historical || !hasHistory ? 'SUCCESS' : 'WARNING');
+  return pumpStory(next);
 }

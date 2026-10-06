@@ -42,6 +42,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     prevRef.current = state;
     if (prev === state) return;
     if (state.activeCrisis && state.activeCrisis !== prev.activeCrisis) soundManager.playCrisisSting();
+    if (state.story?.activeEventId && state.story.activeEventId !== prev.story?.activeEventId) soundManager.playCrisisSting();
     if ((state.movementLevel ?? 1) > (prev.movementLevel ?? 1)) soundManager.playLevelUp();
     if (state.electionLiveState.isCountingFinished && !prev.electionLiveState.isCountingFinished) soundManager.playFanfare();
     if (state.gameOver && !prev.gameOver) {
@@ -59,7 +60,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-advance clock (optional; the default is turn-based via END DAY).
   // Pauses while a crisis or mini-game needs the player's attention.
-  const clockBlocked = !!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver;
+  const clockBlocked = !!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver || !!state.story?.activeEventId;
   useEffect(() => {
     if (state.clockSpeed === 0 || !state.hasBegun || clockBlocked) return;
 

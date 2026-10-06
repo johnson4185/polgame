@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION } from './engine';
 import type { GameState } from '../types';
+import { STORY_EVENTS } from '../data/story';
 
 const begin = () => gameReducer(createInitialState('ABHIJEET_CJP', 42), { type: 'FINISH_PROLOGUE' });
 
@@ -172,6 +173,10 @@ describe('endings', () => {
     let s = begin();
     s = { ...s, movement: { ...s.movement, movementFunds: 0, publicTrust: 6, monthlyBurnRate: 10_000_000 } };
     for (let i = 0; i < 70 && !s.gameOver; i++) {
+      if (s.story.activeEventId) {
+        const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+        s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: ev.choices.find(c => !c.cost)!.id });
+      }
       s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
     }
     expect(s.gameOver).not.toBeNull();
@@ -236,5 +241,83 @@ describe('historical record (S4)', () => {
     expect(migrated.historicalArchive.some(d => d.id === 'HIST-2024-07-18')).toBe(false);
     expect(migrated.people.some(p => p.id === 'CJP-ASHUTOSH-RANKA')).toBe(true);
     expect(migrated.people.filter(p => p.fictional)).toHaveLength(8);
+  });
+});
+
+describe('story events (S1)', () => {
+  // A campaign that starts the day before the 16 May launch, prologue done
+  const fromMay = (): GameState => {
+    const s = begin();
+    return { ...s, currentDate: { year: 2026, month: 5, day: 15 }, story: { ...s.story, startedOn: '2026-05-15' } };
+  };
+  const advanceTo = (s: GameState, iso: string) => {
+    for (let i = 0; i < 200 && isoDateOf(s) < iso; i++) {
+      s = { ...s, activeCrisis: null };
+      if (s.story.activeEventId) s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: firstAffordable(s) });
+      s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    }
+    return s;
+  };
+  const isoDateOf = (s: GameState) => `${s.currentDate.year}-${String(s.currentDate.month).padStart(2, '0')}-${String(s.currentDate.day).padStart(2, '0')}`;
+  const firstAffordable = (s: GameState) => {
+    const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+    return ev.choices.find(c => !c.cost || c.cost <= s.movement.movementFunds)!.id;
+  };
+
+  it('fires a dated event once, on its date, and blocks the day until resolved', () => {
+    let s = gameReducer(fromMay(), { type: 'ADVANCE_DAY' });
+    expect(isoDateOf(s)).toBe('2026-05-16');
+    expect(s.story.activeEventId).toBe('evt_0516_launch');
+    expect(gameReducer(s, { type: 'ADVANCE_DAY' })).toBe(s);
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'post' });
+    expect(s.story.activeEventId).toBeNull();
+    expect(s.story.choices.evt_0516_launch).toBe('post');
+    expect(s.story.divergence).toBe(0);
+    s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    expect(s.story.firedIds.filter(id => id === 'evt_0516_launch')).toHaveLength(1);
+  });
+
+  it('counts a non-historical choice as divergence and journals what really happened', () => {
+    let s = gameReducer(fromMay(), { type: 'ADVANCE_DAY' });
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'quiet' });
+    expect(s.story.divergence).toBe(1);
+    expect(s.journal[0].text).toContain('In reality');
+  });
+
+  it('queues a delayed follow-up and fires it on time', () => {
+    let s = advanceTo(fromMay(), '2026-05-21');
+    if (s.story.activeEventId !== 'evt_0521_x_block') s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    expect(s.story.activeEventId).toBe('evt_0521_x_block');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'court' });
+    expect(s.story.queue).toEqual([{ eventId: 'evt_0526_hc_petition', due: '2026-05-26' }]);
+    for (let i = 0; i < 4; i++) s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
+    expect(s.story.activeEventId).toBeNull();
+    s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
+    expect(isoDateOf(s)).toBe('2026-05-26');
+    expect(s.story.activeEventId).toBe('evt_0526_hc_petition');
+  });
+
+  it('refuses a choice the movement cannot afford', () => {
+    let s = advanceTo(fromMay(), '2026-05-21');
+    if (s.story.activeEventId !== 'evt_0521_x_block') s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    s = { ...s, movement: { ...s.movement, movementFunds: 1000 } };
+    const r = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'court' });
+    expect(r.lastOutcome?.tone).toBe('FAILURE');
+    expect(r.story.activeEventId).toBe('evt_0521_x_block');
+  });
+
+  it('never fires events dated before the campaign started', () => {
+    const s = advanceTo(begin(), '2026-06-05');
+    expect(s.story.firedIds.some(id => id.startsWith('evt_05'))).toBe(false);
+  });
+
+  it('every event in the registry is well formed', () => {
+    const ids = new Set(STORY_EVENTS.map(e => e.id));
+    for (const e of STORY_EVENTS) {
+      expect(e.choices.length >= 2 && e.choices.length <= 4).toBe(true);
+      if (e.historicalChoice !== undefined) expect(e.choices[e.historicalChoice]).toBeDefined();
+      for (const c of e.choices) if (c.next) expect(ids.has(c.next)).toBe(true);
+      if (e.act === 1 && !e.fictional) expect(e.source?.startsWith('docs/cjp-timeline.md#')).toBe(true);
+    }
   });
 });

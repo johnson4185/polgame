@@ -17,7 +17,7 @@ export function CrisisModal() {
   };
 
   return (
-    <div className="theme-dark-scope fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+    <div role="dialog" aria-modal="true" aria-label="Crisis" className="theme-dark-scope fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-2xl rounded-xs border-2 border-red-600 bg-surface shadow-2xl overflow-hidden text-fg font-sans">
         
         {/* Top Warning Stripe Accent */}

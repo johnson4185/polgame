@@ -93,7 +93,7 @@ Claude's and run in sequence with it. They must not touch Codex-owned files: `li
 (C1), `lib/game/data/media.ts` (C5), `components/map/**` (C4). S1, S2 and S5 are big changes:
 plan first, owner approval before code.
 
-### S1. Story event system — Claude · IN PROGRESS `claude/s1-story-events`
+### S1. Story event system — Claude · ✅ DONE (merged 6 Oct 2026)
 **Plan (self-approved, autonomous run):**
 - Types: `StoryEvent` (id, ISO date or follow-up only, act, title, description, location, optional
   speaker, art label, `kind` EVENT/SETPIECE, `sensitive`, 2–4 `StoryChoice`s, `historicalChoice`,

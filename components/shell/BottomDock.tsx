@@ -112,7 +112,7 @@ export function BottomDock() {
         <EndTurnButton
           className="md:w-72"
           day={dayNumber(state.currentDate)}
-          disabled={!!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver}
+          disabled={!!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver || !!state.story?.activeEventId}
           onClick={() => {
             soundManager.playPaper();
             dispatch({ type: 'ADVANCE_DAY' });

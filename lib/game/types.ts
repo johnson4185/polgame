@@ -356,6 +356,77 @@ export interface CrisisEvent {
   options: CrisisOption[];
 }
 
+// ─── Story events ───────────────────────────────────────────────────────────
+
+/** Resource changes a story choice can make. Positive legalHeat/stress are bad for the player. */
+export interface StoryEffects {
+  followers?: number;
+  volunteers?: number;
+  funds?: number;
+  trust?: number;
+  credibility?: number;
+  legalHeat?: number;
+  energy?: number;
+  stress?: number;
+  /** Moves the government response meter (S2) */
+  govResponse?: number;
+}
+
+export interface StoryChoice {
+  id: string;
+  label: string;
+  description: string;
+  effects: StoryEffects;
+  /** Movement funds needed to pick this choice */
+  cost?: number;
+  /** Follow-up event id */
+  next?: string;
+  /** Days until the follow-up fires (0 = straight away) */
+  nextDelayDays?: number;
+  /** Shown after choosing: what happens as a result */
+  outcome: string;
+}
+
+export interface StoryEvent {
+  id: string;
+  /** ISO date the event fires; omit for follow-ups reached only through `next` */
+  date?: string;
+  act: 1 | 2 | 3;
+  kind?: 'EVENT' | 'SETPIECE' | 'NEWS';
+  title: string;
+  /** 1–3 sentences */
+  description: string;
+  location: string;
+  speaker?: { name: string; role: string; line: string };
+  /** Label for the illustration slot until art exists */
+  art?: string;
+  choices: StoryChoice[];
+  /** Index into `choices` of what really happened (Act 1) */
+  historicalChoice?: number;
+  /** What really happened, in one or two sentences (Act 1) */
+  history?: string;
+  /** Timeline heading this event comes from, e.g. "docs/cjp-timeline.md#20-june-sat" */
+  source?: string;
+  /** Mentions student suicides or serious harm: show the helpline */
+  sensitive?: boolean;
+  /** Invented sandbox content rather than the record */
+  fictional?: boolean;
+}
+
+export interface StoryState {
+  act: 1 | 2 | 3;
+  /** ISO date the campaign began; dated events before it never fire */
+  startedOn: string;
+  firedIds: string[];
+  /** eventId → choiceId */
+  choices: Record<string, string>;
+  /** Follow-ups waiting for their date */
+  queue: { eventId: string; due: string }[];
+  activeEventId: string | null;
+  /** Number of choices that differ from what really happened */
+  divergence: number;
+}
+
 export interface ActionOutcome {
   id: number;
   text: string;
@@ -452,6 +523,9 @@ export interface GameState {
 
   // Set when the campaign ends (victory or defeat); the engine ignores gameplay actions after this
   gameOver: GameEnding | null;
+
+  // Dated story events (Act 1 follows docs/cjp-timeline.md)
+  story: StoryState;
 
   // Active dialogue or notification alert
   activeDialogue: {

@@ -233,7 +233,7 @@ export function GameDialog({
             size === 'lg' ? 'max-w-3xl' : 'max-w-lg',
           )}
         >
-          {art && <div className="relative aspect-[16/7] w-full overflow-hidden rounded-t-[11px] border-b-3 border-ink">{art}</div>}
+          {art && <div className="relative aspect-[16/7] max-h-[28vh] w-full overflow-hidden rounded-t-[11px] border-b-3 border-ink">{art}</div>}
           {tag && <div className="absolute left-4 top-4 z-10">{tag}</div>}
           {dismissible && (
             <Dialog.Close

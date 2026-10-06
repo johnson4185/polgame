@@ -4,6 +4,7 @@
 import { it, expect } from 'vitest';
 import { createInitialState, gameReducer, GameAction, BALANCE } from './engine';
 import type { GameState } from '../types';
+import { STORY_EVENTS } from '../data/story';
 
 type Strategy = 'BALANCED' | 'RECKLESS' | 'PASSIVE';
 
@@ -12,6 +13,20 @@ function act(s: GameState, a: GameAction) {
 }
 
 function playDay(s: GameState, strat: Strategy): GameState {
+  // Story events: balanced follows history, reckless picks the riskiest, passive the last option
+  for (let guard = 0; guard < 5 && s.story.activeEventId; guard++) {
+    const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+    const affordable = ev.choices.filter(c => !c.cost || c.cost <= s.movement.movementFunds);
+    const pick =
+      strat === 'BALANCED' && ev.historicalChoice !== undefined && affordable.includes(ev.choices[ev.historicalChoice])
+        ? ev.choices[ev.historicalChoice]
+        : strat === 'RECKLESS'
+          ? [...affordable].sort((a, b) => (b.effects.legalHeat ?? 0) - (a.effects.legalHeat ?? 0))[0]
+          : strat === 'PASSIVE'
+            ? affordable[affordable.length - 1]
+            : affordable[0];
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: pick.id });
+  }
   // Resolve crisis: pick affordable option with best trust − crackdown trade-off
   if (s.activeCrisis) {
     const opts = s.activeCrisis.options.filter(o => (o.consequences.fundsChange ?? 0) >= -s.movement.movementFunds);
