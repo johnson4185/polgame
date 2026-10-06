@@ -425,7 +425,7 @@ describe('Act 1 calendar (S3)', () => {
   it('covers every month from 16 May to 5 October, in date order per file, with unique ids', () => {
     const ids = STORY_EVENTS.map(e => e.id);
     expect(new Set(ids).size).toBe(ids.length);
-    const months = new Set(STORY_EVENTS.filter(e => e.date).map(e => e.date!.slice(0, 7)));
+    const months = new Set(STORY_EVENTS.filter(e => e.date && e.act === 1).map(e => e.date!.slice(0, 7)));
     expect([...months].sort()).toEqual(['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']);
     expect(STORY_EVENTS.length).toBeGreaterThanOrEqual(70);
   });
@@ -442,7 +442,7 @@ describe('Act 1 calendar (S3)', () => {
     }
     expect(s.story.act).toBe(2);
     // Every dated event fired exactly once, except those skipped by an earlier choice
-    const dated = STORY_EVENTS.filter(e => e.date && !e.skipIfChosen?.some(k => s.story.choices[k.event] === k.choice));
+    const dated = STORY_EVENTS.filter(e => e.act === 1 && e.date && !e.skipIfChosen?.some(k => s.story.choices[k.event] === k.choice));
     for (const e of dated) expect(s.story.firedIds.filter(id => id === e.id)).toHaveLength(1);
     expect(s.story.divergence).toBe(0);
     // The 20 July march played out as a chain on one day
@@ -616,5 +616,35 @@ describe('politics cycle (R6)', () => {
     s = { ...s, party: { ...s.party, isRulingCoalition: true, actualSeatsWon: 10 }, movement: { ...s.movement, publicTrust: 20 } };
     s = gameReducer({ ...s, activeCrisis: null, story: { ...s.story, activeEventId: null } }, { type: 'ADVANCE_DAY' });
     expect(s.party.isRulingCoalition).toBe(false);
+  });
+});
+
+describe('Act 2 events (A2)', () => {
+  it('are all fictional, dated on or after 5 October, and well formed', () => {
+    const a2 = STORY_EVENTS.filter(e => e.act === 2);
+    expect(a2.length).toBeGreaterThanOrEqual(12);
+    for (const e of a2) {
+      expect(e.fictional).toBe(true);
+      expect(e.date! >= '2026-10-05').toBe(true);
+      for (const c of e.choices) if (c.cost) expect(c.effects.funds ?? 0).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('wait for their requirements: party events only fire once a party exists', () => {
+    let s = at(begin(), { year: 2026, month: 11, day: 14 });
+    s = { ...s, story: { ...s.story, act: 2 } };
+    s = passDays(s, 2);
+    expect(s.story.firedIds).not.toContain('evt_a2_1115_convention');
+    s = { ...s, movement: { ...s.movement, volunteerCount: 30000, movementFunds: 1_000_000 } };
+    s = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
+    s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
+    expect(s.story.firedIds).toContain('evt_a2_1115_convention');
+  });
+
+  it('government-only events never fire in opposition', () => {
+    let s = at(begin(), { year: 2027, month: 7, day: 30 });
+    s = passDays({ ...s, story: { ...s.story, act: 2 } }, 5);
+    expect(s.story.firedIds).not.toContain('evt_a2_no_confidence');
+    expect(s.story.firedIds).not.toContain('evt_a2_scandal');
   });
 });

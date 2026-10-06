@@ -25,6 +25,21 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A2 · Act 2 gets a story (6 Oct 2026)
+
+**What changed**
+- **13 new events after 5 October**, all labelled "Fictional scenario": the 10 October march (called
+  in the record; how it goes is up to you), "When do we register?", the first party convention, an
+  alliance offer, a ticket for ₹50 lakh, the 2027 state elections (Punjab, UP, Uttarakhand, Goa and
+  Manipur early in the year; Gujarat and Himachal at the end, as scheduled), defectors at the door,
+  a year of burnout, your MPs' first day in the Lok Sabha, a scandal in your ministry, a no-confidence
+  threat, and the run-up to 2029.
+- Events can now wait for conditions: party events only happen once you've registered, government
+  events only when you're in power, Lok Sabha events only once you have MPs.
+
+**What a player will notice**
+- The game keeps telling a story after the real record ends, shaped by what you've built.
+
 ## Codex features integrated (6 Oct 2026)
 
 **What changed**

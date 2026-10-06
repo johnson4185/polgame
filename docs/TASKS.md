@@ -215,7 +215,7 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Next run (owner asked to continue, 6 Oct 2026)
-### A2. Act 2 story events — Claude · IN PROGRESS `claude/a2-events`
+### A2. Act 2 story events — Claude · ✅ DONE (13 fictional events)
 **Plan:** after 5 Oct the record ends, so Act 2 gets its own *fictional* beats (labelled as such).
 - Engine: `StoryEvent.requires` (`party`, `noParty`, `inGovernment`, `minSeats`). A dated event whose
   requirements aren't met waits and fires on the first day they are (never before its date).

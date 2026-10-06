@@ -5,8 +5,9 @@ import { ACT1_JUN } from './act1-jun';
 import { ACT1_JUL } from './act1-jul';
 import { ACT1_AUG, ACT1_SEP } from './act1-aug-sep';
 import { ACT1_OCT } from './act1-oct';
+import { ACT2_EVENTS } from './act2';
 
-export const STORY_EVENTS: StoryEvent[] = [...ACT1_MAY, ...ACT1_JUN, ...ACT1_JUL, ...ACT1_AUG, ...ACT1_SEP, ...ACT1_OCT];
+export const STORY_EVENTS: StoryEvent[] = [...ACT1_MAY, ...ACT1_JUN, ...ACT1_JUL, ...ACT1_AUG, ...ACT1_SEP, ...ACT1_OCT, ...ACT2_EVENTS];
 
 const BY_ID = new Map(STORY_EVENTS.map(e => [e.id, e]));
 
