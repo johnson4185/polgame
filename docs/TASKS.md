@@ -121,7 +121,22 @@ new `lib/game/data/story/index.ts`.
 - Coexists with the random crisis deck (C1) rather than replacing it.
 - Tests: an event fires on its date exactly once, chains resolve, saves migrate.
 
-### S2. Act 1 frame and missing resources — Claude (plan → approval → build)
+### S2. Act 1 frame and missing resources — Claude · IN PROGRESS `claude/s2-act1-frame`
+**Plan (self-approved, autonomous run):**
+- Start 16 May 2026. Prologue retold from the 15 May remark and the exam crisis; its focus choice
+  (Exams / Jobs / Free speech) gives a small real starting bonus (closes the "prologue choice" backlog item).
+- Starting numbers fit a joke that hasn't launched: no followers, little money, no paid staff
+  (fictional recruits start un-hired). The Jantar Mantar operation becomes the real indefinite sit-in
+  (20 Jun, 36 days); operations in PREPARATION activate on their start date.
+- **Followers** (`movement.followers`): grow with trust and media, slowed by account blocks; feed
+  volunteers and donations; rallies and debates add followers. Shown first in the top bar.
+- **Government response meter** (`govResponse.pressure` 0–100): Ignore (<25) → Block accounts (<50) →
+  Police action (<75) → Negotiate. Pressure rises with followers, trust, protests and story choices
+  (`govResponse` effect = 10 pts per step), eases when quiet. Stage effects: blocks slow follower
+  growth; police action pushes legal heat up daily; negotiation eases it. Shown in the HUD.
+- **Act handover**: on 5 Oct the story moves to Act 2 with a "where the record ends" event. Party
+  registration (and so nominations/elections) is locked during Act 1, as in the record.
+- Tests + balance sim updated for the new opening.
 Files: `lib/game/types.ts`, `lib/game/simulation/engine.ts`, `lib/game/simulation/balance.sim.test.ts`,
 `components/shell/TopBar.tsx`, `components/game/PrologueModal.tsx`. Depends on S1.
 - Start date 16 May 2026; prologue retold from the 15 May remark and the 16 May launch post.
