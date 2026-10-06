@@ -128,7 +128,7 @@ export function ActionBar() {
           ))}
         </div>
       </Tooltip>
-      <div className="order-last grid basis-full grid-cols-4 gap-1.5 sm:order-none sm:flex sm:basis-auto sm:gap-2">
+      <div data-tour="actions" className="order-last grid basis-full grid-cols-4 gap-1.5 sm:order-none sm:flex sm:basis-auto sm:gap-2">
         <Menu trigger={trigger('Organise', Users)} items={organise} />
         <Menu trigger={trigger('Media', Tv)} items={media} />
         <Menu trigger={trigger('Legal', Scale)} items={legal} />

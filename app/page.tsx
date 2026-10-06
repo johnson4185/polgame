@@ -19,6 +19,7 @@ import { OverviewView } from '@/components/game/OverviewView';
 import { MediaView } from '@/components/game/MediaView';
 import { ActionBar } from '@/components/shell/ActionBar';
 import { OutcomeToast } from '@/components/shell/OutcomeToast';
+import { Tutorial } from '@/components/shell/Tutorial';
 import { CrisisModal } from '@/components/game/CrisisModal';
 import { RallyMiniGameModal } from '@/components/game/RallyMiniGameModal';
 import { TVDebateMiniGameModal } from '@/components/game/TVDebateMiniGameModal';
@@ -70,6 +71,7 @@ function GameAppContainer() {
 
       <BottomDock />
       <OutcomeToast />
+      <Tutorial />
 
       <PrologueModal />
       <StoryEventDialog />

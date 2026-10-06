@@ -208,6 +208,32 @@ function shiftNarrative(state: GameState, movement: number, government: number):
   return { ...state, media: { ...state.media, narrative: { movement: m, government: g } } };
 }
 
+/**
+ * Rewards for a mini-game score (0–100). Computed here, not in the UI, so the engine stays the
+ * single source of truth.
+ */
+export function miniGameRewards(kind: 'RALLY' | 'TV_DEBATE', rawScore: number) {
+  const score = clamp(Math.round(rawScore), 0, 100);
+  if (kind === 'RALLY') {
+    return {
+      score,
+      trustDelta: Math.floor(score * 0.18 + 5),
+      fundsDelta: Math.floor(score * 180 + 3500),
+      volunteersDelta: Math.floor(score * 8 + 200),
+      xpDelta: 350,
+      notes: `A ground rally with crowd energy at ${score}%. Volunteers signed up at the stage.`,
+    };
+  }
+  return {
+    score,
+    trustDelta: Math.floor(score * 0.15 + 6),
+    fundsDelta: Math.floor(score * 220 + 4000),
+    volunteersDelta: Math.floor(score * 7 + 150),
+    xpDelta: 400,
+    notes: `A prime-time TV debate with public approval at ${score}%. Clips spread across social media.`,
+  };
+}
+
 /** Start a campaign (no cost here; LAUNCH_OPERATION charges the player) */
 function startOperation(state: GameState, templateId: string): GameState {
   const t = getOperationTemplate(templateId);
@@ -477,7 +503,7 @@ export type GameAction =
   | { type: 'TRIGGER_CRISIS'; crisis: CrisisEvent }
   | { type: 'OPEN_MINI_GAME'; miniGame: 'RALLY' | 'TV_DEBATE' }
   | { type: 'CLOSE_MINI_GAME' }
-  | { type: 'FINISH_MINI_GAME'; result: { score: number; trustDelta: number; fundsDelta: number; volunteersDelta: number; xpDelta: number; notes: string } }
+  | { type: 'FINISH_MINI_GAME'; score: number }
   | { type: 'TOGGLE_EMPLOYMENT'; status: GameState['player']['employmentStatus'] }
   | { type: 'PERSONAL_TO_MOVEMENT_DONATION'; amount: number }
   | { type: 'HIRE_STAFF'; personId: string }
@@ -1129,8 +1155,8 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'FINISH_MINI_GAME': {
       if (!state.activeMiniGame) return state;
-      const res = action.result;
       const kind = state.activeMiniGame;
+      const res = miniGameRewards(kind, action.score);
       let next = adjustMovement(state, {
         trust: res.trustDelta,
         funds: res.fundsDelta,

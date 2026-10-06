@@ -9,6 +9,21 @@ _None yet._
 
 ---
 
+## R5 · Game feel and a tutorial (6 Oct 2026)
+
+**What changed**
+- **Numbers tick**: followers, volunteers, funds, trust and credibility count up or down, with a small
+  green "+300K" or red "−2" sticker floating next to them.
+- **A tutorial for the first days**: four coach cards highlight the top bar, the action menus, the map
+  and END TURN. The action and END TURN steps wait until you actually do them. Skip any time; replay it
+  from Settings → "Show tutorial again".
+- Rally and TV debate rewards are now worked out by the game engine from your score (it can't be
+  over-rewarded by the screen).
+
+**What a player will notice**
+- Every action visibly moves the numbers.
+- A new player is walked through day 1 instead of facing a wall of buttons.
+
 ## R4 · The Media room (6 Oct 2026)
 
 **What changed**

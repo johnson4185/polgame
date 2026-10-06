@@ -112,6 +112,7 @@ export function BottomDock() {
         </nav>
 
         <EndTurnButton
+          data-tour="endturn"
           className="md:w-72"
           day={dayNumber(state.currentDate)}
           disabled={!!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver || !!state.story?.activeEventId}

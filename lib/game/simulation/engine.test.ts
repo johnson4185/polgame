@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION, govStage } from './engine';
+import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION, govStage, miniGameRewards } from './engine';
 import type { GameState } from '../types';
 import { STORY_EVENTS } from '../data/story';
 import { readFileSync } from 'node:fs';
@@ -559,5 +559,17 @@ describe('media room (R4)', () => {
     for (const p of s.media.feed) expect(p.handle.startsWith('@')).toBe(true);
     const still = s.media.trending.find(t => t.tag === gameReducer(begin(), { type: 'MEDIA_ACTION', kind: 'HASHTAG' }).media.trending[0].tag);
     expect(!still || still.posts < posts).toBe(true);
+  });
+});
+
+describe('mini-games in the engine (R5)', () => {
+  it('computes rewards from the score and clamps out-of-range scores', () => {
+    expect(miniGameRewards('RALLY', 500)).toEqual(miniGameRewards('RALLY', 100));
+    expect(miniGameRewards('TV_DEBATE', -20).score).toBe(0);
+    let s = gameReducer(begin(), { type: 'OPEN_MINI_GAME', miniGame: 'RALLY' });
+    const before = s.movement.volunteerCount;
+    s = gameReducer(s, { type: 'FINISH_MINI_GAME', score: 60 });
+    expect(s.activeMiniGame).toBeNull();
+    expect(s.movement.volunteerCount).toBeGreaterThan(before);
   });
 });

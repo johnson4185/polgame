@@ -149,23 +149,7 @@ export function TVDebateMiniGameModal() {
 
   const handleFinish = () => {
     soundManager.playGavel();
-    const trustGain = Math.floor(publicApproval * 0.15 + 6);
-    const mediaGain = Math.floor(mediaRating * 0.15 + 5);
-    const fundsGain = Math.floor(publicApproval * 220 + 4000);
-    const volunteersGain = Math.floor(publicApproval * 7 + 150);
-    const xpGain = 400;
-
-    dispatch({
-      type: 'FINISH_MINI_GAME',
-      result: {
-        score: publicApproval,
-        trustDelta: trustGain,
-        fundsDelta: fundsGain,
-        volunteersDelta: volunteersGain,
-        xpDelta: xpGain,
-        notes: `Dominated the 9 PM Prime Time TV Crossfire. Public approval surged to ${publicApproval}%. Clip viral across social media.`,
-      },
-    });
+    dispatch({ type: 'FINISH_MINI_GAME', score: publicApproval });
   };
 
   return (

@@ -142,22 +142,7 @@ export function RallyMiniGameModal() {
 
   const handleClaimResults = () => {
     soundManager.playFanfare();
-    const volunteerBonus = Math.floor(crowdHype * 8 + 200);
-    const trustBonus = Math.floor(crowdHype * 0.18 + 5);
-    const fundsBonus = Math.floor(crowdHype * 180 + 3500);
-    const xpBonus = 350;
-
-    dispatch({
-      type: 'FINISH_MINI_GAME',
-      result: {
-        score: crowdHype,
-        trustDelta: trustBonus,
-        fundsDelta: fundsBonus,
-        volunteersDelta: volunteerBonus,
-        xpDelta: xpBonus,
-        notes: `Addressed 15,000 citizens from the Jantar Mantar wooden stage. Generated national front-page coverage and galvanized volunteer enrollment.`,
-      },
-    });
+    dispatch({ type: 'FINISH_MINI_GAME', score: crowdHype });
   };
 
   return (

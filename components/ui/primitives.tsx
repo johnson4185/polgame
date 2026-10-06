@@ -300,9 +300,9 @@ export function ArtPlaceholder({ label, className, compact = false }: { label: s
 }
 
 /** The big saffron END TURN button with the handwritten day note */
-export function EndTurnButton({ day, onClick, disabled, className }: { day: number; onClick: () => void; disabled?: boolean; className?: string }) {
+export function EndTurnButton({ day, onClick, disabled, className, ...rest }: { day: number; onClick: () => void; disabled?: boolean; className?: string; 'data-tour'?: string }) {
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn('relative', className)} {...rest}>
       <button
         onClick={onClick}
         disabled={disabled}

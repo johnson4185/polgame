@@ -86,7 +86,7 @@ export function OverviewView() {
       </div>
 
       {/* Centre: the map */}
-      <Panel className="relative overflow-hidden p-2 sm:p-3">
+      <Panel data-tour="map" className="relative overflow-hidden p-2 sm:p-3">
         <div className="mb-1 flex items-center justify-between px-1">
           <PanelHeader title="India" icon={MapIcon} />
           <span className="text-xs font-bold text-muted">Tap a state</span>

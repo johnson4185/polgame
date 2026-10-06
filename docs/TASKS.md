@@ -209,6 +209,7 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
    - R2 ✅ Overview home + ActionBar (Organise · Media · Legal · Politics menus) + global outcome toast
    - R3 ✅ Crisis deck 5 → 21 (fictional minor characters), crises as event cards, pacing and idle penalties
    - R4 ✅ Media room: narrative battle, trending, platforms, social feed, 4 media actions
+   - R5 ✅ Mini-game rewards in the engine, ticking numbers with +/- bubbles, interactive tutorial
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Backlog
@@ -216,10 +217,8 @@ Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
 - [x] **More operations.** Done in S5 (templates, story launches, player launches).
 - [ ] The Jantar Mantar scene is used for every protest campaign; a local protest elsewhere still shows
       Delhi-specific banners and the Delhi photo. Make the protest scene location-aware (redesign).
-- [ ] **Prologue choice is cosmetic.** `PrologueModal` stores `selectedResponse` but never
-      dispatches it; make each response set different starting stats.
-- [ ] **Mini-game rewards are computed in the components** (`RallyMiniGameModal`,
-      `TVDebateMiniGameModal`). Move the formulas into the engine so it can validate them.
+- [x] **Prologue choice is cosmetic.** Done in S2 (focus choice gives a starting bonus).
+- [x] **Mini-game rewards are computed in the components.** Done in R5 (`miniGameRewards`).
 - [ ] **One election per campaign.** After the coalition there is no next cycle, by-election,
       or no-confidence motion.
 - [ ] Manifesto pledges and cabinet ministries are display-only; wire them to reforms/trust.
@@ -230,7 +229,7 @@ Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
 Features:
 - [ ] Gemini-generated dynamic news headlines via a server route (keeps `GEMINI_API_KEY` secret)
 - [ ] Interactive SVG India map (state-level choropleth of CJP support)
-- [ ] Onboarding/tutorial overlay explaining AP, energy, crackdown, funds, and END DAY
+- [x] Onboarding/tutorial overlay — done in R5 (4 coach steps, waits for real actions)
 
 ## Done
 - [x] Initial local setup: install, typecheck, lint, build, dev server verified (2026-10-05)

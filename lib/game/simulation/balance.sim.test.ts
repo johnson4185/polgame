@@ -72,7 +72,7 @@ function playDay(s: GameState, strat: Strategy): GameState {
       if (game) {
         s = act(s, { type: 'OPEN_MINI_GAME', miniGame: game });
         if (s.activeMiniGame) {
-          s = act(s, { type: 'FINISH_MINI_GAME', result: { score: 55, trustDelta: 15, fundsDelta: 13400, volunteersDelta: 640, xpDelta: 350, notes: 'sim' } });
+          s = act(s, { type: 'FINISH_MINI_GAME', score: 55 });
         }
       } else if (s.party.isFormed) {
         const seat = s.constituencies.filter(c => c.cjpCandidate).sort((a, b) => a.cjpSupportScore - b.cjpSupportScore)[0];

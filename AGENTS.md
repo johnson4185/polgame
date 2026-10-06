@@ -124,7 +124,8 @@ Text over photos/illustrations goes inside `theme-dark-scope`.
 **Use the kit, don't hand-roll.** `components/ui/primitives.tsx` (Button, Panel, PanelHeader,
 StatCard, Meter, SegmentMeter, EffectChip, Badge, StickyNote, SpeechBubble, ArtPlaceholder,
 EndTurnButton) and `components/ui/menus.tsx` (Tabs, Menu dropdown, Tooltip, HoverCard, Popover,
-GameDialog, ChoiceCard; Radix-based). Preview at `/kit`. Prefer dropdowns, popovers and tabs
+GameDialog, ChoiceCard; Radix-based), `components/ui/Ticker.tsx` (animated numbers). Preview at `/kit`.
+Tutorial steps target elements with `data-tour="…"` (`components/shell/Tutorial.tsx`). Prefer dropdowns, popovers and tabs
 over long vertical option lists. App frame: `components/shell/` (TopBar, BottomDock, TitleScreen).
 
 Fonts (next/font, `app/layout.tsx`): `font-display` **Bungee** for short titles, buttons and
