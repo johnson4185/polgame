@@ -25,6 +25,22 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4c · Ledgers screen rebuilt (6 Oct 2026)
+
+**What changed**
+- The three accounts (your savings, the movement fund, the party account) are now resource cards,
+  each showing its monthly cost or status.
+- A runway badge turns gold below 4 months and red below 2. Under 2 months it also tells you to
+  hold a fundraiser or cut stipends.
+- The transaction book has tabs (All, Movement, Personal, Party), plus money-in and money-out
+  totals for the selected account.
+- **Bug fixed:** the book used to show the oldest entry first. It now shows the newest first.
+
+**Checked:** 1440px and 390px with real spending (an RTI and a corroboration): totals, account
+tabs, no horizontal scroll, no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+---
+
 ## A4b · Research screen rebuilt (6 Oct 2026)
 
 **What changed**

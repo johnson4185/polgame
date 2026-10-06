@@ -1,172 +1,108 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { ArrowDownRight, ArrowUpRight, CreditCard, Landmark, ReceiptText, Wallet } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
-import { soundManager } from '@/lib/game/simulation/sound';
 import { formatDate } from '@/lib/game/simulation/engine';
-import { CreditCard, Wallet, TrendingUp, TrendingDown, ShieldCheck, ArrowDownRight, ArrowUpRight, Award, AlertCircle } from 'lucide-react';
+import type { Transaction } from '@/lib/game/types';
+import { Badge, Panel, PanelHeader, StatCard } from '@/components/ui/primitives';
+import { TabPanel, Tabs } from '@/components/ui/menus';
 
+const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+const ACCOUNT_LABEL: Record<Transaction['account'], string> = { PERSONAL: 'Personal', MOVEMENT: 'Movement', PARTY: 'Party' };
+
+/** Ledgers: three separate accounts, runway, and the transaction book by account. */
 export function FinanceLedgerView() {
   const { state } = useGame();
-  const [accountFilter, setAccountFilter] = useState<'ALL' | 'PERSONAL' | 'MOVEMENT' | 'PARTY'>('ALL');
-
-  const filteredTxns = state.transactions.filter(t => {
-    if (accountFilter !== 'ALL' && t.account !== accountFilter) return false;
-    return true;
-  });
-
-  const movementRunwayMonths = state.movement.monthlyBurnRate > 0
-    ? (state.movement.movementFunds / state.movement.monthlyBurnRate).toFixed(1)
-    : '∞';
+  const { movementFunds, monthlyBurnRate } = state.movement;
+  const runway = monthlyBurnRate > 0 ? movementFunds / monthlyBurnRate : Infinity;
+  const txns = state.transactions;
 
   return (
     <div className="space-y-4">
-      
-      {/* Finance Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
-              <span className="stamp-red text-[9px]">AUDIT LEVEL 1</span>
-              <span>TRANSPARENT PUBLIC AUDIT BOOK</span>
-            </span>
-            <span className="text-faint">|</span>
-            <span className="text-xs text-fg-2">Triple Ledger Strict Separation</span>
-          </div>
-          <h2 className="font-display text-xl font-bold text-fg mt-1">
-            Personal Savings · Movement Public Fund · Party Account
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-2 text-xs font-tactical">
-          <div className="rounded-xs border border-line-strong bg-inset px-3.5 py-1.5">
-            <span className="text-muted">CASH RUNWAY: </span>
-            <span className={`font-black tabular-nums text-sm ${Number(movementRunwayMonths) < 2 ? 'text-danger-fg animate-pulse' : 'text-accent-fg'}`}>
-              {movementRunwayMonths} Months
-            </span>
-          </div>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard icon={Wallet} iconTone="teal" label="Your savings" value={inr(state.player.personalSavings)}>
+          <div className="mt-1 text-xs font-bold text-muted">Living costs {inr(state.player.monthlyLivingCost)}/month</div>
+        </StatCard>
+        <StatCard icon={CreditCard} iconTone="saffron" label="Movement fund" value={inr(movementFunds)}>
+          <div className="mt-1 text-xs font-bold text-muted">Spending {inr(monthlyBurnRate)}/month</div>
+        </StatCard>
+        <StatCard icon={Landmark} iconTone="pink" label="Party account" value={inr(state.party.partyFunds)}>
+          <div className="mt-1 text-xs font-bold text-muted">{state.party.isFormed ? 'Regulated by the ECI' : 'Opens when the party registers'}</div>
+        </StatCard>
       </div>
 
-      {/* Account Balances Matrix in Black, Red, Yellow */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-tactical text-xs">
-        
-        {/* Personal Account */}
-        <div className="rounded-xs border-2 border-line bg-surface p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-muted">
-            <span className="font-bold">1. PERSONAL FOUNDER ACCOUNT</span>
-            <Wallet className="h-4 w-4 text-accent-fg" />
-          </div>
-          <div className="text-2xl font-black text-fg tabular-nums">
-            ₹{state.player.personalSavings.toLocaleString('en-IN')}
-          </div>
-          <div className="text-[11px] text-muted font-sans">
-            Monthly Living Costs: ₹{state.player.monthlyLivingCost.toLocaleString('en-IN')}
-          </div>
+      <Panel className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <PanelHeader title="Runway" icon={ReceiptText} />
+          <Badge tone={runway < 2 ? 'danger' : runway < 4 ? 'gold' : 'success'}>
+            {Number.isFinite(runway) ? `${runway.toFixed(1)} months of movement funds` : 'No monthly spending'}
+          </Badge>
         </div>
+        <p className="mt-2 text-sm font-semibold text-fg-2">
+          The three accounts are kept apart: personal money never pays for the movement, and movement money never pays
+          for party campaigns. {runway < 2 && 'Funds are running low. Hold a fundraiser or cut stipends.'}
+        </p>
+      </Panel>
 
-        {/* Movement Fund */}
-        <div className="rounded-xs border-2 border-danger-line bg-danger-soft p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-danger-fg">
-            <span className="font-black">2. MOVEMENT OPERATIONAL FUND</span>
-            <CreditCard className="h-4 w-4 text-danger-fg" />
-          </div>
-          <div className="text-2xl font-black text-accent-fg tabular-nums">
-            ₹{state.movement.movementFunds.toLocaleString('en-IN')}
-          </div>
-          <div className="text-[11px] text-fg-2 font-sans">
-            Monthly Burn: ₹{state.movement.monthlyBurnRate.toLocaleString('en-IN')}/mo
-          </div>
-        </div>
-
-        {/* Party Account */}
-        <div className="rounded-xs border-2 border-line bg-surface p-4 space-y-1.5 shadow-md">
-          <div className="flex items-center justify-between text-muted">
-            <span className="font-bold">3. ELECTORAL PARTY ACCOUNT</span>
-            <ShieldCheck className="h-4 w-4 text-success-fg" />
-          </div>
-          <div className="text-2xl font-black text-fg tabular-nums">
-            ₹{state.party.partyFunds.toLocaleString('en-IN')}
-          </div>
-          <div className="text-[11px] text-muted font-sans">
-            {state.party.isFormed ? 'ECI Regulated Candidate Funds' : 'Pending ECI Registration (₹0)'}
-          </div>
-        </div>
-
-      </div>
-
-      {/* Account Filters */}
-      <div className="flex items-center gap-2 text-xs font-tactical">
-        <span className="text-muted font-bold">FILTER ACCOUNT:</span>
-        {['ALL', 'PERSONAL', 'MOVEMENT', 'PARTY'].map((acc) => (
-          <button
-            key={acc}
-            onClick={() => {
-              soundManager.playClick();
-              setAccountFilter(acc as any);
-            }}
-            className={`px-3 py-1 rounded-xs border font-black transition-all ${
-              accountFilter === acc
-                ? 'border-accent bg-[#FACC15] text-black shadow-xs'
-                : 'border-line bg-raised text-muted hover:text-fg hover:border-line-strong'
-            }`}
-          >
-            {acc}
-          </button>
-        ))}
-      </div>
-
-      {/* Transactions Ledger Table */}
-      <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs shadow-md">
-        <div className="flex items-center justify-between border-b-2 border-line pb-2 mb-3">
-          <h3 className="font-tactical font-black text-fg">
-            CHRONOLOGICAL PUBLIC TRANSACTION BOOK ({filteredTxns.length} ENTRIES)
-          </h3>
-          <span className="text-[10px] font-tactical text-muted">
-            Immutable Double-Entry Ledger
-          </span>
-        </div>
-
-        <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-          {filteredTxns.slice().reverse().map((t) => (
-            <div
-              key={t.id}
-              className="rounded-xs border border-line bg-inset p-3 flex items-center justify-between font-tactical hover:border-line-strong transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-1.5 rounded-xs ${
-                  t.type === 'INCOME' ? 'bg-success-soft text-success-fg border border-success-line' : 'bg-danger-soft text-danger-fg border border-danger-line'
-                }`}>
-                  {t.type === 'INCOME' ? <ArrowDownRight className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
-                </div>
-
-                <div>
-                  <div className="font-bold text-fg text-xs">{t.description}</div>
-                  <div className="text-[10px] text-muted mt-0.5">
-                    {formatDate(t.date)} · Account: <span className="text-accent-fg font-bold">{t.account}</span> · Ref: {t.donorName || t.category}
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div className={`text-sm font-black tabular-nums ${
-                  t.type === 'INCOME' ? 'text-success-fg' : 'text-danger-fg'
-                }`}>
-                  {t.type === 'INCOME' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
-                </div>
-                <div className="text-[10px] text-faint font-mono">
-                  {!t.verified ? (
-                    <span className="text-danger-fg font-black animate-pulse">FLAGGED</span>
-                  ) : (
-                    <span className="text-success-fg font-bold">AUDIT VERIFIED</span>
-                  )}
-                </div>
-              </div>
-            </div>
+      <Panel className="p-3 sm:p-4">
+        <Tabs
+          size="sm"
+          tabs={[
+            { value: 'ALL', label: 'All', badge: txns.length },
+            { value: 'MOVEMENT', label: 'Movement' },
+            { value: 'PERSONAL', label: 'Personal' },
+            { value: 'PARTY', label: 'Party' },
+          ]}
+        >
+          {(['ALL', 'MOVEMENT', 'PERSONAL', 'PARTY'] as const).map(acc => (
+            <TabPanel key={acc} value={acc}>
+              <Book list={acc === 'ALL' ? txns : txns.filter(t => t.account === acc)} />
+            </TabPanel>
           ))}
-        </div>
-      </div>
+        </Tabs>
+      </Panel>
+    </div>
+  );
+}
 
+function Book({ list }: { list: Transaction[] }) {
+  if (list.length === 0) return <p className="py-8 text-center text-sm font-semibold text-muted">No entries yet.</p>;
+  const income = list.filter(t => t.type === 'INCOME').reduce((n, t) => n + t.amount, 0);
+  const spent = list.filter(t => t.type === 'EXPENSE').reduce((n, t) => n + t.amount, 0);
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <Badge tone="success">In {inr(income)}</Badge>
+        <Badge tone="danger">Out {inr(spent)}</Badge>
+        <Badge tone="neutral">{list.length} entries</Badge>
+      </div>
+      {/* the engine keeps the newest entry first */}
+      <ul className="max-h-[28rem] space-y-2 overflow-y-auto pr-1">
+        {list.map(t => {
+          const inc = t.type === 'INCOME';
+          return (
+            <li key={t.id} className="chunky-sm flex items-center gap-3 bg-raised p-2.5">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 border-ink text-white ${inc ? 'bg-success' : 'bg-danger'}`}>
+                {inc ? <ArrowDownRight className="h-4 w-4" strokeWidth={3} aria-label="Income" /> : <ArrowUpRight className="h-4 w-4" strokeWidth={3} aria-label="Expense" />}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 text-sm font-bold text-fg first-letter:uppercase">{t.description}</div>
+                <div className="truncate text-xs font-semibold text-muted">
+                  {formatDate(t.date)} · {ACCOUNT_LABEL[t.account]} · {t.donorName || t.category}
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div className={`text-sm font-extrabold tabular-nums ${inc ? 'text-success-fg' : 'text-danger-fg'}`}>
+                  {inc ? '+' : '−'}
+                  {inr(t.amount)}
+                </div>
+                {!t.verified && <Badge tone="danger">Flagged</Badge>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

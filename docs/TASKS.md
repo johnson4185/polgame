@@ -230,7 +230,7 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
 ### A3. Location-aware protest scene — Claude · ✅ DONE
 Scene text comes from the campaign: police force, march target, permit code, weather and
 temperature by season; no Delhi street names outside Delhi; no named fictional lawyer.
-### A4. Rebuild older screens with the kit — People ✅ · Research ✅ · Ledgers next
+### A4. Rebuild older screens with the kit — People ✅ · Research ✅ · Ledgers ✅ · next: Party, Election, Parliament, Archive, Chronicle (+ Situation log), Personal, Map detail
 
 ## Still open (after the autonomous run)
 - [ ] Illustrations for every `ArtPlaceholder` (waiting on the owner — see PROGRESS "Questions")
