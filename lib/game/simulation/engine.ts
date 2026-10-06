@@ -31,7 +31,7 @@ import { STORY_EVENTS, getStoryEvent } from '../data/story';
 import { getOperationTemplate, type OperationTemplate } from '../data/operations';
 import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -212,6 +212,22 @@ function shiftNarrative(state: GameState, movement: number, government: number):
  * Rewards for a mini-game score (0–100). Computed here, not in the UI, so the engine stays the
  * single source of truth.
  */
+/** Which ministry drives each reform sector */
+const SECTOR_MINISTRY: Record<string, string> = {
+  EXAM_SECURITY: 'MIN-EDU',
+  EDUCATION_INFRA: 'MIN-EDU',
+  JUDICIAL_ACCOUNTABILITY: 'MIN-LAW',
+  CIVIC_PROCUREMENT: 'MIN-FIN',
+  HEALTH_CARE: 'MIN-HEALTH',
+};
+
+/** Earliest date the next general election can be called (a year after the last count) */
+export function nextElectionDate(state: GameState): GameDate | null {
+  const last = state.party.lastElectionDate;
+  if (!last) return null;
+  return { year: last.year + 1, month: last.month, day: last.day };
+}
+
 export function miniGameRewards(kind: 'RALLY' | 'TV_DEBATE', rawScore: number) {
   const score = clamp(Math.round(rawScore), 0, 100);
   if (kind === 'RALLY') {
@@ -380,6 +396,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
           publicAppeal: 92,
           vestedResistance: 75,
           fulfilled: false,
+          reformId: 'REFORM-EXAM-ACT',
         },
         {
           id: 'MAN-02',
@@ -390,6 +407,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
           publicAppeal: 88,
           vestedResistance: 85,
           fulfilled: false,
+          reformId: 'REFORM-RTI-FASTTRACK',
         },
       ],
       candidateCount: 0,
@@ -895,6 +913,14 @@ export function migrateState(saved: GameState): GameState {
     activeOperationId: saved.activeOperationId ?? saved.operations?.[0]?.id ?? null,
     // v7: media room
     media: saved.media ?? initialMediaState(),
+    // v8: manifesto pledges linked to reforms
+    party: {
+      ...saved.party,
+      manifestoPledges: (saved.party?.manifestoPledges ?? fresh.party.manifestoPledges).map(pl => ({
+        ...pl,
+        reformId: pl.reformId ?? fresh.party.manifestoPledges.find(f => f.id === pl.id)?.reformId,
+      })),
+    },
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
@@ -1468,9 +1494,7 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'NOMINATE_CANDIDATE': {
       if (!state.party.isFormed) return fail(state, 'Register the party before nominating candidates.');
-      if (state.electionLiveState.isCountingUnderway || state.electionLiveState.isCountingFinished) {
-        return fail(state, 'Nominations are closed.');
-      }
+      if (state.electionLiveState.isCountingUnderway) return fail(state, 'Nominations are closed while votes are counted.');
       const c = state.constituencies.find(x => x.id === action.constituencyId);
       if (!c) return fail(state, `No constituency #${action.constituencyId}.`);
       if (c.cjpCandidate) return fail(state, `${c.name} already has a candidate (${c.cjpCandidate.name}).`);
@@ -1505,8 +1529,21 @@ function reduce(state: GameState, action: GameAction): GameState {
       const live = state.electionLiveState;
       if (!state.party.isFormed) return fail(state, 'Register the party first.');
       if (state.party.candidateCount < 1) return fail(state, 'Nominate at least one candidate first.');
-      if (live.isCountingUnderway || live.isCountingFinished) return state;
-      const next = runElection(state);
+      if (live.isCountingUnderway) return state;
+      let base = state;
+      if (live.isCountingFinished) {
+        const due = nextElectionDate(state);
+        if (due && dateKey(state.currentDate) < dateKey(due)) {
+          return fail(state, `The next general election can be called from ${formatDate(due)}.`);
+        }
+        // A new cycle: clear old results and the old mandate; candidates stand again
+        base = {
+          ...state,
+          constituencies: state.constituencies.map(c => ({ ...c, electionResult: undefined })),
+          party: { ...state.party, isRulingCoalition: false, isOppositionLead: false, actualSeatsWon: 0 },
+        };
+      }
+      const next = runElection(base);
       return {
         ...next,
         activeScreen: 'ELECTION_NIGHT',
@@ -1547,7 +1584,11 @@ function reduce(state: GameState, action: GameAction): GameState {
           isCountingUnderway: !finished,
           isCountingFinished: finished,
         },
-        party: { ...state.party, actualSeatsWon: t.cjp },
+        party: {
+          ...state.party,
+          actualSeatsWon: t.cjp,
+          ...(finished ? { lastElectionDate: { ...state.currentDate }, electionsHeld: (state.party.electionsHeld ?? 0) + 1 } : {}),
+        },
       };
       if (finished) {
         next = addJournal(
@@ -1623,10 +1664,13 @@ function reduce(state: GameState, action: GameAction): GameState {
       const s = spendAction(state);
       if (typeof s === 'string') return fail(state, s);
       const seats = state.party.actualSeatsWon;
+      // Holding the relevant ministry in government makes a bill much easier to move
+      const ministry = state.cabinet.find(c => c.id === SECTOR_MINISTRY[r.sector]);
+      const ministryBonus = state.party.isRulingCoalition && ministry?.isPlayerParty ? 5 + Math.round(ministry.performanceScore / 20) : 0;
       const gain = clamp(
-        Math.round(8 + seats / 8 + (state.party.isRulingCoalition ? 12 : 0) + state.player.negotiation - r.bureaucraticResistance / 10),
+        Math.round(8 + seats / 8 + (state.party.isRulingCoalition ? 12 : 0) + ministryBonus + state.player.negotiation - r.bureaucraticResistance / 10),
         3,
-        40,
+        45,
       );
       const progress = Math.min(100, r.implementationProgress + gain);
       const passed = progress >= 100;
@@ -1640,6 +1684,15 @@ function reduce(state: GameState, action: GameAction): GameState {
       if (passed) {
         next = adjustMovement(next, { trust: 6 });
         next = addJournal(next, `Act Passed: ${r.name}`, r.description, 'HISTORIC_TURNING_POINT', 'GOVERNMENT');
+        const pledge = next.party.manifestoPledges.find(pl => pl.reformId === r.id && !pl.fulfilled);
+        if (pledge) {
+          next = {
+            ...adjustMovement(next, { trust: 4, credibility: 4 }),
+            party: { ...next.party, manifestoPledges: next.party.manifestoPledges.map(pl => (pl.id === pledge.id ? { ...pl, fulfilled: true } : pl)) },
+          };
+          next = addJournal(next, `Promise Kept: ${pledge.title}`, 'A manifesto pledge is now law.', 'MILESTONE', 'PARTY_ECI');
+          return withOutcome(next, `${r.name} passed into law, and a manifesto promise is kept! Trust +10.`);
+        }
         return withOutcome(next, `${r.name} passed into law! Trust +6.`);
       }
       return withOutcome(next, `${r.name}: support +${gain}% (now ${progress}%).`);
@@ -1930,6 +1983,16 @@ export function advanceSimulationDay(state: GameState): GameState {
       'HISTORIC_TURNING_POINT',
       'JOURNAL',
     );
+  }
+
+  // In government with collapsing trust: partners walk out at the start of a month
+  if (isNewMonth && next.party.isRulingCoalition && next.movement.publicTrust < 25) {
+    next = {
+      ...next,
+      party: { ...next.party, isRulingCoalition: false, isOppositionLead: next.party.actualSeatsWon > 0 },
+    };
+    next = addJournal(next, 'The Coalition Collapses', 'With public trust below 25%, coalition partners withdrew support. You are back in opposition.', 'HISTORIC_TURNING_POINT', 'GOVERNMENT');
+    next = withOutcome(next, 'Coalition partners walked out: you are back in opposition.', 'WARNING');
   }
 
   // Running campaigns pay out their template effects, scaled by crowd morale

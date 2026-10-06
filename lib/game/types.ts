@@ -94,6 +94,9 @@ export interface PartyStats {
   actualSeatsWon: number;
   isRulingCoalition: boolean;
   isOppositionLead: boolean;
+  /** Date the most recent general election was counted */
+  lastElectionDate?: GameDate;
+  electionsHeld?: number;
 }
 
 export interface ManifestoPledge {
@@ -105,6 +108,8 @@ export interface ManifestoPledge {
   publicAppeal: number; // 0 - 100
   vestedResistance: number; // 0 - 100
   fulfilled: boolean;
+  /** Passing this reform fulfils the pledge */
+  reformId?: string;
 }
 
 export interface RecruitablePerson {

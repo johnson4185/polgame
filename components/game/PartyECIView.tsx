@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
-import { BALANCE } from '@/lib/game/simulation/engine';
+import { BALANCE, formatDate, isoDate, nextElectionDate } from '@/lib/game/simulation/engine';
 import { Vote, Shield, Check, Plus, AlertCircle, ArrowRight, UserCheck, Award, Flag, Flame } from 'lucide-react';
 
 export function PartyECIView() {
@@ -70,7 +70,12 @@ export function PartyECIView() {
       met: state.movement.movementFunds >= BALANCE.partyRegistrationCost,
     },
   ];
-  const electionHeld = state.electionLiveState.isCountingUnderway || state.electionLiveState.isCountingFinished;
+  const counting = state.electionLiveState.isCountingUnderway;
+  const nextDue = nextElectionDate(state);
+  const waitingForNext = !!nextDue && isoDate(state.currentDate) < isoDate(nextDue);
+  // Locked while votes are counted, or until a year after the last election
+  const electionHeld = counting || waitingForNext;
+  const act1 = (state.story?.act ?? 1) === 1;
 
   const handleLaunchElection = () => {
     soundManager.playGavel();
@@ -111,11 +116,26 @@ export function PartyECIView() {
               className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-5 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Vote className="h-4 w-4 text-accent-fg" />
-              <span>{electionHeld ? 'Election Held' : 'Launch 543 General Election Tally'}</span>
+              <span>
+                {counting
+                  ? 'Counting under way'
+                  : waitingForNext
+                    ? `Next election from ${formatDate(nextDue!)}`
+                    : nextDue
+                      ? 'Call the next general election'
+                      : 'Launch 543 General Election Tally'}
+              </span>
             </button>
           </div>
         )}
       </div>
+
+      {act1 && !state.party.isFormed && (
+        <div className="chunky-sm bg-accent p-3 text-sm font-bold text-ink">
+          Party registration opens on 5 October 2026, when Act 1 ends. In the real record CJP had not registered as a party by then.
+          Until then, build volunteers and money so you&apos;re ready.
+        </div>
+      )}
 
       {!state.party.isFormed ? (
         /* Party Registration Flow */

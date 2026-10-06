@@ -357,3 +357,14 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Older screens (not yet rebuilt with the kit) still use thin "rounded-xs border-2" cards.
+   Give them the poster look so every screen feels like the same game. */
+main .rounded-xs.border-2 {
+  border-radius: 14px;
+  border-color: var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+main .rounded-xs.border {
+  border-radius: 10px;
+}

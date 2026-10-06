@@ -9,6 +9,21 @@ _None yet._
 
 ---
 
+## R6 · Politics after the election (6 Oct 2026)
+
+**What changed**
+- **Elections repeat**: a year after an election you can call the next one. Old results clear,
+  nominations reopen and your seats are won again (or lost).
+- **Coalitions can collapse**: if you're in government and public trust falls below 25% at the start
+  of a month, your partners walk out.
+- **Manifesto promises matter**: the two pledges are linked to bills. Passing one marks the promise
+  as kept (+10 trust in total, +4 credibility).
+- **Cabinet matters**: in government, holding the ministry for a bill's sector (Education, Law,
+  Finance, Health) makes lobbying much faster.
+- The Party desk explains that registration opens on 5 October (Act 2), as in the record.
+- The older screens (People, Research, Ledgers, Party, Election, Parliament, Archive, Chronicle,
+  Personal life, Map detail) now use the same chunky poster cards as the new ones.
+
 ## R5 · Game feel and a tutorial (6 Oct 2026)
 
 **What changed**

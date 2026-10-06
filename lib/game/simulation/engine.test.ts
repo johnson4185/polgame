@@ -573,3 +573,48 @@ describe('mini-games in the engine (R5)', () => {
     expect(s.movement.volunteerCount).toBeGreaterThan(before);
   });
 });
+
+describe('politics cycle (R6)', () => {
+  // Act 2 with a registered party and a few candidates
+  const act2Party = (): GameState => {
+    let s: GameState = { ...begin(), story: { ...begin().story, act: 2 }, movement: { ...begin().movement, volunteerCount: 30000, movementFunds: 5_000_000, publicTrust: 70 } };
+    s = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
+    for (const c of s.constituencies.slice(0, 20)) s = gameReducer(s, { type: 'NOMINATE_CANDIDATE', constituencyId: c.id, candidateName: `C${c.id}`, funding: 50000 });
+    return s;
+  };
+  const count = (s: GameState) => {
+    for (let i = 0; i < 20; i++) s = gameReducer(s, { type: 'STEP_ELECTION_COUNT' });
+    return s;
+  };
+
+  it('allows the next general election a year after the last one', () => {
+    let s = count(gameReducer(act2Party(), { type: 'TRIGGER_ELECTION' }));
+    expect(s.party.electionsHeld).toBe(1);
+    const tooSoon = gameReducer(s, { type: 'TRIGGER_ELECTION' });
+    expect(tooSoon.lastOutcome?.tone).toBe('FAILURE');
+    const last = s.party.lastElectionDate!;
+    s = { ...s, currentDate: { ...last, year: last.year + 1 } };
+    s = count(gameReducer(s, { type: 'TRIGGER_ELECTION' }));
+    expect(s.party.electionsHeld).toBe(2);
+    const live = s.electionLiveState;
+    expect(live.rulingSeats + live.oppositionSeats + live.cjpSeats + live.otherSeats).toBe(543);
+  });
+
+  it('keeps a manifesto promise when its reform passes', () => {
+    let s = count(gameReducer(act2Party(), { type: 'TRIGGER_ELECTION' }));
+    s = { ...s, party: { ...s.party, actualSeatsWon: Math.max(1, s.party.actualSeatsWon), isRulingCoalition: true }, electionLiveState: { ...s.electionLiveState, coalitionFormed: true } };
+    s = gameReducer(s, { type: 'TABLE_REFORM', reformId: 'REFORM-EXAM-ACT' });
+    for (let i = 0; i < 10 && s.reforms.find(r => r.id === 'REFORM-EXAM-ACT')!.status !== 'PASSED_ACT'; i++) {
+      s = gameReducer({ ...s, actionPoints: 3 }, { type: 'LOBBY_REFORM', reformId: 'REFORM-EXAM-ACT' });
+    }
+    expect(s.reforms.find(r => r.id === 'REFORM-EXAM-ACT')!.status).toBe('PASSED_ACT');
+    expect(s.party.manifestoPledges.find(p => p.reformId === 'REFORM-EXAM-ACT')!.fulfilled).toBe(true);
+  });
+
+  it('a coalition collapses when trust falls below 25', () => {
+    let s = { ...act2Party(), currentDate: { year: 2026, month: 11, day: 30 } };
+    s = { ...s, party: { ...s.party, isRulingCoalition: true, actualSeatsWon: 10 }, movement: { ...s.movement, publicTrust: 20 } };
+    s = gameReducer({ ...s, activeCrisis: null, story: { ...s.story, activeEventId: null } }, { type: 'ADVANCE_DAY' });
+    expect(s.party.isRulingCoalition).toBe(false);
+  });
+});
