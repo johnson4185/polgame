@@ -113,7 +113,7 @@ export function SaveLoadModal({ onClose }: { onClose: () => void }) {
                       slot.status === 'unavailable' ? 'Browser storage is unavailable. You can still download your current campaign.' :
                       'This slot contains a checkpoint that cannot be read by this version. Replacing it will overwrite that checkpoint.'
                     }</p>}
-                    {automatic ? <p className="text-xs text-muted">Updates automatically every 20 seconds during a campaign.</p> : <label className="block text-sm font-bold" htmlFor={`save-name-${slot.id}`}>
+                    {automatic ? <p className="text-xs text-muted">Updates at the start of each day, after every story decision, and every 20 seconds.</p> : <label className="block text-sm font-bold" htmlFor={`save-name-${slot.id}`}>
                       Checkpoint name
                       <input id={`save-name-${slot.id}`} value={name} maxLength={SAVE_NAME_LIMIT}
                         onChange={event => { setNames(previous => ({ ...previous, [slot.id]: event.target.value })); setOverwrite(null); }}

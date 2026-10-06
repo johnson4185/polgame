@@ -25,6 +25,20 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## Codex features integrated (6 Oct 2026)
+
+**What changed**
+- **Save & load** (Settings → Save / Load): autosave plus three named checkpoints with a preview of
+  each (date, funds, trust, volunteers, seats), rename, a confirmation before overwriting, download of
+  the current campaign or any checkpoint, and import of a JSON backup with a preview before loading.
+  Broken or newer-version files are rejected.
+- **Statistics** (More → Chronicle → Statistics): charts of funds, followers, trust, volunteers,
+  credibility and legal heat over the last 7 or 30 days or all recorded days, a date slider, exact
+  values, and a list of major decisions. History is kept in this browser, separately from saves.
+
+**What a player will notice**
+- Old saves still load; the save menu explains that browser saves aren't encrypted.
+
 ## R6 · Politics after the election (6 Oct 2026)
 
 **What changed**

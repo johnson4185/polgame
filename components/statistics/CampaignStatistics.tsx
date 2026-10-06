@@ -7,10 +7,10 @@ import { useGame } from '@/lib/game/context/GameContext';
 import { useCampaignStatistics } from './CampaignStatisticsProvider';
 import { DailySnapshot, dateKey, METRICS, Metric, recentHistory } from '@/lib/game/statistics/history';
 
-const LABELS: Record<Metric, string> = { funds: 'Movement funds', trust: 'Public trust', volunteers: 'Volunteers', credibility: 'Credibility', legalHeat: 'Legal heat' };
+const LABELS: Record<Metric, string> = { funds: 'Movement funds', followers: 'Followers', trust: 'Public trust', volunteers: 'Volunteers', credibility: 'Credibility', legalHeat: 'Legal heat' };
 const number = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 });
 function valueLabel(metric: Metric, value: number) {
-  return metric === 'funds' ? `₹${number.format(value)}` : `${number.format(value)}${metric === 'volunteers' ? '' : '%'}`;
+  return metric === 'funds' ? `₹${number.format(value)}` : `${number.format(value)}${metric === 'volunteers' || metric === 'followers' ? '' : '%'}`;
 }
 function dateLabel(date: string) {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -23,7 +23,7 @@ function TrendChart({ points, metric }: { points: DailySnapshot[]; metric: Metri
   const selectedIndex = matchingIndex >= 0 ? matchingIndex : points.length - 1;
   const point = points[selectedIndex];
   if (!point) return <p className="py-8 text-muted">Begin your campaign to record its first snapshot.</p>;
-  const max = metric === 'funds' || metric === 'volunteers' ? Math.max(1, ...points.map(item => item[metric])) : 100;
+  const max = metric === 'funds' || metric === 'volunteers' || metric === 'followers' ? Math.max(1, ...points.map(item => item[metric])) : 100;
   const time = (date: string) => Date.parse(`${date}T00:00:00Z`);
   const start = time(points[0].date);
   const span = time(points[points.length - 1].date) - start;
@@ -99,7 +99,7 @@ export function CampaignStatistics() {
         {first && last && <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             ['Latest recorded', valueLabel(metric, last[metric])],
-            ['Change in period', `${last[metric] - first[metric] > 0 ? '+' : ''}${metric === 'funds' || metric === 'volunteers' ? valueLabel(metric, last[metric] - first[metric]) : `${number.format(last[metric] - first[metric])} percentage points`}`],
+            ['Change in period', `${last[metric] - first[metric] > 0 ? '+' : ''}${metric === 'funds' || metric === 'volunteers' || metric === 'followers' ? valueLabel(metric, last[metric] - first[metric]) : `${number.format(last[metric] - first[metric])} percentage points`}`],
             ['Peak in period', valueLabel(metric, Math.max(...points.map(point => point[metric])))],
           ].map(([label, value]) => <div key={label} className="chunky-sm min-w-0 bg-inset p-3"><p className="text-xs text-muted">{label}</p><p className="break-words text-lg font-bold text-fg">{value}</p></div>)}
         </div>}

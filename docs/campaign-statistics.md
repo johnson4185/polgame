@@ -6,7 +6,7 @@ Claude's uncommitted S1 story work is not included or modified.
 
 ## Player experience
 
-Open **More → Chronicle → Statistics**. Select movement funds, public trust,
+Open **More → Chronicle → Statistics**. Select movement funds, followers, public trust,
 volunteers, credibility, or legal heat and a 7-day, 30-day, or all-recorded period.
 The chart has a keyboard-accessible date slider and an exact-value table.
 Summary cards show the latest value, change, and peak for the selected period.

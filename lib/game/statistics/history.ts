@@ -1,7 +1,7 @@
 import type { GameDate, GameState } from '@/lib/game/types';
 
 export const HISTORY_LIMIT = 730;
-export const METRICS = ['funds', 'trust', 'volunteers', 'credibility', 'legalHeat'] as const;
+export const METRICS = ['funds', 'followers', 'trust', 'volunteers', 'credibility', 'legalHeat'] as const;
 export type Metric = typeof METRICS[number];
 export type DailySnapshot = Record<Metric, number> & { date: string };
 
@@ -17,6 +17,7 @@ export function snapshot(state: GameState): DailySnapshot {
   return {
     date: dateKey(state.currentDate),
     funds: state.movement.movementFunds,
+    followers: state.movement.followers ?? 0,
     trust: state.movement.publicTrust,
     volunteers: state.movement.volunteerCount,
     credibility: state.movement.mediaCredibility,

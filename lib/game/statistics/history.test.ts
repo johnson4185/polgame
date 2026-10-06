@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createInitialState } from '@/lib/game/simulation/engine';
 import { campaignKey, DailySnapshot, HISTORY_LIMIT, parseHistory, recentHistory, recordSnapshot, snapshot } from './history';
 
-const point = (date: string, funds = 100): DailySnapshot => ({ date, funds, trust: 50, volunteers: 100, credibility: 40, legalHeat: 10 });
+const point = (date: string, funds = 100): DailySnapshot => ({ date, funds, followers: 1000, trust: 50, volunteers: 100, credibility: 40, legalHeat: 10 });
 
 describe('observed campaign history', () => {
   it('replaces the current day without mutating history, and ignores unchanged UI updates', () => {

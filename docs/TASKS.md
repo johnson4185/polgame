@@ -4,13 +4,6 @@ Shared between Claude Code and Codex. Claim a task by putting your agent + branc
 before starting; move it to Done when merged.
 
 ## File ownership while tasks are in flight
-Codex handoff (owner approved 5 Oct 2026): campaign statistics is developed separately in
-`C:/Aurliqlabs/polgame-codex-stats`, branch `codex/campaign-statistics`. Scope:
-`components/statistics/**`, `lib/game/statistics/**`, plus small integration additions in
-`app/page.tsx` and `components/game/JournalEndingsView.tsx`. Claude continues the existing
-story/redesign work; engine, game types, context and save format are unchanged by this feature.
-The ownership table below describes Claude's earlier run, before this separate task was approved.
-
 To avoid merge conflicts, only the owning task may edit these files until it merges:
 
 | Files | Owner |
@@ -18,21 +11,6 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 | Everything | Claude — autonomous run (5 Oct 2026). Codex tasks C1, C4, C5 taken over by Claude with the owner's permission; no other agent is active. |
 
 ## In progress
-Save manager — Codex, `codex/save-manager`, separate worktree `C:/Aurliqlabs/polgame-codex-saves`,
-based on the completed statistics branch. Owner approved named saves, previews and easier backups.
-Scope: `components/game/SaveLoadModal.tsx`, `components/saves/**`,
-`lib/game/simulation/persistence.ts`, `saveValidation.ts` and persistence tests.
-Implemented; awaiting integration. Typecheck, lint (no warnings), all 39 tests,
-and build:check pass. Preview on port 3002 returns HTTP 200. Visual browser/mobile
-checks remain manual because browser automation is unavailable. Handoff:
-`docs/save-manager.md`. No engine, types or story edits.
-
-Campaign statistics — Codex, `codex/campaign-statistics`: implemented, awaiting integration
-with Claude's work. Resource charts, observed daily history, and journal milestones under
-Chronicle → Statistics. Stored independently in browser storage; old saves begin recording
-when first observed, and loading earlier saves truncates later history. Handoff and validation:
-`docs/campaign-statistics.md`.
-
 | Task | Agent | Branch |
 |------|-------|--------|
 
@@ -271,6 +249,9 @@ Features:
       crackdown/insolvency/trust-decay pressure; derived quests & rank-based AP; all 543 seats
       nominatable; save migration; Vitest (engine + balance sim); header no longer overflows
 - [x] Headless balance simulation (`lib/game/simulation/balance.sim.test.ts`)
+- [x] Campaign statistics (Codex `456953f`) and save manager (Codex `91aed90`) — integrated by Claude
+      6 Oct 2026; Followers added as a statistics metric. See `docs/campaign-statistics.md`,
+      `docs/save-manager.md`.
 - [x] UI overhaul (Claude, 2026-10-05; absorbed Codex task C3): semantic colour tokens with a real
       light theme; next/font typography; rebuilt header, tab bar, HUD, ticker, footer; no horizontal
       scroll on any screen at 390px; election empty state; honest Parliament state before MPs;
