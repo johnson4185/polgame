@@ -1716,6 +1716,7 @@ export function pumpStory(state: GameState, registry: StoryEvent[] = STORY_EVENT
     ...st.queue.filter(q => q.due <= today).map(q => ({ id: q.eventId, due: q.due, queued: true })),
     ...registry
       .filter(e => e.date && e.date >= st.startedOn && e.date <= today && !st.firedIds.includes(e.id))
+      .filter(e => !e.skipIfChosen?.some(k => st.choices[k.event] === k.choice))
       .map(e => ({ id: e.id, due: e.date!, queued: false })),
   ].sort((a, b) => a.due.localeCompare(b.due) || Number(b.queued) - Number(a.queued));
 
@@ -1738,6 +1739,8 @@ export function describeEffects(e: StoryEffects): string {
   if (e.energy) parts.push(`energy ${signed(e.energy)}`);
   if (e.stress) parts.push(`stress ${signed(e.stress)}`);
   if (e.govResponse) parts.push(e.govResponse > 0 ? 'government escalates' : 'government eases off');
+  if (e.recruit?.length) parts.push(`${e.recruit.length} join${e.recruit.length === 1 ? 's' : ''} the team`);
+  if (e.dismiss?.length) parts.push(`${e.dismiss.length} leave${e.dismiss.length === 1 ? 's' : ''} the team`);
   return parts.join(', ');
 }
 
@@ -1748,6 +1751,22 @@ function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
   }
   if (e.govResponse) {
     next = { ...next, govResponse: { pressure: clamp((next.govResponse?.pressure ?? 0) + e.govResponse * 10, 0, 100) } };
+  }
+  // Team changes driven by the story (real people join on the day the record says they did)
+  for (const [ids, hired] of [[e.recruit, true], [e.dismiss, false]] as const) {
+    for (const id of ids ?? []) {
+      const person = next.people.find(p => p.id === id);
+      if (!person || person.isHired === hired) continue;
+      next = {
+        ...next,
+        people: next.people.map(p => (p.id === id ? { ...p, isHired: hired, currentAssignment: hired ? p.currentAssignment : null } : p)),
+        movement: {
+          ...next.movement,
+          coreStaffCount: Math.max(0, next.movement.coreStaffCount + (hired ? 1 : -1)),
+          monthlyBurnRate: Math.max(10000, next.movement.monthlyBurnRate + (hired ? 1 : -1) * person.salaryMonthly),
+        },
+      };
+    }
   }
   if (e.legalHeat) next = adjustCrackdown(next, e.legalHeat);
   if (e.energy || e.stress) {

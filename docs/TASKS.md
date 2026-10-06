@@ -145,7 +145,9 @@ Files: `lib/game/types.ts`, `lib/game/simulation/engine.ts`, `lib/game/simulatio
   choice breaks from history (decide in the S2 plan).
 - Re-run the balance simulation for the new opening.
 
-### S3. Write Act 1 events — Claude, or Codex once S1 merges
+### S3. Write Act 1 events — Claude · ✅ DONE (merged 6 Oct 2026)
+79 events in `lib/game/data/story/act1-{may,jun,jul,aug-sep,oct}.ts`; tests check every source anchor
+against the timeline's headings and play all of Act 1 the historical way.
 Files: new `lib/game/data/story/act1-*.ts` only (one file per batch). Depends on S1.
 - One month per batch, 10–20 events each: May (16–31) · June · July · August · September ·
   October (1–5). Each event cites its timeline heading in `source` and marks the historical choice.

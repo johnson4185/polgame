@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { createInitialState, gameReducer, BALANCE, GameAction, migrateState, SAVE_VERSION, govStage } from './engine';
 import type { GameState } from '../types';
 import { STORY_EVENTS } from '../data/story';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 // Start a campaign and answer the opening story event (16 May launch) the way history went
 const begin = (): GameState => {
@@ -10,6 +12,24 @@ const begin = (): GameState => {
     const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
     s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: ev.choices[ev.historicalChoice ?? 0].id });
   }
+  return s;
+};
+
+// Open a specific story event now
+const fireNow = (s: GameState, id: string): GameState => ({ ...s, story: { ...s.story, activeEventId: id, firedIds: [...s.story.firedIds, id] } });
+
+// Answer any open story events with their first affordable choice
+const settle = (s: GameState): GameState => {
+  for (let g = 0; g < 20 && s.story.activeEventId; g++) {
+    const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: ev.choices.find(c => !c.cost || c.cost <= s.movement.movementFunds)!.id });
+  }
+  return s;
+};
+
+// Advance n days, settling story events and clearing random crises on the way
+const passDays = (s: GameState, n: number): GameState => {
+  for (let i = 0; i < n; i++) s = gameReducer({ ...settle(s), activeCrisis: null }, { type: 'ADVANCE_DAY' });
   return s;
 };
 
@@ -291,10 +311,10 @@ describe('story events (S1)', () => {
     expect(s.story.activeEventId).toBe('evt_0516_launch');
     expect(gameReducer(s, { type: 'ADVANCE_DAY' })).toBe(s);
     s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'post' });
-    expect(s.story.activeEventId).toBeNull();
+    expect(s.story.activeEventId).not.toBe('evt_0516_launch'); // the next same-day event may open
     expect(s.story.choices.evt_0516_launch).toBe('post');
     expect(s.story.divergence).toBe(0);
-    s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    s = passDays(s, 1);
     expect(s.story.firedIds.filter(id => id === 'evt_0516_launch')).toHaveLength(1);
   });
 
@@ -306,21 +326,19 @@ describe('story events (S1)', () => {
   });
 
   it('queues a delayed follow-up and fires it on time', () => {
-    let s = advanceTo(fromMay(), '2026-05-21');
-    if (s.story.activeEventId !== 'evt_0521_x_block') s = gameReducer(s, { type: 'ADVANCE_DAY' });
-    expect(s.story.activeEventId).toBe('evt_0521_x_block');
+    let s = fireNow(at(begin(), { year: 2026, month: 5, day: 21 }), 'evt_0521_x_block');
+    s = { ...s, movement: { ...s.movement, movementFunds: 100000 } };
     s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'court' });
     expect(s.story.queue).toEqual([{ eventId: 'evt_0526_hc_petition', due: '2026-05-26' }]);
-    for (let i = 0; i < 4; i++) s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
-    expect(s.story.activeEventId).toBeNull();
-    s = gameReducer({ ...s, activeCrisis: null }, { type: 'ADVANCE_DAY' });
+    s = passDays(s, 4);
+    expect(s.story.firedIds).not.toContain('evt_0526_hc_petition');
+    s = passDays(s, 1);
     expect(isoDateOf(s)).toBe('2026-05-26');
-    expect(s.story.activeEventId).toBe('evt_0526_hc_petition');
+    expect(s.story.firedIds).toContain('evt_0526_hc_petition');
   });
 
   it('refuses a choice the movement cannot afford', () => {
-    let s = advanceTo(fromMay(), '2026-05-21');
-    if (s.story.activeEventId !== 'evt_0521_x_block') s = gameReducer(s, { type: 'ADVANCE_DAY' });
+    let s = fireNow(at(begin(), { year: 2026, month: 5, day: 21 }), 'evt_0521_x_block');
     s = { ...s, movement: { ...s.movement, movementFunds: 1000 } };
     const r = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'court' });
     expect(r.lastOutcome?.tone).toBe('FAILURE');
@@ -328,8 +346,10 @@ describe('story events (S1)', () => {
   });
 
   it('never fires events dated before the campaign started', () => {
-    const s = advanceTo(at(begin(), { year: 2026, month: 6, day: 1 }), '2026-06-05');
-    expect(s.story.firedIds.some(id => id.startsWith('evt_05') && id !== 'evt_0516_launch')).toBe(false);
+    const start = at(begin(), { year: 2026, month: 6, day: 1 });
+    const s = passDays(start, 4);
+    const newlyFired = s.story.firedIds.filter(id => !start.story.firedIds.includes(id));
+    expect(newlyFired.some(id => id.startsWith('evt_05'))).toBe(false);
   });
 
   it('every event in the registry is well formed', () => {
@@ -356,9 +376,7 @@ describe('Act 1 frame (S2)', () => {
   it('story effects move followers and the government response meter', () => {
     const s = begin(); // launch: "post" adds followers
     expect(s.movement.followers).toBeGreaterThan(0);
-    let x = at(s, { year: 2026, month: 5, day: 20 });
-    x = gameReducer(x, { type: 'ADVANCE_DAY' }); // 21 May: X block
-    expect(x.story.activeEventId).toBe('evt_0521_x_block');
+    let x = fireNow(at(s, { year: 2026, month: 5, day: 21 }), 'evt_0521_x_block');
     const before = x.govResponse.pressure;
     x = gameReducer(x, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'back' });
     expect(x.govResponse.pressure).toBe(before + 10);
@@ -383,12 +401,69 @@ describe('Act 1 frame (S2)', () => {
     let s = { ...begin(), movement: { ...begin().movement, volunteerCount: 20000, movementFunds: 1_000_000 } };
     const locked = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
     expect(locked.party.isFormed).toBe(false);
-    s = at(s, { year: 2026, month: 10, day: 4 });
+    s = at(s, { year: 2026, month: 10, day: 5 });
     s = gameReducer(s, { type: 'ADVANCE_DAY' });
     expect(s.story.act).toBe(2);
-    expect(s.story.activeEventId).toBe('evt_1005_record_ends');
+    s = { ...s, story: { ...s.story, activeEventId: 'evt_1005_record_ends' } };
     s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'party' });
     const open = gameReducer(s, { type: 'FORM_PARTY', partyName: 'CJP', abbreviation: 'CJP', symbol: 'x' });
     expect(open.party.isFormed).toBe(true);
+  });
+});
+
+describe('Act 1 calendar (S3)', () => {
+  // GitHub-style anchors for the timeline's headings
+  const timeline = readFileSync(path.join(__dirname, '../../../docs/cjp-timeline.md'), 'utf8');
+  const anchors = new Set(
+    timeline
+      .split('\n')
+      .filter(l => /^#{2,3} /.test(l))
+      .map(l => l.replace(/^#{2,3} /, '').trim().toLowerCase().replace(/[^\w\- ]/g, '').replace(/ /g, '-')),
+  );
+
+  it('cites only headings that exist in the timeline', () => {
+    const bad = STORY_EVENTS.filter(e => e.source && !anchors.has(e.source.split('#')[1])).map(e => `${e.id} → ${e.source}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('covers every month from 16 May to 5 October, in date order per file, with unique ids', () => {
+    const ids = STORY_EVENTS.map(e => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const months = new Set(STORY_EVENTS.filter(e => e.date).map(e => e.date!.slice(0, 7)));
+    expect([...months].sort()).toEqual(['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']);
+    expect(STORY_EVENTS.length).toBeGreaterThanOrEqual(70);
+  });
+
+  it('plays all of Act 1 following history without getting stuck', () => {
+    let s = gameReducer(createInitialState('ABHIJEET_CJP', 7), { type: 'FINISH_PROLOGUE', focus: 'EXAMS' });
+    s = { ...s, movement: { ...s.movement, movementFunds: 5_000_000 } }; // keep costed choices affordable
+    for (let day = 0; day < 160 && !(s.story.act === 2 && !s.story.activeEventId); day++) {
+      for (let g = 0; g < 10 && s.story.activeEventId; g++) {
+        const ev = STORY_EVENTS.find(e => e.id === s.story.activeEventId)!;
+        s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: ev.choices[ev.historicalChoice ?? 0].id });
+      }
+      s = gameReducer({ ...s, activeCrisis: null, gameOver: null, crackdownLevel: Math.min(s.crackdownLevel, 60) }, { type: 'ADVANCE_DAY' });
+    }
+    expect(s.story.act).toBe(2);
+    // Every dated event fired exactly once, except those skipped by an earlier choice
+    const dated = STORY_EVENTS.filter(e => e.date && !e.skipIfChosen?.some(k => s.story.choices[k.event] === k.choice));
+    for (const e of dated) expect(s.story.firedIds.filter(id => id === e.id)).toHaveLength(1);
+    expect(s.story.divergence).toBe(0);
+    // The 20 July march played out as a chain on one day
+    for (const id of ['evt_0720_lockdown', 'evt_0720_barricades', 'evt_0720_talks', 'evt_0720_night']) expect(s.story.firedIds).toContain(id);
+    // Real team joined and left on the record's dates
+    const hired = (id: string) => s.people.find(p => p.id === id)!.isHired;
+    expect(hired('CJP-SAURAV-DAS')).toBe(true);
+    expect(hired('CJP-RATNA-SINGH')).toBe(true);
+    expect(hired('CJP-VIJETA-DAHIYA')).toBe(false);
+  });
+
+  it('skips the 26 May court decision if the player already went to court on 21 May', () => {
+    let s = fireNow(at(begin(), { year: 2026, month: 5, day: 21 }), 'evt_0521_x_block');
+    s = { ...s, movement: { ...s.movement, movementFunds: 100000 } };
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'court' });
+    s = passDays(s, 6);
+    expect(s.story.firedIds).toContain('evt_0526_hc_petition');
+    expect(s.story.firedIds).not.toContain('evt_0526_hc_decision');
   });
 });

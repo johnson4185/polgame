@@ -372,6 +372,10 @@ export interface StoryEffects {
   stress?: number;
   /** Moves the government response meter (S2) */
   govResponse?: number;
+  /** People (ids from recruits.ts) who join the team as a result */
+  recruit?: string[];
+  /** People who leave the team as a result */
+  dismiss?: string[];
 }
 
 export interface StoryChoice {
@@ -413,6 +417,8 @@ export interface StoryEvent {
   sensitive?: boolean;
   /** Invented sandbox content rather than the record */
   fictional?: boolean;
+  /** Don't fire this dated event if the player already made one of these choices */
+  skipIfChosen?: { event: string; choice: string }[];
 }
 
 export interface StoryState {

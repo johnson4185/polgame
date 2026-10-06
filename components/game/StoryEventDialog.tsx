@@ -36,7 +36,7 @@ const short = (n: number) => {
 
 // Which direction is good for the player: legal heat, stress and government response going up is bad
 const FX: {
-  key: keyof StoryEffects;
+  key: Exclude<keyof StoryEffects, "recruit" | "dismiss">;
   label: string;
   icon: React.ElementType;
   upIsGood: boolean;
@@ -96,6 +96,10 @@ export function EffectChips({
         tone="neutral"
       />,
     );
+  if (effects.recruit?.length)
+    chips.push(<EffectChip key="recruit" icon={UserCheck} value={`+${effects.recruit.length}`} label="Join the team" tone="good" />);
+  if (effects.dismiss?.length)
+    chips.push(<EffectChip key="dismiss" icon={UserCheck} value={`−${effects.dismiss.length}`} label="Leave the team" tone="bad" />);
   return <>{chips}</>;
 }
 

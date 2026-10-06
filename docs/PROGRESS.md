@@ -9,6 +9,31 @@ _None yet._
 
 ---
 
+## S3 · The whole of Act 1 (6 Oct 2026)
+
+**What changed**
+- **79 story events** cover the real arc from the 16 May launch to 5 October, written month by
+  month from the research timeline. Each cites the timeline section it comes from (a test checks
+  every citation exists) and marks what really happened.
+- Highlights: the five-point manifesto, the X block, "49% Pakistani", the 6 June first protest, the
+  Pune Exam Manifesto, **"The Police Cut the Lights"** (your mockup) on the first night of the sit-in,
+  Wangchuk's fast and removal, the resignation, School Thik Karo, the court win, "Gyanesh, it's done
+  bro!" and Gandhi Jayanti in two cities.
+- **20 July is a branching set-piece**: lockdown → barricades → talks with the Health Minister → the
+  night the camp was cleared. Choosing not to march opens fictional branches (clearly labelled).
+- The real team joins and leaves through the story: three spokespersons on 3 June, four more on
+  26 June, and the "burger row" dismissal on 21 July.
+- When the record doesn't say what CJP chose, the event has no "historical" option; disputed points
+  are attributed ("CJP alleged…", "police said…"); events touching student deaths or injuries show the
+  helpline and never turn a death into a reward.
+
+**What a player will notice**
+- Something happens almost every day: news, decisions, big moments.
+- A playthrough that follows history ends Act 1 with "You followed history in N of N decisions".
+
+**Balance note:** a player who follows history wins the long game every time in the simulation;
+tightening that is part of S5.
+
 ## S2 · Act 1 opens on 16 May (6 Oct 2026)
 
 **What changed**

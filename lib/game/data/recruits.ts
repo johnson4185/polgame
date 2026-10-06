@@ -224,7 +224,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Co-convenor and chief spokesperson. Named spokesperson on 3 June 2026.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 3 },
-    source: 'docs/cjp-timeline.md#2-4-june',
+    source: 'docs/cjp-timeline.md#24-june',
   },
   {
     id: 'CJP-ASHUTOSH-RANKA',
@@ -266,7 +266,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Named one of the first three spokespersons on 3 June 2026.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 3 },
-    source: 'docs/cjp-timeline.md#2-4-june',
+    source: 'docs/cjp-timeline.md#24-june',
   },
   {
     id: 'CJP-VAISHNAVI-GAUR',
@@ -287,7 +287,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Inducted as a spokesperson on 26 June 2026.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 26 },
-    source: 'docs/cjp-timeline.md#25-26-june',
+    source: 'docs/cjp-timeline.md#2526-june',
   },
   {
     id: 'CJP-AAFREEN-NAWAZ',
@@ -308,7 +308,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Inducted as a spokesperson on 26 June 2026.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 26 },
-    source: 'docs/cjp-timeline.md#25-26-june',
+    source: 'docs/cjp-timeline.md#2526-june',
   },
   {
     id: 'CJP-DEEPAK-BALIYAN',
@@ -329,7 +329,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Inducted as a spokesperson on 26 June 2026.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 26 },
-    source: 'docs/cjp-timeline.md#25-26-june',
+    source: 'docs/cjp-timeline.md#2526-june',
   },
   {
     id: 'CJP-RATNA-SINGH',
@@ -350,7 +350,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'Inducted as a spokesperson on 26 June 2026; at the 13 August volunteers\' meeting in Delhi.',
     historical: true,
     joinDate: { year: 2026, month: 6, day: 26 },
-    source: 'docs/cjp-timeline.md#25-26-june',
+    source: 'docs/cjp-timeline.md#2526-june',
   },
   {
     id: 'CJP-AJINKYA-SHINDE',
@@ -371,6 +371,6 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
     observation: 'CJP leader; spoke at the Shivaji Park rally in Mumbai on 2 October 2026.',
     historical: true,
     joinDate: { year: 2026, month: 10, day: 2 },
-    source: 'docs/cjp-timeline.md#2-october-mumbai-shivaji-park',
+    source: 'docs/cjp-timeline.md#2-october--mumbai-shivaji-park',
   },
 ];
