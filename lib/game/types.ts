@@ -349,6 +349,7 @@ export interface CrisisOption {
     crackdownChange?: number;
     stressChange?: number;
     energyChange?: number;
+    followersChange?: number;
   };
 }
 
@@ -362,6 +363,8 @@ export interface CrisisEvent {
   contextNarrative: string;
   quote: string;
   options: CrisisOption[];
+  /** Touches student deaths or serious harm: show the helpline */
+  sensitive?: boolean;
 }
 
 // ─── Story events ───────────────────────────────────────────────────────────

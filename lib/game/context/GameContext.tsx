@@ -82,6 +82,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(autosaveTimer);
   }, [state.hasBegun]);
 
+  // Also save at the start of every new day and whenever a story decision is made
+  const dayKey = `${state.currentDate.year}-${state.currentDate.month}-${state.currentDate.day}`;
+  const decisions = Object.keys(state.story?.choices ?? {}).length;
+  useEffect(() => {
+    if (state.hasBegun) saveGameToSlot('autosave', stateRef.current);
+  }, [dayKey, decisions, state.hasBegun]);
+
   const startNewGame = (mode: CampaignMode) => {
     // Fresh seed per campaign so crises, donations and elections differ between runs
     const newState = createInitialState(mode, Math.floor(Math.random() * 2 ** 31));

@@ -9,6 +9,27 @@ _None yet._
 
 ---
 
+## R3 · Crises and pacing (6 Oct 2026)
+
+**What changed**
+- **21 random crises** (was 5): monsoon floods, a deepfake, dark money from Mauritius, a team split, a
+  ₹100 crore defamation suit, a TV sting, a rogue state chapter, a celebrity with strings attached,
+  poaching, another paper leak, an internet shutdown, inflated crowd numbers, and more. All are labelled
+  "Fictional scenario" and use invented minor characters.
+- Crises now appear as the same dramatic card as story events, with effect stickers; options you can't
+  afford are greyed out with the reason.
+- The three old crises that put invented words and deeds on the real founder were rewritten; the
+  hunger-strike one is now about a volunteer and puts his health first.
+- A crisis about a bereaved family is handled the way the story rules require: no rewards from a death,
+  the family's wishes first, and the helpline shown.
+- **Pacing**: random crises are half as frequent during Act 1 (the story already fills most days).
+  Followers now fade a little every day unless you keep giving people reasons to follow, and a day where
+  you take no actions costs a point of trust. Doing nothing now ends in "Faded from the headlines".
+- The game autosaves at the start of every day and after every story decision, not just every 20 seconds.
+
+**What a player will notice**
+- More variety between the story beats; idling is punished.
+
 ## R1–R2 · The map and the new home screen (6 Oct 2026)
 
 **What changed**

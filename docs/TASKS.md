@@ -18,7 +18,7 @@ To avoid merge conflicts, only the owning task may edit these files until it mer
 ## Ready for Codex
 Each item lists the files it may touch. Do not edit files owned by an in-flight task above.
 
-### C1. Expand the crisis deck (5 → 20+ events) — `codex/crisis-deck`
+### C1. Expand the crisis deck (5 → 20+ events) — ✅ done by Claude (R3): 21 crises
 Files: `lib/game/data/crises.ts` only.
 - Keep the `CrisisEvent` shape from `lib/game/types.ts` exactly (don't change types).
 - Add 15+ new events covering: monsoon flooding at protest site, fake-news deepfake of the
@@ -207,6 +207,7 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
 3. [ ] Screens: ~~Overview (map + feeds)~~ ✅ · ~~Event dialog~~ ✅ (S1) · Protest scene → Media room → People, Finance, Research, Lawsuits, Election
    - R1 ✅ India map (`components/map/IndiaMap.tsx`, DataMeet CC BY 4.0, Survey of India depiction) — took over C4
    - R2 ✅ Overview home + ActionBar (Organise · Media · Legal · Politics menus) + global outcome toast
+   - R3 ✅ Crisis deck 5 → 21 (fictional minor characters), crises as event cards, pacing and idle penalties
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
 ## Backlog

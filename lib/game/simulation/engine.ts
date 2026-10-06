@@ -42,6 +42,8 @@ export const BALANCE = {
   followerCap: 25_000_000,
   /** Share of followers who become volunteers each day */
   followerToVolunteer: 0.00001,
+  /** Share of followers lost each day to attention decay */
+  followerDecay: 0.012,
   partyRegistrationCost: 50000,
   securityDepositGeneral: 25000,
   securityDepositReserved: 12500,
@@ -976,6 +978,9 @@ function reduce(state: GameState, action: GameAction): GameState {
         volunteers: c.volunteersChange,
       });
       next = adjustCrackdown(next, c.crackdownChange ?? 0);
+      if (c.followersChange) {
+        next = { ...next, movement: { ...next.movement, followers: Math.max(0, next.movement.followers + c.followersChange) } };
+      }
       next = {
         ...next,
         activeCrisis: null,
@@ -1657,6 +1662,8 @@ export function advanceSimulationDay(state: GameState): GameState {
 
   // 4. Movement momentum. Attention fades faster the higher trust is, so it must be actively
   // maintained; volunteers grow with trust but a share drifts away every day.
+  // A day with no actions at all: the movement looks asleep
+  if (state.hasBegun && state.actionPoints >= state.maxActionPoints) trustDelta -= 1;
   if (m.publicTrust > 45) {
     const decay = (m.publicTrust - 45) / 20;
     trustDelta -= Math.floor(decay) + (rng.next() < decay % 1 ? 1 : 0);
@@ -1673,7 +1680,8 @@ export function advanceSimulationDay(state: GameState): GameState {
   // Followers grow with trust (shrink when it's low) and level off near the cap; account blocks slow growth
   const saturation = Math.max(0, 1 - m.followers / BALANCE.followerCap);
   const rawRate = clamp((m.publicTrust - 40) / 1500, -0.02, 0.03);
-  const growthRate = (rawRate > 0 ? rawRate * saturation : rawRate) * (stage === 'BLOCK_ACCOUNTS' ? 0.6 : 1);
+  // Attention decays every day: the feed moves on unless you keep giving it reasons to follow
+  const growthRate = (rawRate > 0 ? rawRate * saturation : rawRate) * (stage === 'BLOCK_ACCOUNTS' ? 0.6 : 1) - BALANCE.followerDecay;
   const followers = Math.max(0, Math.round(m.followers * (1 + growthRate)));
 
   const attrition = m.volunteerCount > 2000 ? Math.floor(m.volunteerCount * BALANCE.dailyVolunteerAttrition) : 0;
@@ -1705,7 +1713,8 @@ export function advanceSimulationDay(state: GameState): GameState {
 
   // 7. Crisis roll — more likely under heavy crackdown
   let activeCrisis = state.activeCrisis;
-  if (!activeCrisis && state.hasBegun && CRISIS_EVENT_DECK.length > 0 && rng.next() < 0.15 + newCrackdown / 400) {
+  const crisisChance = (0.15 + newCrackdown / 400) * ((state.story?.act ?? 1) === 1 ? 0.5 : 1);
+  if (!activeCrisis && state.hasBegun && CRISIS_EVENT_DECK.length > 0 && rng.next() < crisisChance) {
     activeCrisis = CRISIS_EVENT_DECK[Math.floor(rng.next() * CRISIS_EVENT_DECK.length)];
   }
 
