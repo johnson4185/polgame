@@ -36,7 +36,7 @@ const short = (n: number) => {
 
 // Which direction is good for the player: legal heat, stress and government response going up is bad
 const FX: {
-  key: Exclude<keyof StoryEffects, "recruit" | "dismiss">;
+  key: Exclude<keyof StoryEffects, "recruit" | "dismiss" | "launchOperation" | "endOperation">;
   label: string;
   icon: React.ElementType;
   upIsGood: boolean;

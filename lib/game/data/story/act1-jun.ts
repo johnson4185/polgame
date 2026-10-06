@@ -213,7 +213,7 @@ export const ACT1_JUN: StoryEvent[] = [
         id: 'tour_and_sitin',
         label: 'City tour, then an indefinite sit-in',
         description: 'Pune first, then from 20 June, Jantar Mantar until he goes.',
-        effects: { volunteers: 1000, govResponse: 1 },
+        effects: { volunteers: 1000, govResponse: 1, launchOperation: 'city-tour' },
         outcome: 'A route is announced: Pune, then the north and south, then Delhi.',
       },
       {
@@ -361,7 +361,7 @@ export const ACT1_JUN: StoryEvent[] = [
         id: 'refuse',
         label: 'Refuse to leave',
         description: 'Not until the minister resigns.',
-        effects: { volunteers: 1500, legalHeat: 10, govResponse: 1 },
+        effects: { volunteers: 1500, legalHeat: 10, govResponse: 1, launchOperation: 'sitin' },
         next: 'evt_0620_lights',
         outcome: 'You sit down. So does everyone else. Police try to disperse the crowd, then pull back.',
       },

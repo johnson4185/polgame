@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { GameProvider, useGame } from '@/lib/game/context/GameContext';
 import { PrologueModal } from '@/components/game/PrologueModal';
 
-import { JantarMantarScene } from '@/components/game/JantarMantarScene';
+import { CampaignsView } from '@/components/game/CampaignsView';
 import { PersonalLifeView } from '@/components/game/PersonalLifeView';
 import { IndiaMapView } from '@/components/game/IndiaMapView';
 import { PeopleRosterView } from '@/components/game/PeopleRosterView';
@@ -34,7 +34,7 @@ function GameScreenRouter() {
       {/* Daily actions and quest; becomes part of the Overview screen in the redesign */}
       <GameActionHUD />
 
-      {state.activeScreen === 'OPERATIONS' && <JantarMantarScene />}
+      {state.activeScreen === 'OPERATIONS' && <CampaignsView />}
       {state.activeScreen === 'PERSONAL' && <PersonalLifeView />}
       {state.activeScreen === 'MAP_543' && <IndiaMapView />}
       {state.activeScreen === 'PEOPLE' && <PeopleRosterView />}

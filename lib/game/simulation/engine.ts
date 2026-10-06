@@ -25,8 +25,9 @@ import { INITIAL_REFORMS, INITIAL_CABINET } from '../data/reforms';
 import { CRISIS_EVENT_DECK } from '../data/crises';
 import { SeededRNG } from './random';
 import { STORY_EVENTS, getStoryEvent } from '../data/story';
+import { getOperationTemplate, type OperationTemplate } from '../data/operations';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -111,34 +112,61 @@ export function archiveUnlockedBy(date: GameDate) {
   return HISTORICAL_ARCHIVE.map(d => ({ ...d, isUnlocked: d.historicalDate <= iso }));
 }
 
+/** A running campaign built from a template, starting on `start` */
+export function operationFromTemplate(t: OperationTemplate, start: GameDate, seq: number): OperationState {
+  const protest = t.type === 'JANTAR_MANTAR_PROTEST' || t.type === 'PARLIAMENT_MARCH';
+  return {
+    id: `OP-${t.id}-${dateKey(start)}-${seq}`,
+    templateId: t.id,
+    fictional: t.fictional,
+    title: t.title,
+    type: t.type,
+    location: t.location,
+    stateName: t.stateName,
+    status: 'ACTIVE',
+    startDate: { ...start },
+    durationDays: t.durationDays,
+    currentDay: 1,
+    budgetAllocated: t.budget,
+    crowdSize: t.crowd ?? 500,
+    crowdMorale: 80,
+    suppliesWaterFood: 75,
+    medicalReadiness: 55,
+    legalSupportOnSite: false,
+    policePermissionStatus: protest ? 'PENDING' : 'GRANTED',
+    policeNegotiationTension: protest ? 40 : 15,
+    mediaCoverageLevel: 45,
+    speakerStageStatus: 'ACTIVE',
+    weatherCondition: start.month >= 4 && start.month <= 6 ? 'HEATWAVE' : start.month >= 7 && start.month <= 9 ? 'MONSOON_RAIN' : 'SUNNY',
+    assignedStaffIds: [],
+    dailyLog: [`Day 1: ${t.blurb}`],
+  };
+}
+
+/** Start a campaign (no cost here; LAUNCH_OPERATION charges the player) */
+function startOperation(state: GameState, templateId: string): GameState {
+  const t = getOperationTemplate(templateId);
+  if (!t) return state;
+  if (state.operations.some(o => o.templateId === templateId && (o.status === 'ACTIVE' || o.status === 'PREPARATION'))) return state;
+  const op = operationFromTemplate(t, state.currentDate, state.operations.length);
+  let next: GameState = { ...state, operations: [...state.operations, op], activeOperationId: op.id };
+  next = addJournal(next, `${t.title} Begins`, t.blurb, 'MILESTONE', 'OPERATIONS');
+  return next;
+}
+
+/** End a running campaign early (story-driven), judged on how it went */
+function endOperation(state: GameState, templateId: string): GameState {
+  const op = state.operations.find(o => o.templateId === templateId && o.status === 'ACTIVE');
+  if (!op) return state;
+  const outcomeSummary = `${op.title} ended after ${op.currentDay} day${op.currentDay === 1 ? '' : 's'}.`;
+  return {
+    ...addJournal(state, `${op.title} Concluded`, outcomeSummary, 'HISTORIC_TURNING_POINT', 'OPERATIONS'),
+    operations: state.operations.map(o => (o.id === op.id ? { ...o, status: 'CONCLUDED' as const, outcomeSummary } : o)),
+  };
+}
+
 export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: number = 20260601): GameState {
   const constituencies = generateFull543Constituencies();
-
-  // The real indefinite sit-in (20 June → 25 July 2026: 36 days). Starts on its date.
-  const initialOperation: OperationState = {
-    id: 'OP-JANTAR-MANTAR',
-    title: 'Indefinite Sit-in at Jantar Mantar',
-    type: 'JANTAR_MANTAR_PROTEST',
-    location: 'Jantar Mantar Road, Connaught Place',
-    stateName: 'NCT of Delhi',
-    status: 'PREPARATION',
-    startDate: { year: 2026, month: 6, day: 20 },
-    durationDays: 36,
-    currentDay: 0,
-    budgetAllocated: 75000,
-    crowdSize: 800,
-    crowdMorale: 80,
-    suppliesWaterFood: 70,
-    medicalReadiness: 50,
-    legalSupportOnSite: false,
-    policePermissionStatus: 'PENDING',
-    policeNegotiationTension: 40,
-    mediaCoverageLevel: 40,
-    speakerStageStatus: 'STANDBY',
-    weatherCondition: 'HEATWAVE',
-    assignedStaffIds: [],
-    dailyLog: ['Planned for 20 June: stay at Jantar Mantar until the Education Minister resigns.'],
-  };
 
   const initialNews: NewsArticle[] = [
     {
@@ -273,8 +301,9 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
 
     people: INITIAL_RECRUITS.map(p => ({ ...p, isHired: false, currentAssignment: null })),
     transactions: [] as GameState['transactions'],
-    operations: [initialOperation],
-    activeOperationId: 'OP-JANTAR-MANTAR',
+    // Campaigns start through story events or the player (lib/game/data/operations.ts)
+    operations: [],
+    activeOperationId: null,
     cases: [...INITIAL_CASES],
     constituencies,
     states: [...INITIAL_STATES],
@@ -391,7 +420,9 @@ export type GameAction =
   | { type: 'LOAD_STATE'; state: GameState }
   | { type: 'FINISH_PROLOGUE'; focus?: PrologueFocus }
   | { type: 'LOG_JOURNAL'; entry: JournalEntry }
-  | { type: 'RESOLVE_STORY_CHOICE'; choiceId: string };
+  | { type: 'RESOLVE_STORY_CHOICE'; choiceId: string }
+  | { type: 'LAUNCH_OPERATION'; templateId: string }
+  | { type: 'SET_ACTIVE_OPERATION'; operationId: string };
 
 /** The issue the player leads with in the prologue; each gives a small starting edge */
 export type PrologueFocus = 'EXAMS' | 'JOBS' | 'SPEECH';
@@ -572,22 +603,24 @@ export function cjpVoteShare(c: LokSabhaConstituency, ctx: SeatContext, noise = 
     st?.regionalMood === 'VOLATILE' ? 1 : 0;
   const funding = 4 * Math.log10(1 + c.cjpCandidate.campaignFundingAllocated / 10000);
   const share =
-    c.cjpSupportScore * (0.5 + ctx.trust / 100) +
+    c.cjpSupportScore * (0.25 + ctx.trust / 200) +
     funding +
     c.cjpCandidate.localReputation / 20 +
     chapter * 2 +
     mood +
     Math.min(4, ctx.volunteers / 10000) -
-    ctx.crackdown / 10 +
+    ctx.crackdown / 10 -
+    // First-time parties lose votes to habit and doubt about whether they can win
+    5 +
     noise;
-  return clamp(share, 1, 60);
+  return clamp(share, 1, 55);
 }
 
 export type SeatWinner = 'RULING' | 'OPPOSITION' | 'OTHERS' | 'CJP';
 
 export function contestSeat(c: LokSabhaConstituency, ctx: SeatContext, rng?: SeededRNG) {
   const n = (spread: number) => (rng ? (rng.next() - 0.5) * spread : 0);
-  const cjp = cjpVoteShare(c, ctx, n(10));
+  const cjp = cjpVoteShare(c, ctx, n(18));
   const ruling = Math.max(1, c.rulingVoteShareBaseline + ctx.swingRuling + n(6) - cjp * 0.45);
   const opp = Math.max(1, c.mainOppVoteShareBaseline + ctx.swingOpp + n(6) - cjp * 0.4);
   const others = Math.max(1, Math.max(4, 100 - c.rulingVoteShareBaseline - c.mainOppVoteShareBaseline) - cjp * 0.15);
@@ -756,6 +789,7 @@ export function migrateState(saved: GameState): GameState {
     // v5: followers and the government response meter
     movement: { ...saved.movement, followers: saved.movement?.followers ?? 0 },
     govResponse: saved.govResponse ?? { pressure: 0 },
+    activeOperationId: saved.activeOperationId ?? saved.operations?.[0]?.id ?? null,
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
@@ -816,6 +850,21 @@ function reduce(state: GameState, action: GameAction): GameState {
 
     case 'RESOLVE_STORY_CHOICE':
       return resolveStoryChoice(state, action.choiceId);
+
+    case 'SET_ACTIVE_OPERATION':
+      return state.operations.some(o => o.id === action.operationId) ? { ...state, activeOperationId: action.operationId } : state;
+
+    case 'LAUNCH_OPERATION': {
+      const t = getOperationTemplate(action.templateId);
+      if (!t) return state;
+      if (t.storyOnly) return fail(state, `${t.title} is part of the story; it starts when the story gets there.`);
+      if (state.operations.some(o => o.templateId === t.id && o.status === 'ACTIVE')) return fail(state, `${t.title} is already running.`);
+      if (state.movement.movementFunds < t.budget) return fail(state, `${t.title} needs ${inr(t.budget)}.`);
+      const spent = spendAction(state);
+      if (typeof spent === 'string') return fail(state, spent);
+      const next = startOperation(spendFunds(spent, t.budget, 'Campaign', `Launch: ${t.title}`), t.id);
+      return withOutcome(next, `${t.title} launched (${inr(t.budget)}, ${t.durationDays} days).`);
+    }
 
     // ── Time ──
     case 'ADVANCE_DAY':
@@ -880,7 +929,7 @@ function reduce(state: GameState, action: GameAction): GameState {
       next = {
         ...next,
         constituencies: next.constituencies.map(x =>
-          x.id === c.id ? { ...x, cjpSupportScore: clamp(x.cjpSupportScore + gain, 0, 60) } : x,
+          x.id === c.id ? { ...x, cjpSupportScore: clamp(x.cjpSupportScore + gain, 0, 45) } : x,
         ),
       };
       return withOutcome(next, `Blitz in ${c.name}: local support +${gain}.`);
@@ -1695,6 +1744,18 @@ export function advanceSimulationDay(state: GameState): GameState {
     );
   }
 
+  // Running campaigns pay out their template effects, scaled by crowd morale
+  for (const op of next.operations) {
+    if (op.status !== 'ACTIVE' || !op.templateId) continue;
+    const t = getOperationTemplate(op.templateId);
+    if (!t || (op.currentDay - 1) % (t.every ?? 1) !== 0) continue;
+    const scale = clamp(op.crowdMorale / 80, 0.3, 1.25);
+    const scaled = Object.fromEntries(
+      Object.entries(t.dailyEffects).map(([k, v]) => [k, typeof v === 'number' ? Math.round(v * (k === 'legalHeat' ? 1 : scale)) : v]),
+    ) as StoryEffects;
+    next = applyStoryEffects(next, scaled);
+  }
+
   // Dated story events fire on their day and take priority over a freshly rolled random crisis
   next = pumpStory(next);
   if (next.story.activeEventId && !state.activeCrisis) next = { ...next, activeCrisis: null };
@@ -1739,6 +1800,8 @@ export function describeEffects(e: StoryEffects): string {
   if (e.energy) parts.push(`energy ${signed(e.energy)}`);
   if (e.stress) parts.push(`stress ${signed(e.stress)}`);
   if (e.govResponse) parts.push(e.govResponse > 0 ? 'government escalates' : 'government eases off');
+  if (e.launchOperation) parts.push(`starts ${getOperationTemplate(e.launchOperation)?.title ?? 'a campaign'}`);
+  if (e.endOperation) parts.push(`ends ${getOperationTemplate(e.endOperation)?.title ?? 'a campaign'}`);
   if (e.recruit?.length) parts.push(`${e.recruit.length} join${e.recruit.length === 1 ? 's' : ''} the team`);
   if (e.dismiss?.length) parts.push(`${e.dismiss.length} leave${e.dismiss.length === 1 ? 's' : ''} the team`);
   return parts.join(', ');
@@ -1752,6 +1815,8 @@ function applyStoryEffects(state: GameState, e: StoryEffects): GameState {
   if (e.govResponse) {
     next = { ...next, govResponse: { pressure: clamp((next.govResponse?.pressure ?? 0) + e.govResponse * 10, 0, 100) } };
   }
+  if (e.launchOperation) next = startOperation(next, e.launchOperation);
+  if (e.endOperation) next = endOperation(next, e.endOperation);
   // Team changes driven by the story (real people join on the day the record says they did)
   for (const [ids, hired] of [[e.recruit, true], [e.dismiss, false]] as const) {
     for (const id of ids ?? []) {

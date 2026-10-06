@@ -389,12 +389,8 @@ describe('Act 1 frame (S2)', () => {
     expect(govStage(90)).toBe('NEGOTIATE');
   });
 
-  it('starts the sit-in on 20 June', () => {
-    let s = at(begin(), { year: 2026, month: 6, day: 19 });
-    expect(s.operations[0].status).toBe('PREPARATION');
-    s = gameReducer(s, { type: 'ADVANCE_DAY' });
-    expect(s.operations[0].status).toBe('ACTIVE');
-    expect(s.operations[0].currentDay).toBe(1);
+  it('starts with no campaigns: the story launches them', () => {
+    expect(begin().operations).toEqual([]);
   });
 
   it('locks party registration in Act 1 and opens it on 5 October', () => {
@@ -456,6 +452,10 @@ describe('Act 1 calendar (S3)', () => {
     expect(hired('CJP-SAURAV-DAS')).toBe(true);
     expect(hired('CJP-RATNA-SINGH')).toBe(true);
     expect(hired('CJP-VIJETA-DAHIYA')).toBe(false);
+    // The real campaigns all happened
+    const launched = new Set(s.operations.map(o => o.templateId));
+    for (const id of ['city-tour', 'sitin', 'stk', 'adivasi-stk', 'cec']) expect(launched.has(id)).toBe(true);
+    expect(s.operations.find(o => o.templateId === 'sitin')!.status).toBe('CONCLUDED');
   });
 
   it('skips the 26 May court decision if the player already went to court on 21 May', () => {
@@ -465,5 +465,48 @@ describe('Act 1 calendar (S3)', () => {
     s = passDays(s, 6);
     expect(s.story.firedIds).toContain('evt_0526_hc_petition');
     expect(s.story.firedIds).not.toContain('evt_0526_hc_decision');
+  });
+});
+
+describe('campaigns (S5)', () => {
+  it('starts the sit-in only if you refuse to leave on 20 June', () => {
+    const base = fireNow(at(begin(), { year: 2026, month: 6, day: 20 }), 'evt_0620_permission');
+    const refused = gameReducer(base, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'refuse' });
+    expect(refused.operations.find(o => o.templateId === 'sitin')?.status).toBe('ACTIVE');
+    const left = gameReducer(base, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'leave_return' });
+    expect(left.operations.some(o => o.templateId === 'sitin')).toBe(false);
+  });
+
+  it('ends the sit-in when the agitation is called off on 25 July', () => {
+    let s = fireNow(at(begin(), { year: 2026, month: 6, day: 20 }), 'evt_0620_permission');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'refuse' });
+    s = fireNow(at(settle(s), { year: 2026, month: 7, day: 25 }), 'evt_0725_resign');
+    s = gameReducer(s, { type: 'RESOLVE_STORY_CHOICE', choiceId: 'withdraw' });
+    expect(s.operations.find(o => o.templateId === 'sitin')?.status).toBe('CONCLUDED');
+  });
+
+  it('lets the player launch sandbox campaigns for funds and an AP, but not story ones', () => {
+    const s = { ...begin(), movement: { ...begin().movement, movementFunds: 100000 } };
+    const story = gameReducer(s, { type: 'LAUNCH_OPERATION', templateId: 'sitin' });
+    expect(story.lastOutcome?.tone).toBe('FAILURE');
+    const yatra = gameReducer(s, { type: 'LAUNCH_OPERATION', templateId: 'jan-yatra' });
+    expect(yatra.operations).toHaveLength(1);
+    expect(yatra.movement.movementFunds).toBe(70000);
+    expect(yatra.actionPoints).toBe(s.actionPoints - 1);
+    const again = gameReducer(yatra, { type: 'LAUNCH_OPERATION', templateId: 'jan-yatra' });
+    expect(again.operations).toHaveLength(1);
+  });
+
+  it('runs several campaigns at once and pays out their daily effects', () => {
+    let s = { ...begin(), movement: { ...begin().movement, movementFunds: 200000 } };
+    s = gameReducer(s, { type: 'LAUNCH_OPERATION', templateId: 'jan-yatra' });
+    s = gameReducer(s, { type: 'LAUNCH_OPERATION', templateId: 'audit-drive' });
+    expect(s.operations.filter(o => o.status === 'ACTIVE')).toHaveLength(2);
+    const followers = s.movement.followers;
+    s = passDays(s, 1);
+    expect(s.movement.followers).toBeGreaterThan(followers);
+    s = passDays(s, 7);
+    expect(s.operations.find(o => o.templateId === 'jan-yatra')!.status).toBe('CONCLUDED');
+    expect(s.operations.find(o => o.templateId === 'audit-drive')!.status).toBe('ACTIVE');
   });
 });

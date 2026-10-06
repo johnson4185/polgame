@@ -9,6 +9,27 @@ _None yet._
 
 ---
 
+## S5 · Campaigns (6 Oct 2026)
+
+**What changed**
+- **Real campaigns follow the story**: the City Tour (10 June), the Indefinite Sit-in (only if you refuse
+  to leave on 20 June), School Thik Karo (12 Aug), Adivasi School Thik Karo (17 Sep) and the
+  "Gyanesh, It's Done Bro" campaign (24 Sep). The sit-in ends when you call off the agitation. If you
+  diverge from history, the campaigns you never started don't happen.
+- **Several at once**: each running campaign pays out every day or every few days (followers,
+  volunteers, credibility), scaled by its morale.
+- **Your own campaigns**: Jan Yatra, District Audit Drive and Local Protest (fictional, labelled),
+  launched from a "Launch campaign" pop-up for money and an action point.
+- **New Campaigns screen**: tabs for every campaign; protests use the Jantar Mantar scene, tours and
+  audits get a panel with progress, morale, resources and three actions.
+- **Elections are less predictable**: a first-time-party penalty, more local swing and lower weight on
+  local support. In the simulation a balanced campaign now wins 56–90% of the seats it contests
+  instead of all of them.
+
+**What a player will notice**
+- The Campaigns tab is empty until the story (or you) starts something.
+- Running two or three campaigns at once is possible but costs money, AP and attention.
+
 ## S3 · The whole of Act 1 (6 Oct 2026)
 
 **What changed**

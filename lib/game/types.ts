@@ -158,7 +158,8 @@ export type OperationType =
   | 'SCHOOL_AUDIT_DRIVE'
   | 'STATE_JAN_YATRA'
   | 'PARLIAMENT_MARCH'
-  | 'GENERAL_ELECTION_CAMPAIGN';
+  | 'GENERAL_ELECTION_CAMPAIGN'
+  | 'ELECTION_COMMISSION_CAMPAIGN';
 
 export interface OperationState {
   id: string;
@@ -187,6 +188,10 @@ export interface OperationState {
   assignedStaffIds: string[];
   dailyLog: string[];
   outcomeSummary?: string;
+  /** Template this campaign came from (lib/game/data/operations.ts) */
+  templateId?: string;
+  /** Invented sandbox campaign */
+  fictional?: boolean;
 }
 
 // Evidence & Case Management
@@ -376,6 +381,10 @@ export interface StoryEffects {
   recruit?: string[];
   /** People who leave the team as a result */
   dismiss?: string[];
+  /** Start a campaign from lib/game/data/operations.ts */
+  launchOperation?: string;
+  /** End a running campaign (by template id) */
+  endOperation?: string;
 }
 
 export interface StoryChoice {

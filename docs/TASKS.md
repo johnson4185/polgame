@@ -176,7 +176,19 @@ Files: `lib/game/data/historicalArchive.ts`, `lib/game/data/recruits.ts`,
   keep or mark fictional recruits clearly as fictional.
 - Mark the investigation cases as fictional sandbox content.
 
-### S5. Campaigns that follow the real arc — Claude (plan → approval → build)
+### S5. Campaigns that follow the real arc — Claude · ✅ DONE (merged 6 Oct 2026)
+**Plan (self-approved, autonomous run):**
+- Templates in `lib/game/data/operations.ts`: the real City Tour, Indefinite Sit-in, School Thik Karo,
+  Adivasi School Thik Karo and CEC campaign (story-only), plus fictional sandbox Jan Yatra, District
+  Audit Drive and Local Protest the player can launch (funds + 1 AP).
+- Story effects `launchOperation` / `endOperation`: 10 Jun tour, 20 Jun sit-in (only if you refuse to
+  leave), 25 Jul end, 12 Aug School Thik Karo, 17 Sep Adivasi drive, 24 Sep CEC campaign. The sit-in
+  is no longer pre-seeded: diverge from history and it doesn't happen.
+- Daily template effects while a campaign runs (scaled by crowd morale); several at once.
+- Campaigns screen: tabs for every campaign, a "Launch campaign" popover, the Jantar Mantar scene for
+  protests and a simpler panel for tours, audits and the CEC campaign.
+- Elections: more local variance and a new-party penalty so following history no longer guarantees
+  victory (balance sim target: balanced wins most but not all seeds).
 Files: `lib/game/simulation/engine.ts`, `lib/game/types.ts`, new `lib/game/data/operations.ts`,
 `components/game/JantarMantarScene.tsx` (or its redesign successor), `lib/game/simulation/balance.sim.test.ts`.
 Depends on S1–S2.
@@ -197,9 +209,9 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
 
 ## Backlog
 Gameplay gaps (engine work — claim before starting, they touch `engine.ts`):
-- [ ] **More operations.** Only the Jantar Mantar vigil exists; once it concludes (day 14) the
-      Operations screen has nothing to do. `OperationType` already lists `STATE_JAN_YATRA`,
-      `SCHOOL_AUDIT_DRIVE`, `PARLIAMENT_MARCH` — add a "launch operation" action + templates.
+- [x] **More operations.** Done in S5 (templates, story launches, player launches).
+- [ ] The Jantar Mantar scene is used for every protest campaign; a local protest elsewhere still shows
+      Delhi-specific banners and the Delhi photo. Make the protest scene location-aware (redesign).
 - [ ] **Prologue choice is cosmetic.** `PrologueModal` stores `selectedResponse` but never
       dispatches it; make each response set different starting stats.
 - [ ] **Mini-game rewards are computed in the components** (`RallyMiniGameModal`,
