@@ -2029,6 +2029,7 @@ export function pumpStory(state: GameState, registry: StoryEvent[] = STORY_EVENT
     ...registry
       .filter(e => e.date && e.date >= st.startedOn && e.date <= today && !st.firedIds.includes(e.id))
       .filter(e => !e.skipIfChosen?.some(k => st.choices[k.event] === k.choice))
+      .filter(e => requirementsMet(state, e))
       .map(e => ({ id: e.id, due: e.date!, queued: false })),
   ].sort((a, b) => a.due.localeCompare(b.due) || Number(b.queued) - Number(a.queued));
 
@@ -2036,6 +2037,17 @@ export function pumpStory(state: GameState, registry: StoryEvent[] = STORY_EVENT
   if (!pick) return state;
   const queue = pick.queued ? st.queue.filter(q => !(q.eventId === pick.id && q.due === pick.due)) : st.queue;
   return { ...state, story: { ...st, queue, activeEventId: pick.id, firedIds: [...st.firedIds, pick.id] } };
+}
+
+/** Whether an event's `requires` conditions hold right now */
+export function requirementsMet(state: GameState, e: StoryEvent): boolean {
+  const r = e.requires;
+  if (!r) return true;
+  if (r.party && !state.party.isFormed) return false;
+  if (r.noParty && state.party.isFormed) return false;
+  if (r.inGovernment && !state.party.isRulingCoalition) return false;
+  if (r.minSeats !== undefined && state.party.actualSeatsWon < r.minSeats) return false;
+  return true;
 }
 
 /** Human-readable effect list, e.g. "+300K followers, legal heat +6" */

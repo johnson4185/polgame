@@ -444,6 +444,8 @@ export interface StoryEvent {
   fictional?: boolean;
   /** Don't fire this dated event if the player already made one of these choices */
   skipIfChosen?: { event: string; choice: string }[];
+  /** Conditions that must hold before the event fires; it waits (from its date) until they do */
+  requires?: { party?: boolean; noParty?: boolean; inGovernment?: boolean; minSeats?: number };
 }
 
 export interface StoryState {

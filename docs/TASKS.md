@@ -214,6 +214,22 @@ Decisions: real names kept · Truck Art Poster style · bottom dock · placehold
      Parliament, Archive, Chronicle, Personal, Map detail)
 4. [ ] Mechanics behind the new UI: followers, concurrent campaigns, narrative battle, trending/social, media actions
 
+## Next run (owner asked to continue, 6 Oct 2026)
+### A2. Act 2 story events — Claude · IN PROGRESS `claude/a2-events`
+**Plan:** after 5 Oct the record ends, so Act 2 gets its own *fictional* beats (labelled as such).
+- Engine: `StoryEvent.requires` (`party`, `noParty`, `inGovernment`, `minSeats`). A dated event whose
+  requirements aren't met waits and fires on the first day they are (never before its date).
+- ~15 events, Oct 2026 → 2029: the 10 Oct march (announced in the record; outcome is yours), the
+  party question, first convention, an alliance offer, ticket-for-money, the 2027 state elections
+  (on the real schedule: Punjab/UP/Uttarakhand/Goa/Manipur early 2027, Gujarat/Himachal late 2027),
+  defectors, first day in the Lok Sabha, a ministry scandal, a no-confidence threat, volunteer
+  burnout, and the run-up to the 2029 Lok Sabha.
+- Rules: fictional minor characters; real people only as already on record; no invented deeds.
+- Tests: requirements gate firing; all Act 2 events are marked fictional and fire in a playthrough.
+
+### A3. Location-aware protest scene — after A2
+### A4. Rebuild older screens with the kit (People, Research, Ledgers first) — after A3
+
 ## Still open (after the autonomous run)
 - [ ] Illustrations for every `ArtPlaceholder` (waiting on the owner — see PROGRESS "Questions")
 - [ ] Location-aware protest scene (currently Jantar Mantar visuals for every protest)
