@@ -25,6 +25,31 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4h · Chronicle and Situation log rebuilt (8 Oct 2026)
+
+**What changed**
+- The Chronicle screen has three tabs: **Chronicle**, **Full log** and **Statistics**. Statistics
+  is the existing campaign statistics, unchanged.
+- **Chronicle** shows cards for public trust, laws passed and cases concluded, a "Your story so
+  far" summary, and your diary as cards with turning-point and milestone badges.
+- **The summary is now written from what actually happened.** It covers your start date, whether
+  you formed a party, MPs, laws, cases and current trust. The old one was a fixed boast ("you
+  began in June 2026 …", although the game starts on 16 May) that read the same whether or not
+  you'd done any of it.
+- **The Situation log** (used in both Chronicle and Research) is rebuilt with the kit:
+  - four stat cards;
+  - filter chips (Everything, Decisions & crises, News, Turning points);
+  - a search box and a newest/oldest toggle;
+  - entry cards with a coloured edge by type.
+  The noisy hashtag tags are gone.
+
+**Checked:** 1440px and 390px after playing to day 4: the diary lists the real journal; the log
+filters (5 entries in total, 3 of them news), shows "Nothing matches" for a junk search, and the
+sort flips the order; Statistics renders; the log inside Research still works. No horizontal scroll,
+no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+---
+
 ## A4g · Archive screen rebuilt (8 Oct 2026)
 
 **What changed**
