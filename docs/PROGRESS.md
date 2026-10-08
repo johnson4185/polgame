@@ -25,6 +25,32 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4f · Parliament screen rebuilt (8 Oct 2026)
+
+**What changed**
+- A photo banner says where you stand: in government, in opposition, or not in Parliament yet.
+- Below it are cards for your MPs, bills tabled, and laws passed out of 3, with "3 laws wins the
+  game" spelled out.
+- **Bills tab:**
+  - Each bill shows its status, description, resistance, cost, how many states it needs, and which
+    ministry it belongs to (green when you hold that ministry, since that makes lobbying go further).
+  - Once tabled, a "votes secured" bar shows progress towards passing.
+  - The Table and Lobby buttons show their cost. When one can't be used, it says why: no MPs, no
+    action points, or not enough money.
+- **Cabinet tab** (called "Shadow cabinet" outside government): one card per ministry with
+  performance and scandal-risk meters.
+
+**Checked:** 1440px and 390px. Outside Parliament the Table buttons are locked with the reason. In
+a patched in-government save, tabling put a bill at 25% of votes and one round of lobbying took it
+to 60%; the Cabinet tab rendered. No horizontal scroll, no console errors. Typecheck, lint, 77 tests
+and the build all pass.
+
+**Noticed, not changed:** a party in government holds every ministry (the starting cabinet is all
+yours), and the Law minister is still the fictional "Advocate Meera Tandon". Both are content and
+engine decisions, left for a later pass.
+
+---
+
 ## A4e · Election screen rebuilt (8 Oct 2026)
 
 **What changed**

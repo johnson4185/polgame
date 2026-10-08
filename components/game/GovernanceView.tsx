@@ -1,196 +1,178 @@
 'use client';
 
 import React from 'react';
-import { useGame } from '@/lib/game/context/GameContext';
-import { soundManager } from '@/lib/game/simulation/sound';
-import { Landmark, Scale, FileText, CheckCircle2, AlertOctagon, Users, ShieldAlert, Award, Vote } from 'lucide-react';
 import Image from 'next/image';
+import { CheckCircle2, FileText, Gavel, Landmark, Megaphone, ShieldAlert, Vote } from 'lucide-react';
+import { useGame } from '@/lib/game/context/GameContext';
+import { BALANCE } from '@/lib/game/simulation/engine';
+import { soundManager } from '@/lib/game/simulation/sound';
+import type { ReformPolicy } from '@/lib/game/types';
+import { Badge, Button, Meter, Panel, StatCard } from '@/components/ui/primitives';
+import { TabPanel, Tabs } from '@/components/ui/menus';
 
+const STATUS: Record<ReformPolicy['status'], { label: string; tone: 'neutral' | 'gold' | 'success' | 'teal' | 'danger' }> = {
+  DRAFT: { label: 'Draft', tone: 'neutral' },
+  TABLED_PARLIAMENT: { label: 'Tabled', tone: 'gold' },
+  PASSED_ACT: { label: 'Passed into law', tone: 'success' },
+  ENFORCING: { label: 'Being enforced', tone: 'teal' },
+  CHALLENGED_SUPREME_COURT: { label: 'In the Supreme Court', tone: 'danger' },
+};
+// Mirrors SECTOR_MINISTRY in the engine: holding this ministry speeds up lobbying
+const SECTOR_MINISTRY: Record<ReformPolicy['sector'], string> = {
+  EXAM_SECURITY: 'MIN-EDU',
+  EDUCATION_INFRA: 'MIN-EDU',
+  JUDICIAL_ACCOUNTABILITY: 'MIN-LAW',
+  CIVIC_PROCUREMENT: 'MIN-FIN',
+  HEALTH_CARE: 'MIN-HEALTH',
+};
+
+/** Parliament: bills to table and lobby, and the (shadow) cabinet. */
 export function GovernanceView() {
-  const { state, dispatch } = useGame();
-
+  const { state } = useGame();
   const inParliament = state.electionLiveState.coalitionFormed && state.party.actualSeatsWon > 0;
   const inGovernment = inParliament && state.party.isRulingCoalition;
-
-  const handleTable = (id: string) => {
-    soundManager.playGavel();
-    dispatch({ type: 'TABLE_REFORM', reformId: id });
-  };
-
-  const handleLobby = (id: string) => {
-    soundManager.playClick();
-    dispatch({ type: 'LOBBY_REFORM', reformId: id });
-  };
+  const passed = state.reforms.filter(r => r.status === 'PASSED_ACT').length;
+  const tabled = state.reforms.filter(r => r.status === 'TABLED_PARLIAMENT').length;
 
   return (
     <div className="space-y-4">
-      
-      {/* Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
-        <div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
-              <span className="stamp-red text-[9px]">SANSAD BHAVAN</span>
-              <span>PARLIAMENT OF INDIA · LOK SABHA</span>
-            </span>
-            <span className="text-faint">|</span>
-            <span className="text-xs text-fg-2">Legislative Governance & Systemic Reforms</span>
-          </div>
-          <h2 className="font-display text-xl font-bold text-fg mt-1">
-            Passing Structural Laws, Cabinet Portfolios & Systemic Accountability
-          </h2>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs font-tactical">
-          <div className="rounded-xs border border-accent-line bg-accent-soft px-3.5 py-1.5">
-            <span className="text-muted">ACTS RATIFIED: </span>
-            <span className="font-black text-accent-fg tabular-nums text-sm">
-              {state.reforms.filter(r => r.status === 'PASSED_ACT').length} / {state.reforms.length}
-            </span>
-          </div>
+      <div className="chunky theme-dark-scope relative h-40 overflow-hidden sm:h-44">
+        <Image src="/images/delhi_parliament_dawn_1790774340629.jpg" alt="Parliament of India at dawn" fill priority className="object-cover" />
+        <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-ink via-ink/50 to-transparent p-4">
+          <Badge tone={inGovernment ? 'success' : inParliament ? 'teal' : 'neutral'} className="self-start">
+            {inGovernment ? 'In government' : inParliament ? 'In opposition' : 'Not in Parliament yet'}
+          </Badge>
+          <p className="mt-1.5 font-display text-lg text-on-canvas sm:text-xl">Parliament</p>
+          <p className="text-sm font-semibold text-on-canvas-muted">Power doesn&apos;t make you right. It gives you the tools to make it stick.</p>
         </div>
       </div>
 
-      {/* Atmospheric Parliament Banner */}
-      <div className="relative h-48 w-full overflow-hidden rounded-xs border-2 border-line-strong bg-inset shadow-xl">
-        <Image
-          src="/images/delhi_parliament_dawn_1790774340629.jpg"
-          alt="Parliament of India"
-          fill
-          priority
-          className="object-cover opacity-60 filter contrast-125"
-          referrerPolicy="no-referrer"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent p-5 flex flex-col justify-end">
-          <span className="text-[11px] font-tactical font-black text-accent-fg uppercase tracking-wider flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse" />
-            <span>UNION LEGISLATURE & EXECUTIVE DEMOCRATIC AUTHORITY</span>
-          </span>
-          <h3 className="text-lg font-bold text-fg font-display mt-1">
-            &ldquo;Power does not validate the truth; it only gives you the constitutional tools to enforce it.&rdquo;
-          </h3>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard icon={Vote} iconTone="pink" label="Your MPs" value={state.party.actualSeatsWon} />
+        <StatCard icon={FileText} iconTone="saffron" label="Bills tabled" value={tabled} />
+        <StatCard icon={CheckCircle2} iconTone="success" label="Laws passed" value={`${passed} / ${BALANCE.reformsForVictory}`}>
+          <div className="mt-1 text-xs font-bold text-muted">{BALANCE.reformsForVictory} laws wins the game</div>
+        </StatCard>
       </div>
 
-      {/* Union Cabinet Portfolios */}
       {!inParliament && (
-        <div className="rounded-xs border border-accent-line bg-accent-soft px-4 py-3 text-xs text-fg">
-          <strong className="font-tactical text-accent-fg">NOT YET IN PARLIAMENT · </strong>
-          Win seats in the general election to table bills. The cabinet below is the shadow line-up you would field if you join a government.
+        <div className="chunky-sm bg-accent p-3 text-sm font-bold text-ink">
+          Win seats in a general election to table bills. The cabinet tab shows the line-up you would field if you joined a government.
         </div>
       )}
 
-      <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-3 shadow-md">
-        <h3 className="font-tactical font-black text-fg border-b-2 border-line pb-2.5 flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Landmark className="h-4 w-4 text-accent-fg" />
-            <span>{inGovernment ? 'UNION CABINET' : 'SHADOW CABINET'} · MINISTRIES &amp; INTEGRITY WATCH</span>
-          </div>
-          <span className="text-[10px] text-muted font-mono">Performance & Vigilance Bureau</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {state.cabinet.map((min) => (
-            <div key={min.id} className="rounded-xs border-2 border-line bg-inset p-3.5 text-xs space-y-2 font-tactical hover:border-line-strong transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="font-black text-fg text-xs">{min.title}</span>
-                {min.isPlayerParty ? (
-                  <span className="rounded-xs bg-[#DC2626] text-white px-2 py-0.5 text-[9px] font-black tracking-wide">
-                    CJP PORTFOLIO
-                  </span>
-                ) : (
-                  <span className="rounded-xs bg-line-strong text-fg-2 px-2 py-0.5 text-[9px] font-bold">
-                    Coalition Partner
-                  </span>
-                )}
-              </div>
-              <div className="text-[11px] text-fg-2 font-sans">Incumbent Minister: <strong className="text-fg font-tactical">{min.ministerName}</strong></div>
-              <div className="flex items-center justify-between border-t border-line pt-1.5 text-[10px]">
-                <span className="text-muted">Integrity: <strong className="text-accent-fg">{min.performanceScore}%</strong></span>
-                <span className={`font-black ${min.corruptionScandalRisk > 30 ? 'text-danger-fg animate-pulse' : 'text-success-fg'}`}>
-                  Scandal Risk: {min.corruptionScandalRisk}%
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Legislative Reforms and Structural Bills */}
-      <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-3 shadow-md">
-        <h3 className="font-tactical font-black text-fg border-b-2 border-line pb-2.5 flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <FileText className="h-4 w-4 text-danger-fg" />
-            <span>FLAGSHIP REFORM BILLS & LEGISLATIVE VOTING</span>
-          </div>
-          <span className="text-[10px] text-muted font-mono">Simple Majority Required: 272 Ayes</span>
-        </h3>
-
-        <div className="space-y-3">
-          {state.reforms.map((reform) => (
-            <div
-              key={reform.id}
-              className="rounded-xs border-2 border-line bg-inset p-4 space-y-3 font-tactical hover:border-line-strong transition-colors"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-black text-sm text-fg">{reform.name}</span>
-                    <span className={`px-2 py-0.5 rounded-xs text-[9px] font-black uppercase tracking-wider ${
-                      reform.status === 'PASSED_ACT' ? 'bg-success-soft text-success-fg border border-success-line' :
-                      reform.status === 'TABLED_PARLIAMENT' ? 'bg-accent-soft text-accent-fg border border-accent-line' : 'bg-line-strong text-muted'
-                    }`}>
-                      {reform.status.replace(/_/g, ' ')}
-                    </span>
+      <Panel className="p-3 sm:p-4">
+        <Tabs
+          size="sm"
+          tabs={[
+            { value: 'bills', label: 'Bills', badge: tabled },
+            { value: 'cabinet', label: inGovernment ? 'Cabinet' : 'Shadow cabinet' },
+          ]}
+        >
+          <TabPanel value="bills">
+            <ul className="space-y-3">
+              {state.reforms.map(r => (
+                <li key={r.id}>
+                  <BillCard reform={r} inParliament={inParliament} />
+                </li>
+              ))}
+            </ul>
+          </TabPanel>
+          <TabPanel value="cabinet">
+            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {state.cabinet.map(m => (
+                <li key={m.id} className="chunky-sm space-y-2 bg-raised p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-display text-xs text-fg">{m.title}</span>
+                    <Badge tone={m.isPlayerParty ? 'pink' : 'neutral'}>{m.isPlayerParty ? state.party.abbreviation || 'CJP' : 'Partner'}</Badge>
                   </div>
-                  <p className="text-[11px] text-muted font-sans mt-0.5">{reform.description}</p>
-                </div>
+                  <div className="text-sm font-semibold text-fg-2">{m.ministerName}</div>
+                  <Meter label="Performance" icon={Landmark} value={m.performanceScore} tone="teal" />
+                  <Meter label="Scandal risk" icon={ShieldAlert} value={m.corruptionScandalRisk} tone={m.corruptionScandalRisk > 30 ? 'danger' : 'success'} />
+                </li>
+              ))}
+            </ul>
+          </TabPanel>
+        </Tabs>
+      </Panel>
+    </div>
+  );
+}
 
-                <div className="flex shrink-0 items-center gap-2">
-                  {reform.status === 'DRAFT' && (
-                    <button
-                      onClick={() => handleTable(reform.id)}
-                      disabled={!inParliament}
-                      title={inParliament ? 'Table this bill (1 AP)' : 'Requires MPs in the Lok Sabha'}
-                      className="whitespace-nowrap rounded-xs bg-[#DC2626] px-3 py-1.5 text-xs font-black text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Table in Lok Sabha · 1 AP
-                    </button>
-                  )}
-                  {reform.status === 'TABLED_PARLIAMENT' && (
-                    <button
-                      onClick={() => handleLobby(reform.id)}
-                      title="Lobby committees (1 AP, ₹10,000)"
-                      className="whitespace-nowrap rounded-xs bg-[#FACC15] px-3 py-1.5 text-xs font-black text-black transition-colors hover:bg-yellow-300"
-                    >
-                      Lobby MPs · 1 AP · ₹10k
-                    </button>
-                  )}
-                  {reform.status === 'PASSED_ACT' && (
-                    <div className="flex items-center gap-1.5 text-success-fg font-black text-xs bg-success-soft px-3 py-1.5 rounded-xs border border-success-line">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>ENACTED LAW OF THE REPUBLIC</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+function BillCard({ reform: r, inParliament }: { reform: ReformPolicy; inParliament: boolean }) {
+  const { state, dispatch } = useGame();
+  const status = STATUS[r.status];
+  const ministry = state.cabinet.find(c => c.id === SECTOR_MINISTRY[r.sector]);
+  const holdsMinistry = state.party.isRulingCoalition && !!ministry?.isPlayerParty;
+  const noAP = state.actionPoints < 1;
 
-              {/* Reform progress & resistance stats */}
-              <div className="border-t border-line pt-2 flex flex-wrap items-center justify-between text-[11px] font-tactical">
-                <div className="flex items-center gap-4">
-                  <span>PROGRESS: <strong className="text-success-fg font-black tabular-nums">{reform.implementationProgress}%</strong></span>
-                  <span>RESISTANCE: <strong className="text-danger-fg font-black tabular-nums">{reform.bureaucraticResistance}%</strong></span>
-                  <span>EST. BUDGET: <strong className="text-accent-fg font-black tabular-nums">₹{reform.costCrores} Cr</strong></span>
-                </div>
-                <div className="text-[10px] text-faint font-mono">
-                  State Support Needed: {reform.stateSupportReq} States
-                </div>
-              </div>
-            </div>
-          ))}
+  const tableBlocker = !inParliament ? 'You need MPs in the Lok Sabha.' : noAP ? 'No action points left today.' : null;
+  const lobbyBlocker = noAP
+    ? 'No action points left today.'
+    : state.movement.movementFunds < BALANCE.lobbyCost
+      ? `Needs ₹${BALANCE.lobbyCost.toLocaleString('en-IN')} in funds.`
+      : null;
+
+  return (
+    <div className="chunky-sm bg-raised p-3 sm:p-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-display text-sm text-fg">{r.name}</span>
+            <Badge tone={status.tone}>{status.label}</Badge>
+          </div>
+          <p className="mt-1 text-sm font-semibold text-fg-2">{r.description}</p>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            <Badge tone="danger">Resistance {r.bureaucraticResistance}</Badge>
+            <Badge tone="neutral">₹{r.costCrores.toLocaleString('en-IN')} crore</Badge>
+            <Badge tone="neutral">Needs {r.stateSupportReq} states</Badge>
+            {ministry && <Badge tone={holdsMinistry ? 'success' : 'neutral'}>{holdsMinistry ? `You hold ${ministry.title}` : ministry.title}</Badge>}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-1 md:items-end">
+          {r.status === 'DRAFT' && (
+            <Button
+              icon={Gavel}
+              disabled={!!tableBlocker}
+              onClick={() => {
+                soundManager.playGavel();
+                dispatch({ type: 'TABLE_REFORM', reformId: r.id });
+              }}
+            >
+              Table the bill · 1 AP
+            </Button>
+          )}
+          {r.status === 'TABLED_PARLIAMENT' && (
+            <Button
+              variant="pink"
+              icon={Megaphone}
+              disabled={!!lobbyBlocker}
+              onClick={() => {
+                soundManager.playClick();
+                dispatch({ type: 'LOBBY_REFORM', reformId: r.id });
+              }}
+            >
+              Lobby MPs · 1 AP · ₹{BALANCE.lobbyCost / 1000}K
+            </Button>
+          )}
+          {(r.status === 'DRAFT' ? tableBlocker : r.status === 'TABLED_PARLIAMENT' ? lobbyBlocker : null) && (
+            <span className="text-xs font-bold text-danger-fg">{r.status === 'DRAFT' ? tableBlocker : lobbyBlocker}</span>
+          )}
         </div>
       </div>
-
+      {r.status !== 'DRAFT' && (
+        <div className="mt-3">
+          <div className="flex justify-between text-xs font-extrabold text-fg">
+            <span>Votes secured</span>
+            <span className="tabular-nums">{r.implementationProgress}%</span>
+          </div>
+          <Meter value={r.implementationProgress} tone={r.status === 'PASSED_ACT' ? 'success' : 'stripes'} showValue={false} className="mt-1" />
+          {r.status === 'TABLED_PARLIAMENT' && holdsMinistry && (
+            <p className="mt-1 text-xs font-semibold text-muted">Holding this ministry makes each round of lobbying go further.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
