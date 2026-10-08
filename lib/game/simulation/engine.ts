@@ -31,9 +31,10 @@ import { STORY_EVENTS, getStoryEvent } from '../data/story';
 import { getOperationTemplate, type OperationTemplate } from '../data/operations';
 import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
+import { PROMOTION_PAY_RISE, RANK_LABEL, nextRank, promotionBlocker, stepTeam, teamOutput } from './team';
 import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -530,6 +531,7 @@ export type GameAction =
   | { type: 'HIRE_STAFF'; personId: string }
   | { type: 'FIRE_STAFF'; personId: string }
   | { type: 'ASSIGN_STAFF'; personId: string; assignment: string }
+  | { type: 'PROMOTE_STAFF'; personId: string }
   | { type: 'OPERATION_DECISION'; operationId: string; choice: 'SUPPLIES' | 'POLICE_TALKS' | 'MEDIA_SPEECH' | 'MEDICAL_AID' | 'MARCH_PARLIAMENT' }
   | { type: 'INVESTIGATION_ACTION'; caseId: string; action: 'RTI_FILING' | 'CORROBORATE_EVIDENCE' | 'LEGAL_PETITION_HC' | 'PUBLIC_EXPOSE' }
   | { type: 'FORM_PARTY'; partyName: string; abbreviation: string; symbol: string }
@@ -929,10 +931,8 @@ export function migrateState(saved: GameState): GameState {
     activeQuests: saved.activeQuests?.length ? saved.activeQuests : fresh.activeQuests,
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
-    people:
-      (saved.version ?? 1) < 3
-        ? [...(saved.people ?? []), ...fresh.people.filter(p => !(saved.people ?? []).some(sp => sp.id === p.id))]
-        : saved.people,
+    // v3 added the real CJP team; v10 adds recruits who appear as the movement grows
+    people: [...(saved.people ?? []), ...fresh.people.filter(p => !(saved.people ?? []).some(sp => sp.id === p.id))],
   };
 }
 
@@ -985,6 +985,8 @@ function skillGains(action: GameAction, prev: GameState): Partial<Record<SkillKe
     case 'HIRE_STAFF':
     case 'ASSIGN_STAFF':
       return { leadership: 4 };
+    case 'PROMOTE_STAFF':
+      return { leadership: 6 };
     case 'RESOLVE_CRISIS':
       return { leadership: 12 };
     case 'RESOLVE_STORY_CHOICE':
@@ -1317,10 +1319,13 @@ function reduce(state: GameState, action: GameAction): GameState {
       if (person.joinDate && dateKey(state.currentDate) < dateKey(person.joinDate)) {
         return fail(state, `${person.name} joins the movement on ${formatDate(person.joinDate)}.`);
       }
+      if (person.unlockVolunteers && !person.availableSince) {
+        return fail(state, `${person.name} isn't looking to join yet. Grow to ${person.unlockVolunteers.toLocaleString('en-IN')} volunteers.`);
+      }
       return withOutcome(
         {
           ...state,
-          people: state.people.map(p => (p.id === action.personId ? { ...p, isHired: true, morale: 90, workload: 30 } : p)),
+          people: state.people.map(p => (p.id === action.personId ? { ...p, isHired: true, morale: 90, workload: 30, lowMoraleDays: 0 } : p)),
           movement: {
             ...state.movement,
             coreStaffCount: state.movement.coreStaffCount + 1,
@@ -1354,6 +1359,35 @@ function reduce(state: GameState, action: GameAction): GameState {
         ...state,
         people: state.people.map(p => (p.id === action.personId ? { ...p, currentAssignment: action.assignment } : p)),
       };
+
+    case 'PROMOTE_STAFF': {
+      const person = state.people.find(p => p.id === action.personId);
+      if (!person) return state;
+      const blocker = promotionBlocker(person);
+      const to = nextRank(person);
+      if (blocker || !to) return fail(state, `${person.name}: ${blocker ?? 'cannot be promoted.'}`);
+      const salary = person.isVolunteer ? 0 : Math.round((person.salaryMonthly * PROMOTION_PAY_RISE) / 500) * 500;
+      const rise = salary - person.salaryMonthly;
+      return withOutcome(
+        {
+          ...state,
+          people: state.people.map(p =>
+            p.id === person.id
+              ? {
+                  ...p,
+                  rank: to,
+                  salaryMonthly: salary,
+                  morale: clamp(p.morale + 15, 0, 100),
+                  loyalty: clamp(p.loyalty + 10, 0, 100),
+                  memories: [...p.memories, `Promoted to ${RANK_LABEL[to]} (${formatDate(state.currentDate)}).`],
+                }
+              : p,
+          ),
+          movement: { ...state.movement, monthlyBurnRate: state.movement.monthlyBurnRate + rise },
+        },
+        `${person.name} is now ${RANK_LABEL[to]}${rise ? ` (+${inr(rise)}/month)` : ''}. Morale +15, loyalty +10.`,
+      );
+    }
 
     // ── Ground operation ──
     case 'OPERATION_DECISION': {
@@ -1961,19 +1995,19 @@ export function advanceSimulationDay(state: GameState): GameState {
     !d.isUnlocked && d.historicalDate <= dateStr ? { ...d, isUnlocked: true } : d,
   );
 
-  // 6. Staff morale (immutably — never push into existing arrays)
-  const people = state.people.map(person => {
-    if (!person.isHired) return person;
-    let morale = person.morale;
-    if (person.workload > 70) morale -= 2;
-    if (isNewMonth && insolventMonths > 0) morale -= 15;
-    morale = clamp(morale, 10, 100);
-    const memories =
-      morale < 30 && rng.next() > 0.95
-        ? [...person.memories, `Exhausted from relentless work without rest on ${formatDate(nextDate)}`]
-        : person.memories;
-    return { ...person, morale, memories };
+  // 6. The team: workload, morale, learning, loyalty, quitting, and new people wanting to join (L2)
+  const concludedOps = operations.filter(op => op.status === 'CONCLUDED' && state.operations.find(o => o.id === op.id)?.status === 'ACTIVE');
+  const team = stepTeam(state, {
+    date: nextDate,
+    dateLabel: formatDate(nextDate),
+    isNewMonth,
+    missedPayroll: isNewMonth && insolventMonths > 0,
+    concludedOps,
+    rng,
   });
+  const people = team.people;
+  // What the team produced today, from yesterday's assignments
+  const output = teamOutput(state);
 
   // 7. Crisis roll — more likely under heavy crackdown
   let activeCrisis = state.activeCrisis;
@@ -2014,6 +2048,53 @@ export function advanceSimulationDay(state: GameState): GameState {
     transactions: transactions.slice(0, 100),
   };
   if (isNewMonth) next = { ...next, player: fadeSkills(next.player, nextDate) };
+
+  // Team output (L2)
+  next = {
+    ...adjustMovement(next, { volunteers: output.total.volunteers, funds: output.total.funds }),
+  };
+  next = { ...next, movement: { ...next.movement, followers: next.movement.followers + output.total.followers } };
+  if (output.total.legalChance > 0 && rng.next() < output.total.legalChance) next = adjustCrackdown(next, -1);
+  if (output.total.research > 0) {
+    const open = next.cases.find(c => c.currentStage !== 'FILED_PIL' && c.currentStage !== 'EXPOSED' && c.readinessPercentage < 100);
+    const gain = Math.floor(output.total.research) + (rng.next() < output.total.research % 1 ? 1 : 0);
+    if (open && gain > 0) {
+      next = { ...next, cases: next.cases.map(c => (c.id === open.id ? { ...c, readinessPercentage: Math.min(100, c.readinessPercentage + gain) } : c)) };
+    }
+  }
+  for (const person of state.people) {
+    const o = output.byPerson[person.id];
+    if (!o?.campaignMorale) continue;
+    const boost = Math.round(o.campaignMorale);
+    next = {
+      ...next,
+      operations: next.operations.map(op =>
+        op.status === 'ACTIVE' && op.title === person.currentAssignment ? { ...op, crowdMorale: clamp(op.crowdMorale + boost, 10, 100) } : op,
+      ),
+    };
+  }
+  // Team news: people who walked out, people who want to join
+  for (const name of team.quits) {
+    const quitter = state.people.find(p => p.name === name);
+    next = {
+      ...next,
+      movement: {
+        ...next.movement,
+        coreStaffCount: Math.max(0, next.movement.coreStaffCount - 1),
+        monthlyBurnRate: Math.max(10000, next.movement.monthlyBurnRate - (quitter?.salaryMonthly ?? 0)),
+      },
+    };
+    next = addJournal(next, `${name} Left the Team`, `${name} walked away, worn out after too long under too much pressure.`, 'MILESTONE', 'PEOPLE');
+  }
+  for (const name of team.joined) {
+    next = addJournal(next, `${name} Wants to Join`, `The movement has grown big enough to draw new people. ${name} has asked to join the team.`, 'MINOR', 'PEOPLE');
+  }
+  const teamNews = [
+    ...team.quits.map(n => `${n} has quit the team.`),
+    ...team.warnings,
+    ...(team.joined.length ? [`${team.joined.join(' and ')} want${team.joined.length === 1 ? 's' : ''} to join the team.`] : []),
+  ];
+  if (teamNews.length) warning = [warning, ...teamNews].filter(Boolean).join(' ');
 
   next = growChapters(
     next,

@@ -154,7 +154,19 @@ export interface RecruitablePerson {
   joinDate?: GameDate;
   /** Timeline citation for historical people */
   source?: string;
+  // L2: the team grows and changes (all optional so old saves load)
+  rank?: StaffRank;
+  /** Days on the team in total */
+  daysServed?: number;
+  /** Consecutive days below quitting morale */
+  lowMoraleDays?: number;
+  /** Only appears once the movement has this many volunteers */
+  unlockVolunteers?: number;
+  /** Date this recruit became available (set when unlockVolunteers is reached) */
+  availableSince?: GameDate;
 }
+
+export type StaffRank = 'MEMBER' | 'COORDINATOR' | 'LEAD';
 
 export interface Transaction {
   id: string;

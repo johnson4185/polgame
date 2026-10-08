@@ -277,7 +277,8 @@ describe('historical record (S4)', () => {
     const migrated = migrateState(v2);
     expect(migrated.historicalArchive.some(d => d.id === 'HIST-2024-07-18')).toBe(false);
     expect(migrated.people.some(p => p.id === 'CJP-ASHUTOSH-RANKA')).toBe(true);
-    expect(migrated.people.filter(p => p.fictional)).toHaveLength(8);
+    // No one is duplicated by the merge
+    expect(migrated.people.filter(p => p.fictional)).toHaveLength(fresh.people.filter(p => p.fictional).length);
   });
 });
 

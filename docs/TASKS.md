@@ -255,7 +255,7 @@ diminishing returns from 1 to 10. Fresh skills grow fast, mastery is slow, and u
 a little. The Personal screen shows progress to the next level, and the toast says when a skill
 goes up.
 
-### L2. The team grows and changes
+### L2. The team grows and changes — ✅ DONE (8 Oct 2026)
 Staff gain skill XP from their assignment and time served (months on the team). Promotions:
 Volunteer → Coordinator → Lead, bringing better output and a higher stipend. Loyalty drifts with
 pay, wins and losses. Someone kept at morale below 20 for two weeks warns you, then quits. New

@@ -25,6 +25,54 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L2 · The team grows and changes (8 Oct 2026)
+
+**Before:** staff did nothing except cost money. Only their morale changed, and it only ever fell.
+
+**What changed**
+- **Desks produce something every day.** Each output scales with the person's skill, rank and
+  morale:
+  - Media room: followers.
+  - Volunteer coordination: volunteers.
+  - Fundraising: money.
+  - Research desk: readiness on your open case.
+  - Legal desk: a daily chance to ease police pressure.
+  - A running campaign: crowd morale.
+
+  A second or third person on the same desk adds less each.
+- **Workload follows the job.** Campaigns are heavy (workload climbs towards 80 and morale
+  drains), desks are moderate, and no assignment is light. Morale recovers on a desk or without an
+  assignment.
+- **Staff learn on the job.** A skill point every 30 days at a desk.
+- **Loyalty moves with payroll.** +2 each month you pay on time, −10 when you miss it
+  (−3 for volunteers).
+- **People can quit.** Below 20 morale for 7 days triggers a warning; at 14 days they walk out. The
+  stipend comes off your burn rate and the journal records it.
+- **Promotions.** Promoting someone to Coordinator needs 60 days on the team; Lead needs 180.
+  Both need morale of 40 or more. A promotion gives 1.5× or 2× output, +40% stipend for paid staff,
+  +15 morale and +10 loyalty.
+- **New people turn up as you grow.** Six new fictional recruits ask to join at 3,000, 6,000,
+  10,000, 15,000, 25,000 and 40,000 volunteers. The People screen says how many are still to come
+  and the next threshold.
+- **Memories come from real events,** for example seeing a campaign through to its end, a
+  promotion, or leaving.
+- **People screen:**
+  - the team's total daily output;
+  - each card shows the person's output and "May quit" or "Can be promoted" badges;
+  - the profile has an Experience section (rank, time on the team, days towards promotion, the
+    Promote button and the pay change) and a desk note explaining what the assignment produces.
+
+**Technical:** the logic lives in `lib/game/simulation/team.ts`. There is a new `PROMOTE_STAFF`
+action. `SAVE_VERSION` is 10, and migration adds the new recruits to old saves without
+duplicates. 9 new tests (92 in total). The balance simulation is unchanged, because staff only
+produce once you assign them.
+
+**Checked:** in the browser, hired Kunal and put him on Fundraising: ₹216 a day, shown on his
+card and in the team header. Promotion is blocked at 0 of 60 days with the reason. 1440px and
+390px, no horizontal scroll, no console errors.
+
+---
+
 ## L1 · Skills grow by doing (8 Oct 2026)
 
 **What changed**
