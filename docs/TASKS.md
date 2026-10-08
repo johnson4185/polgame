@@ -247,7 +247,7 @@ Today: skills, ages, staff skills, state chapters (outside story events), per-st
 and seat support (outside blitzes) never change on their own. The Personal screen currently says
 "Skills rise as you rank up", which is not true yet. L1 makes it true.
 
-### L1. Skills grow by doing (player)
+### L1. Skills grow by doing (player) — ✅ DONE (8 Oct 2026)
 Each action trains a related skill: RTI and corroboration train research; media and rallies train
 communication; campaigns and blitzes train organising; lobbying and coalitions train negotiation;
 fundraising and the ledger train finances; leading a crisis trains leadership. Skills have XP with

@@ -25,6 +25,39 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L1 · Skills grow by doing (8 Oct 2026)
+
+**What changed**
+- Your six skills now grow with practice:
+  - RTIs, corroboration and court petitions train research;
+  - media, going public, rallies and debates train communication;
+  - campaigns and blitzes train organising;
+  - police talks, legal aid, lobbying and coalitions train negotiation;
+  - crises, story choices, marches and hiring train leadership;
+  - funding candidates and giving your own money train finances.
+- Each level needs more practice than the last (7→8 takes 210 XP, 9→10 takes 270), and a skill
+  stops at 10.
+- A skill you haven't used for 45 days loses a little progress each month, but never a whole level.
+- A refused action (such as a PIL below 70% readiness) teaches nothing. A real attempt that fails
+  (a dismissed PIL) still teaches.
+- When a skill goes up, the result toast says so ("Research rose to 8.").
+- On the Personal screen, the Skills tab shows each level, a "next level" bar with the XP figures,
+  and what practises the skill. The old line "Skills rise as you rank up" was untrue and has been
+  replaced.
+
+**Why it matters:** skills already powered the game (research makes RTIs stronger, organising
+makes blitzes stronger, negotiation moves bills), but they never changed. Now playing a style
+makes you better at it.
+
+**Technical:** the logic lives in `lib/game/simulation/skills.ts`. The reducer trains skills
+after any action that actually happened. `SAVE_VERSION` is 9, and old saves get empty progress.
+6 new tests (83 in total). The balance simulation is unchanged: sensible play wins around day 266.
+
+**Checked:** in the browser, one RTI took research from 0 to 12 out of 210, and the opening story
+choice gave 6 leadership XP. 1440px and 390px, no horizontal scroll, no console errors.
+
+---
+
 ## A4j · Map screen rebuilt (8 Oct 2026)
 
 **What changed**

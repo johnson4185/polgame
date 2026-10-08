@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Activity, Bed, Briefcase, Coffee, Flame, HandHeart, Heart, Landmark, MessageSquare, Newspaper, Send, Wallet, Zap } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { formatDate } from '@/lib/game/simulation/engine';
+import { SKILL_FADE_AFTER_DAYS, SKILL_KEYS, SKILL_LABEL, SKILL_MAX, emptySkillProgress, xpToNext } from '@/lib/game/simulation/skills';
 import { soundManager } from '@/lib/game/simulation/sound';
 import type { GameState } from '@/lib/game/types';
 import { ArtPlaceholder, Badge, Button, EffectChip, Meter, Panel, PanelHeader, StatCard, cn } from '@/components/ui/primitives';
@@ -81,25 +82,68 @@ export function PersonalLifeView() {
             <Work />
           </TabPanel>
           <TabPanel value="skills">
-            <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
-              {[
-                { label: 'Communication', val: p.communication },
-                { label: 'Organising', val: p.organizing },
-                { label: 'Research and RTI', val: p.research },
-                { label: 'Negotiation', val: p.negotiation },
-                { label: 'Leadership', val: p.leadership },
-                { label: 'Finances', val: p.financialAcumen },
-              ].map(s => (
-                <Meter key={s.label} label={s.label} value={s.val} max={10} tone="brand" />
-              ))}
-            </div>
-            <p className="mt-3 text-xs font-semibold text-muted">Skills rise as you rank up. Research makes RTIs stronger; negotiation helps bills through Parliament.</p>
+            <Skills />
           </TabPanel>
           <TabPanel value="phone">
             <Phone />
           </TabPanel>
         </Tabs>
       </Panel>
+    </div>
+  );
+}
+
+// What practises each skill, in plain words
+const SKILL_HOW: Record<(typeof SKILL_KEYS)[number], string> = {
+  communication: 'Media posts, going public, rallies and TV debates',
+  organizing: 'Campaigns, blitzes and running protest logistics',
+  research: 'RTIs, corroboration and court petitions',
+  negotiation: 'Police talks, legal aid, lobbying bills and coalitions',
+  leadership: 'Crises, story decisions, marches and building the team',
+  financialAcumen: 'Funding candidates and putting in your own money',
+};
+
+function Skills() {
+  const { state } = useGame();
+  const p = state.player;
+  const progress = p.skillProgress ?? emptySkillProgress();
+  return (
+    <div className="space-y-3">
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {SKILL_KEYS.map(k => {
+          const level = p[k];
+          const maxed = level >= SKILL_MAX;
+          const need = xpToNext(level);
+          const have = progress.xp[k];
+          return (
+            <li key={k} className="chunky-sm bg-raised p-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-display text-xs text-fg">{SKILL_LABEL[k]}</span>
+                <span className="font-display text-lg text-fg tabular-nums">
+                  {level}
+                  <span className="text-xs text-muted">/{SKILL_MAX}</span>
+                </span>
+              </div>
+              <Meter value={level} max={SKILL_MAX} tone="brand" showValue={false} className="mt-1" />
+              <div className="mt-2 flex justify-between text-xs font-bold text-muted">
+                <span>{maxed ? 'Mastered' : `Next level`}</span>
+                {!maxed && (
+                  <span className="tabular-nums">
+                    {have} / {need}
+                  </span>
+                )}
+              </div>
+              {!maxed && <Meter value={have} max={need} tone="teal" showValue={false} className="mt-0.5" />}
+              <p className="mt-1.5 text-xs font-semibold text-fg-2">{SKILL_HOW[k]}</p>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="text-xs font-semibold text-muted">
+        You get better at what you do. Each action practises a skill, and higher levels take longer to reach. A skill you haven&apos;t used for{' '}
+        {SKILL_FADE_AFTER_DAYS} days loses a little progress each month, but never a whole level. Research makes RTIs stronger, organising makes
+        blitzes stronger, and negotiation helps bills through Parliament.
+      </p>
     </div>
   );
 }

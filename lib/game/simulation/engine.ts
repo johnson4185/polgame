@@ -30,8 +30,10 @@ import { SeededRNG } from './random';
 import { STORY_EVENTS, getStoryEvent } from '../data/story';
 import { getOperationTemplate, type OperationTemplate } from '../data/operations';
 import { HASHTAGS, POST_TEMPLATES } from '../data/media';
+import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
+import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -345,6 +347,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
       negotiation: 7,
       leadership: 8,
       financialAcumen: 6,
+      skillProgress: emptySkillProgress(),
       personalSavings: 65000,
       personalDebt: 0,
       monthlyLivingCost: 18000,
@@ -907,6 +910,8 @@ export function migrateState(saved: GameState): GameState {
     gameOver: saved.gameOver ?? null,
     // v4: story events. Old saves start the story from their current date so past events don't flood in.
     story: saved.story ?? initialStoryState(saved.currentDate ?? fresh.currentDate),
+    // v9: skills grow with practice
+    player: { ...saved.player, skillProgress: saved.player?.skillProgress ?? emptySkillProgress() },
     // v5: followers and the government response meter
     movement: { ...saved.movement, followers: saved.movement?.followers ?? 0 },
     govResponse: saved.govResponse ?? { pressure: 0 },
@@ -937,7 +942,78 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (state.gameOver && !POST_GAME_ACTIONS.has(action.type)) return state;
   const next = reduce(state, action);
   if (next === state) return state;
-  return finalize(next, state);
+  return finalize(practise(next, state, action), state);
+}
+
+/** Which skills an action trains, and by how much (L1: learning by doing) */
+function skillGains(action: GameAction, prev: GameState): Partial<Record<SkillKey, number>> {
+  switch (action.type) {
+    case 'INVESTIGATION_ACTION':
+      return action.action === 'LEGAL_PETITION_HC'
+        ? { research: 6, negotiation: 10 }
+        : action.action === 'PUBLIC_EXPOSE'
+          ? { communication: 12 }
+          : { research: 12 };
+    case 'MEDIA_ACTION':
+      return { communication: 10 };
+    case 'BOOST_CONSTITUENCY':
+      return { organizing: 10 };
+    case 'LAUNCH_OPERATION':
+      return { organizing: 15, leadership: 5 };
+    case 'OPERATION_DECISION':
+      return action.choice === 'POLICE_TALKS'
+        ? { negotiation: 10 }
+        : action.choice === 'MEDIA_SPEECH'
+          ? { communication: 10 }
+          : action.choice === 'MARCH_PARLIAMENT'
+            ? { leadership: 12 }
+            : { organizing: 8 };
+    case 'LEGAL_AID':
+      return { negotiation: 6 };
+    case 'TABLE_REFORM':
+      return { negotiation: 6 };
+    case 'LOBBY_REFORM':
+      return { negotiation: 12 };
+    case 'FORM_COALITION':
+      return { negotiation: 20 };
+    case 'FORM_PARTY':
+      return { leadership: 20, organizing: 10 };
+    case 'NOMINATE_CANDIDATE':
+      return { financialAcumen: 6, organizing: 4 };
+    case 'PERSONAL_TO_MOVEMENT_DONATION':
+      return { financialAcumen: 6 };
+    case 'HIRE_STAFF':
+    case 'ASSIGN_STAFF':
+      return { leadership: 4 };
+    case 'RESOLVE_CRISIS':
+      return { leadership: 12 };
+    case 'RESOLVE_STORY_CHOICE':
+      return { leadership: 6 };
+    case 'FINISH_MINI_GAME': {
+      // Practice scales with how well it went (score 0-100)
+      const amount = 5 + Math.round(Math.max(0, Math.min(100, action.score)) / 7);
+      return prev.activeMiniGame === 'TV_DEBATE' ? { communication: amount, negotiation: Math.round(amount / 2) } : { communication: amount, leadership: Math.round(amount / 2) };
+    }
+    default:
+      return {};
+  }
+}
+
+/** Train skills for an action that actually happened (a refused action teaches nothing). */
+function practise(next: GameState, prev: GameState, action: GameAction): GameState {
+  const gains = skillGains(action, prev);
+  if (!Object.keys(gains).length) return next;
+  const spentAP = next.actionPoints < prev.actionPoints;
+  const outcome = next.lastOutcome !== prev.lastOutcome ? next.lastOutcome : null;
+  const refused = !spentAP && outcome?.tone === 'FAILURE';
+  if (refused) return next;
+  const { player, levelUps } = trainSkills(next.player, gains, next.currentDate);
+  let out: GameState = { ...next, player };
+  if (levelUps.length) {
+    const line = levelUps.join(' ');
+    out = outcome ? { ...out, lastOutcome: { ...outcome, text: `${outcome.text} ${line}` } } : withOutcome(out, line);
+  }
+  return out;
 }
 
 function reduce(state: GameState, action: GameAction): GameState {
@@ -1937,6 +2013,7 @@ export function advanceSimulationDay(state: GameState): GameState {
     people,
     transactions: transactions.slice(0, 100),
   };
+  if (isNewMonth) next = { ...next, player: fadeSkills(next.player, nextDate) };
 
   next = growChapters(
     next,

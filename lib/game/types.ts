@@ -25,6 +25,14 @@ export interface GameDate {
   day: number;   // 1-31
 }
 
+export type SkillKey = 'communication' | 'organizing' | 'research' | 'negotiation' | 'leadership' | 'financialAcumen';
+export interface SkillProgress {
+  /** XP collected towards the next level */
+  xp: Record<SkillKey, number>;
+  /** Day number (days since 1970) the skill was last practised; 0 = never */
+  lastTrained: Record<SkillKey, number>;
+}
+
 export interface PlayerStats {
   name: string;
   roleTitle: string;
@@ -44,6 +52,8 @@ export interface PlayerStats {
   negotiation: number;
   leadership: number;
   financialAcumen: number;
+  /** Practice towards the next level of each skill (see simulation/skills.ts) */
+  skillProgress?: SkillProgress;
 
   // Personal Finances (₹)
   personalSavings: number;
