@@ -25,6 +25,38 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L6 · Progress you can see (8 Oct 2026) — living world complete
+
+**What changed**
+- The save now keeps a **starting snapshot**, taken when the prologue ends, and a **snapshot on
+  the 1st of every month** (up to five years). Each one records followers, volunteers, trust,
+  funds, chapters, team size, seats contested and won, laws, average seat support and your total
+  skill. The old campaign statistics live only in this browser's storage; this record travels
+  with the save.
+- **Chronicle → "Then & now"** (new tab):
+  - "Day N · M months since you started";
+  - a table of day 1 against now, with ▲/▼ for each measure;
+  - a month-by-month bar chart (volunteers, followers, chapters, trust or seat support);
+  - every state chapter you have, by strength.
+- **Founding anniversaries.** Every 16 May after the first, a "N Years of the Movement" journal
+  entry compares today with day one ("six words and a joke … since then: +480,000 followers …"),
+  and a toast points to Then & now.
+- AGENTS.md lists the six new simulation modules, so other agents know where things live.
+
+**Technical:** the logic lives in `lib/game/simulation/progress.ts`. `SAVE_VERSION` is 14. Old
+saves compare against the campaign's day-1 values. 6 new tests (117 in total). The balance
+simulation is unchanged.
+
+**Checked:** in the browser, played to 2 June (day 18): the header said "1 month since you started
+on 16 May 2026", followers went from 0 to 4.8 lakh and volunteers from 492 to 1,447, and the chart
+shows Start / Jun / Now. 1440px and 390px, no horizontal scroll, no console errors.
+
+**The living world (L1–L6) is complete.** People improve with practice, the team works and
+changes, people age, the map fills in, the country moves around you, and you can see how far
+you've come.
+
+---
+
 ## L5 · The country moves too (8 Oct 2026)
 
 **Before:** the NDA and INDIA were frozen. Each election added a random ±4-point swing, seat

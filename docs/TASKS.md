@@ -234,7 +234,7 @@ temperature by season; no Delhi street names outside Delhi; no named fictional l
 People, Research, Ledgers, Party, Election, Parliament, Archive, Chronicle + Situation log,
 Personal and Map all use the component kit now. See PROGRESS A4a–A4j.
 
-## Living world — APPROVED by the owner (8 Oct 2026), Claude, in order L1→L6
+## Living world — ✅ COMPLETE (8 Oct 2026), Claude, L1→L6 (approved by the owner)
 Owner decisions: build in order L1 to L6. Add an optional "End week" once the party exists (days stay the
 default; events still stop a skip). Real people get an age only where the public record states one,
 with the source; otherwise no age is shown.
@@ -278,7 +278,7 @@ national trust, so blitzes stop being the only lever. Protests grow the chapter 
 NDA and INDIA popularity drift: anti-incumbency builds over years, and scandals and events move
 it. Seat baselines shift between elections. New issues rise in states over time.
 
-### L6. Progress you can see
+### L6. Progress you can see — ✅ DONE (8 Oct 2026)
 A "Then and now" view: your stats and skills on day 1 against today, monthly snapshots (the
 statistics history already exists), the map filling in over time, and a yearly anniversary
 report event.

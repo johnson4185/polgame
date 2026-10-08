@@ -48,6 +48,12 @@ lib/game/simulation/engine.ts     createInitialState, GameAction union, gameRedu
 lib/game/simulation/random.ts     SeededRNG — use this, never Math.random(), in simulation logic
 lib/game/simulation/persistence.ts  save/load slots + JSON export/import
 lib/game/simulation/sound.ts      WebAudio sound engine (soundManager singleton)
+lib/game/simulation/skills.ts     Living world L1: the player's skills grow with practice (XP per action)
+lib/game/simulation/team.ts       L2: staff desks and daily output, workload, learning, promotion, quitting
+lib/game/simulation/ages.ts       L3: ages and birthdays, and End week (ADVANCE_WEEK)
+lib/game/simulation/geography.ts  L4: volunteers settle in states, chapters grow/fade, seat support drifts
+lib/game/simulation/country.ts    L5: NDA/INDIA national mood, state moods, new issues, seats change hands
+lib/game/simulation/progress.ts   L6: start + monthly progress snapshots, founding anniversaries
 lib/game/context/GameContext.tsx  React context: { state, dispatch, startNewGame, load/save }
 lib/game/data/*.ts                Static content: states & constituencies, crises, recruits,
                                   reforms, investigations, historical archive

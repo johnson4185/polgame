@@ -33,11 +33,12 @@ import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
 import { WEEK_DAYS, ageEnergyPenalty, ageOn, isBirthday, ordinal } from './ages';
 import { CHAPTER_NAME, stepGeography } from './geography';
+import { FOUNDING, recordMonth, sinceStart, startProgress } from './progress';
 import { ELECTION_DAY_NOISE, dentGovernment, initialMood, settleSeats, shiftStateMoods, stepMood, surfaceIssue } from './country';
 import { PROMOTION_PAY_RISE, RANK_LABEL, nextRank, promotionBlocker, stepTeam, teamOutput } from './team';
 import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -941,6 +942,8 @@ export function migrateState(saved: GameState): GameState {
     media: saved.media ?? initialMediaState(),
     // v13: the country moves
     nationalMood: saved.nationalMood ?? initialMood(),
+    // v14: progress history; old saves compare against the campaign's day-1 values
+    progress: saved.progress ?? startProgress(fresh),
     // v8: manifesto pledges linked to reforms
     party: {
       ...saved.party,
@@ -966,7 +969,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === 'ADVANCE_WEEK') return advanceWeek(state);
   const next = reduce(state, action);
   if (next === state) return state;
-  return finalize(react(practise(next, state, action), state, action), state);
+  let out = react(practise(next, state, action), state, action);
+  if (action.type === 'FINISH_PROLOGUE' && !state.hasBegun) out = { ...out, progress: startProgress(out) };
+  return finalize(out, state);
 }
 
 /** L5: the country reacts to what you do */
@@ -2214,6 +2219,20 @@ export function advanceSimulationDay(state: GameState, opts: { routine?: boolean
     }
   }
 
+  // Progress (L6): a snapshot each month, and a look back on every founding anniversary
+  if (isNewMonth) next = recordMonth(next);
+  const anniversary = nextDate.month === FOUNDING.month && nextDate.day === FOUNDING.day && nextDate.year > INITIAL_GAME_DATE.year;
+  if (anniversary) {
+    const years = nextDate.year - INITIAL_GAME_DATE.year;
+    next = addJournal(
+      next,
+      `${years} Year${years === 1 ? '' : 's'} of the Movement`,
+      `On this day in ${INITIAL_GAME_DATE.year} it was six words and a joke. Since then: ${sinceStart(next)}.`,
+      'HISTORIC_TURNING_POINT',
+      'JOURNAL',
+    );
+  }
+
   // Bad news is a warning (and stops End week); good news is shown only on a quiet day
   const teamWarnings = [
     ...team.quits.map(n => `${n} has quit the team.`),
@@ -2222,6 +2241,7 @@ export function advanceSimulationDay(state: GameState, opts: { routine?: boolean
   ];
   if (teamWarnings.length) warning = [warning, ...teamWarnings].filter(Boolean).join(' ');
   const goodNews = [
+    ...(anniversary ? [`${nextDate.year - INITIAL_GAME_DATE.year} year${nextDate.year - INITIAL_GAME_DATE.year === 1 ? '' : 's'} since the launch. See Chronicle → Then & now.`] : []),
     ...(isBirthday(next.player.birthDate, nextDate) ? [`Happy ${ordinal(ageOn(next.player.birthDate, nextDate)!)} birthday!`] : []),
     ...birthdays.map(b => `It's ${b.name}'s ${ordinal(ageOn(b.birthDate, nextDate)!)} birthday. Morale +5.`),
     ...(team.joined.length ? [`${team.joined.join(' and ')} want${team.joined.length === 1 ? 's' : ''} to join the team.`] : []),

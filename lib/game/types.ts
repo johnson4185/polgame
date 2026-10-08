@@ -620,6 +620,8 @@ export interface GameState {
   media: MediaState;
   /** L5: national vote-share swing for each alliance (points, ±12) */
   nationalMood?: NationalMood;
+  /** L6: where the campaign started and a snapshot every month since */
+  progress?: { start: ProgressSnapshot; monthly: ProgressSnapshot[] };
 
   // Active dialogue or notification alert
   activeDialogue: {
@@ -638,4 +640,19 @@ export interface GameState {
 export interface NationalMood {
   nda: number;
   india: number;
+}
+
+export interface ProgressSnapshot {
+  date: GameDate;
+  followers: number;
+  volunteers: number;
+  trust: number;
+  funds: number;
+  chapters: number;
+  teamSize: number;
+  seatsContested: number;
+  seatsWon: number;
+  laws: number;
+  avgSupport: number;
+  skillTotal: number;
 }

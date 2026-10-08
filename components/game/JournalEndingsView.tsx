@@ -9,6 +9,7 @@ import { Badge, Panel, PanelHeader, StatCard } from '@/components/ui/primitives'
 import { TabPanel, Tabs } from '@/components/ui/menus';
 import { CampaignStatistics } from '@/components/statistics/CampaignStatistics';
 import { SituationLogView } from './SituationLogView';
+import { ThenAndNow } from './ThenAndNow';
 
 const SIGNIFICANCE: Record<JournalEntry['significance'], { label: string; tone: 'neutral' | 'gold' | 'pink' }> = {
   MINOR: { label: 'Note', tone: 'neutral' },
@@ -24,12 +25,16 @@ export function JournalEndingsView() {
         size="sm"
         tabs={[
           { value: 'chronicle', label: 'Chronicle' },
+          { value: 'progress', label: 'Then & now' },
           { value: 'log', label: 'Full log' },
           { value: 'statistics', label: 'Statistics' },
         ]}
       >
         <TabPanel value="chronicle">
           <Chronicle />
+        </TabPanel>
+        <TabPanel value="progress">
+          <ThenAndNow />
         </TabPanel>
         <TabPanel value="log">
           <SituationLogView />
