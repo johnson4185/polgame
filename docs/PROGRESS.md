@@ -25,6 +25,34 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4e · Election screen rebuilt (8 Oct 2026)
+
+**What changed**
+- A "seats counted" bar and one big "Count the next 35 seats" button.
+- The 543-seat bar uses the game colours (NDA saffron, CJP pink, INDIA teal, others grey) with the
+  272 majority line marked. Below it is a card per bloc with its seat count.
+- **The verdict now tells the truth.** The old text always said "neither bloc reached 272, you hold
+  the balance of power", even when you won 0 seats or one alliance already had a majority. It now
+  says one of:
+  - you won an outright majority;
+  - you won no seats;
+  - one alliance has a majority without you;
+  - nobody has a majority.
+- The coalition options are choice cards that show the combined seats and the trust cost
+  (NDA −12, INDIA −3, watchdog +4). A partnership that wouldn't reach 272 is greyed out, because
+  the engine refuses it anyway. With 0 seats the only option is "Back to the streets". With 272+
+  it is "Form the government".
+- Once decided, a "Go to Parliament" button appears.
+
+**Checked:** at 1440px and 390px:
+- a real election from the UI (3 nominees, counted to 543; 0 seats leads to "Back to the streets");
+- a patched hung parliament: NDA 230 + CJP 40 = 270 greys out both alliance options; NDA 240
+  makes joining the NDA possible, which forms a 280-seat government.
+
+No horizontal scroll and no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+---
+
 ## A4d · Party screen rebuilt (8 Oct 2026)
 
 **What changed**
