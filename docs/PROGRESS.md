@@ -25,6 +25,28 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4d · Party screen rebuilt (8 Oct 2026)
+
+**What changed**
+- **Before the party exists:** progress bars show volunteers (out of 15,000) and money (out of
+  ₹50,000), each with a tick or a cross. You pick the election symbol from a grid of cards. The
+  Register button says what is still missing, including "Registration opens in Act 2" during Act 1.
+- **After it exists:** a header shows the party name, symbol, candidates out of 543, projected
+  seats and the party account, plus the Call election button with the reason when it is locked.
+  Below are three tabs:
+  - **Nominate.** Pick the state first, then the seat. The full list of 543 seats was one huge
+    dropdown before. The panel beside it shows support in that seat, the security deposit, the
+    campaign fund (quick picks from None to ₹100K) and the total cost.
+  - **Candidates.** Cards for every seat you have contested.
+  - **Manifesto.** Pledge cards with appeal and resistance.
+- The candidate-name box now starts empty. It used to be pre-filled with a fictional lawyer's name.
+
+**Checked:** 1440px and 390px. Act 1 lock, then an Act 2 save: registered with a chosen symbol,
+nominated a candidate in Patna Sahib with ₹50K, and saw them under Candidates. Manifesto tab, no
+horizontal scroll, no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+---
+
 ## A4c · Ledgers screen rebuilt (6 Oct 2026)
 
 **What changed**
