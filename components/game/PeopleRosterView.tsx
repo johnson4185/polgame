@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Users, UserPlus, UserX, Briefcase, Heart, ShieldCheck, Award, ChevronDown, Pencil, TrendingUp, AlertTriangle, Lock } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { formatDate, isoDate } from '@/lib/game/simulation/engine';
+import { ageOn } from '@/lib/game/simulation/ages';
 import { soundManager } from '@/lib/game/simulation/sound';
 import type { RecruitablePerson } from '@/lib/game/types';
 import { ArtPlaceholder, Badge, Button, Meter, Panel, PanelHeader } from '@/components/ui/primitives';
@@ -175,6 +176,7 @@ function ProfileDialog({ person: p, onClose }: { person: RecruitablePerson | nul
           {p.historical && <Badge tone="teal">Real person</Badge>}
           {p.fictional && <Badge tone="neutral">Fictional character</Badge>}
           <Badge tone="neutral">{p.state}</Badge>
+          {p.birthDate && <Badge tone="neutral">Age {ageOn(p.birthDate, state.currentDate)}</Badge>}
           <Badge tone="neutral">{p.isVolunteer ? 'Volunteer (unpaid)' : `₹${p.salaryMonthly.toLocaleString('en-IN')}/month`}</Badge>
         </div>
 

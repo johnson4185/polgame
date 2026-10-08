@@ -54,6 +54,9 @@ export interface PlayerStats {
   financialAcumen: number;
   /** Practice towards the next level of each skill (see simulation/skills.ts) */
   skillProgress?: SkillProgress;
+  /** L3: birth date. For a real person only when the public record states it (see birthDateSource). */
+  birthDate?: GameDate;
+  birthDateSource?: string;
 
   // Personal Finances (₹)
   personalSavings: number;
@@ -164,6 +167,8 @@ export interface RecruitablePerson {
   unlockVolunteers?: number;
   /** Date this recruit became available (set when unlockVolunteers is reached) */
   availableSince?: GameDate;
+  /** L3: fictional characters only; real people have no age unless the record states one */
+  birthDate?: GameDate;
 }
 
 export type StaffRank = 'MEMBER' | 'COORDINATOR' | 'LEAD';

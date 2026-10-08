@@ -31,10 +31,11 @@ import { STORY_EVENTS, getStoryEvent } from '../data/story';
 import { getOperationTemplate, type OperationTemplate } from '../data/operations';
 import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
+import { WEEK_DAYS, ageEnergyPenalty, ageOn, isBirthday, ordinal } from './ages';
 import { PROMOTION_PAY_RISE, RANK_LABEL, nextRank, promotionBlocker, stepTeam, teamOutput } from './team';
 import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -349,6 +350,9 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
       leadership: 8,
       financialAcumen: 6,
       skillProgress: emptySkillProgress(),
+      // Abhijeet Dipke's birth date is in the public record; the custom citizen is invented
+      birthDate: mode === 'ABHIJEET_CJP' ? { year: 1995, month: 9, day: 29 } : { year: 2000, month: 3, day: 14 },
+      ...(mode === 'ABHIJEET_CJP' ? { birthDateSource: 'docs/cjp-timeline.md (Khaleej Times profile)' } : {}),
       personalSavings: 65000,
       personalDebt: 0,
       monthlyLivingCost: 18000,
@@ -513,7 +517,8 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
 export type GameAction =
   | { type: 'SET_SCREEN'; screen: GameState['activeScreen'] }
   | { type: 'SET_CLOCK_SPEED'; speed: GameState['clockSpeed'] }
-  | { type: 'ADVANCE_DAY' }
+  | { type: 'ADVANCE_DAY'; routine?: boolean }
+  | { type: 'ADVANCE_WEEK' }
   | { type: 'REST_DAY' }
   | { type: 'TOGGLE_SOUND'; enabled: boolean }
   | { type: 'TOGGLE_THEME' }
@@ -913,7 +918,13 @@ export function migrateState(saved: GameState): GameState {
     // v4: story events. Old saves start the story from their current date so past events don't flood in.
     story: saved.story ?? initialStoryState(saved.currentDate ?? fresh.currentDate),
     // v9: skills grow with practice
-    player: { ...saved.player, skillProgress: saved.player?.skillProgress ?? emptySkillProgress() },
+    player: {
+      ...saved.player,
+      skillProgress: saved.player?.skillProgress ?? emptySkillProgress(),
+      // v11: ages
+      birthDate: saved.player?.birthDate ?? fresh.player.birthDate,
+      birthDateSource: saved.player?.birthDateSource ?? fresh.player.birthDateSource,
+    },
     // v5: followers and the government response meter
     movement: { ...saved.movement, followers: saved.movement?.followers ?? 0 },
     govResponse: saved.govResponse ?? { pressure: 0 },
@@ -932,7 +943,9 @@ export function migrateState(saved: GameState): GameState {
     // v3: the archive was rebuilt from the record, and the real CJP team was added
     historicalArchive: (saved.version ?? 1) < 3 ? archiveUnlockedBy(saved.currentDate ?? fresh.currentDate) : saved.historicalArchive,
     // v3 added the real CJP team; v10 adds recruits who appear as the movement grows
-    people: [...(saved.people ?? []), ...fresh.people.filter(p => !(saved.people ?? []).some(sp => sp.id === p.id))],
+    people: [...(saved.people ?? []), ...fresh.people.filter(p => !(saved.people ?? []).some(sp => sp.id === p.id))].map(p =>
+      p.birthDate ? p : { ...p, birthDate: fresh.people.find(f => f.id === p.id)?.birthDate },
+    ),
   };
 }
 
@@ -940,9 +953,32 @@ export function migrateState(saved: GameState): GameState {
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   if (state.gameOver && !POST_GAME_ACTIONS.has(action.type)) return state;
+  if (action.type === 'ADVANCE_WEEK') return advanceWeek(state);
   const next = reduce(state, action);
   if (next === state) return state;
   return finalize(practise(next, state, action), state);
+}
+
+/** End week (L3): play up to a week of routine days, stopping for anything that needs the player */
+function advanceWeek(state: GameState): GameState {
+  if (!state.party.isFormed) return fail(state, 'End week unlocks once the party is registered.');
+  if (state.activeCrisis || state.activeMiniGame || state.story?.activeEventId) return state;
+  let s = state;
+  let days = 0;
+  let stop: string | null = null;
+  while (days < WEEK_DAYS) {
+    const before = s;
+    s = gameReducer(s, { type: 'ADVANCE_DAY', routine: true });
+    if (s === before) break;
+    days += 1;
+    if (s.gameOver) return s;
+    if (s.activeCrisis) stop = 'a crisis needs you';
+    else if (s.story?.activeEventId) stop = 'something happened that needs a decision';
+    else if (s.lastOutcome !== before.lastOutcome && s.lastOutcome?.tone === 'WARNING') stop = s.lastOutcome.text;
+    if (stop) break;
+  }
+  const head = `${days} day${days === 1 ? '' : 's'} passed`;
+  return stop ? withOutcome(s, `${head}. Stopped early: ${stop}`, 'WARNING') : withOutcome(s, `${head}. The team kept working.`);
 }
 
 /** Which skills an action trains, and by how much (L1: learning by doing) */
@@ -1127,7 +1163,7 @@ function reduce(state: GameState, action: GameAction): GameState {
     // ── Time ──
     case 'ADVANCE_DAY':
       if (state.activeCrisis || state.activeMiniGame || state.story?.activeEventId) return state;
-      return advanceSimulationDay(state);
+      return advanceSimulationDay(state, { routine: action.routine });
 
     case 'REST_DAY': {
       if (state.activeCrisis || state.activeMiniGame || state.story?.activeEventId) return state;
@@ -1818,7 +1854,7 @@ function reduce(state: GameState, action: GameAction): GameState {
 /**
  * Advance the world by one day. Pure: randomness comes from the seeded RNG.
  */
-export function advanceSimulationDay(state: GameState): GameState {
+export function advanceSimulationDay(state: GameState, opts: { routine?: boolean } = {}): GameState {
   const nextDate = { ...state.currentDate };
   const isNewMonth = nextDate.day >= getDaysInMonth(nextDate.year, nextDate.month);
   if (isNewMonth) {
@@ -1841,7 +1877,11 @@ export function advanceSimulationDay(state: GameState): GameState {
   let warning: string | null = null;
 
   // 1. Personal vitals: overnight recovery, job fatigue, and health consequences
-  const energy = clamp(p.energy + BALANCE.overnightEnergyRecovery - (p.employmentStatus === 'FULL_TIME_JOB' ? 6 : 2), 0, 100);
+  const energy = clamp(
+    p.energy + BALANCE.overnightEnergyRecovery - (p.employmentStatus === 'FULL_TIME_JOB' ? 6 : 2) - ageEnergyPenalty(ageOn(p.birthDate, nextDate)),
+    0,
+    100,
+  );
   let stress = clamp(p.stress - 3 + (energy < 20 ? 5 : 0) + (crackdown > 60 ? 2 : 0), 0, 100);
   let health = p.health;
   if (p.stress > 80) health -= 3;
@@ -1957,7 +1997,8 @@ export function advanceSimulationDay(state: GameState): GameState {
   // 4. Movement momentum. Attention fades faster the higher trust is, so it must be actively
   // maintained; volunteers grow with trust but a share drifts away every day.
   // A day with no actions at all: the movement looks asleep
-  if (state.hasBegun && state.actionPoints >= state.maxActionPoints) trustDelta -= 1;
+  // (Days skipped with End week are routine work, not idleness)
+  if (state.hasBegun && !opts.routine && state.actionPoints >= state.maxActionPoints) trustDelta -= 1;
   if (m.publicTrust > 45) {
     const decay = (m.publicTrust - 45) / 20;
     trustDelta -= Math.floor(decay) + (rng.next() < decay % 1 ? 1 : 0);
@@ -2089,12 +2130,27 @@ export function advanceSimulationDay(state: GameState): GameState {
   for (const name of team.joined) {
     next = addJournal(next, `${name} Wants to Join`, `The movement has grown big enough to draw new people. ${name} has asked to join the team.`, 'MINOR', 'PEOPLE');
   }
-  const teamNews = [
-    ...team.quits.map(n => `${n} has quit the team.`),
-    ...team.warnings,
+  // Birthdays (L3)
+  if (isBirthday(next.player.birthDate, nextDate)) {
+    const age = ageOn(next.player.birthDate, nextDate)!;
+    next = {
+      ...next,
+      player: { ...next.player, stress: clamp(next.player.stress - 5, 0, 100), familySupport: clamp(next.player.familySupport + 3, 0, 100) },
+    };
+    next = addJournal(next, `${next.player.name} Turns ${age}`, `A ${ordinal(age)} birthday, with family on the phone and volunteers bringing sweets.`, 'MINOR', 'PERSONAL');
+  }
+  const birthdays = next.people.filter(x => x.isHired && isBirthday(x.birthDate, nextDate));
+  for (const b of birthdays) {
+    next = { ...next, people: next.people.map(x => (x.id === b.id ? { ...x, morale: clamp(x.morale + 5, 0, 100) } : x)) };
+  }
+  // Bad news is a warning (and stops End week); good news is shown only on a quiet day
+  const teamWarnings = [...team.quits.map(n => `${n} has quit the team.`), ...team.warnings];
+  if (teamWarnings.length) warning = [warning, ...teamWarnings].filter(Boolean).join(' ');
+  const goodNews = [
+    ...(isBirthday(next.player.birthDate, nextDate) ? [`Happy ${ordinal(ageOn(next.player.birthDate, nextDate)!)} birthday!`] : []),
+    ...birthdays.map(b => `It's ${b.name}'s ${ordinal(ageOn(b.birthDate, nextDate)!)} birthday. Morale +5.`),
     ...(team.joined.length ? [`${team.joined.join(' and ')} want${team.joined.length === 1 ? 's' : ''} to join the team.`] : []),
-  ];
-  if (teamNews.length) warning = [warning, ...teamNews].filter(Boolean).join(' ');
+  ].join(' ');
 
   next = growChapters(
     next,
@@ -2111,6 +2167,7 @@ export function advanceSimulationDay(state: GameState): GameState {
     }
   }
   if (warning) next = withOutcome(next, warning, 'WARNING');
+  else if (goodNews) next = withOutcome(next, goodNews);
 
   // Media: the narrative drifts toward what trust and government pressure support; trends cool off
   {

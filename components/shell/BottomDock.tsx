@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useSyncExternalStore } from 'react';
-import { Home, Tv, Megaphone, Map as MapIcon, Users, Search, Vote, Trophy, Landmark, User, Wallet, BookOpen, ScrollText, LayoutGrid } from 'lucide-react';
+import { Home, Tv, Megaphone, Map as MapIcon, Users, Search, Vote, Trophy, Landmark, User, Wallet, BookOpen, ScrollText, LayoutGrid, FastForward } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
 import { useGame } from '@/lib/game/context/GameContext';
 import { soundManager } from '@/lib/game/simulation/sound';
@@ -33,6 +33,7 @@ function useIsWide() {
 
 export function BottomDock() {
   const { state, dispatch } = useGame();
+  const busy = !!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver || !!state.story?.activeEventId;
   const wide = useIsWide();
 
   const go = (screen: ScreenTab) => {
@@ -111,16 +112,32 @@ export function BottomDock() {
           </DropdownMenu.Root>
         </nav>
 
-        <EndTurnButton
-          data-tour="endturn"
-          className="md:w-72"
-          day={dayNumber(state.currentDate)}
-          disabled={!!state.activeCrisis || !!state.activeMiniGame || !!state.gameOver || !!state.story?.activeEventId}
-          onClick={() => {
-            soundManager.playPaper();
-            dispatch({ type: 'ADVANCE_DAY' });
-          }}
-        />
+        <div className="flex items-stretch gap-2">
+          {state.party.isFormed && (
+            <button
+              onClick={() => {
+                soundManager.playPaper();
+                dispatch({ type: 'ADVANCE_WEEK' });
+              }}
+              disabled={busy}
+              title="Play up to 7 days. Stops early for any event, crisis or warning."
+              className="chunky pressable flex w-16 shrink-0 flex-col items-center justify-center bg-teal font-display text-[10px] text-white disabled:opacity-50 md:w-20 md:text-xs"
+            >
+              <FastForward className="h-5 w-5 fill-current" aria-hidden="true" />
+              Week
+            </button>
+          )}
+          <EndTurnButton
+            data-tour="endturn"
+            className="min-w-0 flex-1 md:w-72"
+            day={dayNumber(state.currentDate)}
+            disabled={busy}
+            onClick={() => {
+              soundManager.playPaper();
+              dispatch({ type: 'ADVANCE_DAY' });
+            }}
+          />
+        </div>
       </div>
     </div>
   );

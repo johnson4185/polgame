@@ -25,6 +25,42 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L3 · Age and time (8 Oct 2026)
+
+**What changed**
+- **People have ages.**
+  - Abhijeet Dipke's birth date (29 September 1995) comes from the public record (the Khaleej Times
+    profile in docs/cjp-timeline.md), and the Personal screen says so. He turns 31 in-game on
+    29 September 2026.
+  - A custom citizen is 26 (born 14 March 2000, invented).
+  - All 14 fictional staff have birth dates, and their profiles show their age.
+  - Other real people show no age, because the record doesn't give one (your rule).
+- **Birthdays happen.**
+  - Yours: −5 stress, +3 family support, and a journal entry.
+  - Staff on your team: +5 morale and a toast.
+- **Age has a mild effect.** Past 35, you recover 1 less energy each night, plus 1 more for every
+  further 10 years. It only matters in long campaigns.
+- **End week.** Once the party is registered, a teal "Week" button sits next to End Turn.
+  - It plays up to 7 days and stops early for any story event, crisis or warning (for example
+    someone about to quit, or missed payroll), saying why.
+  - Skipped days count as routine work, not idleness, so there's no "the movement looks asleep"
+    trust penalty. Normal trust decay still applies, so you can't coast for ever.
+- Good news (birthdays, new people wanting to join) no longer shows as a warning, so it doesn't
+  stop a week.
+
+**Technical:** the logic lives in `lib/game/simulation/ages.ts`. There is a new `ADVANCE_WEEK`
+action, and `ADVANCE_DAY` takes `routine`. `SAVE_VERSION` is 11; migration fills in birth dates.
+The save validator now treats the living-world fields (birth dates, rank, days served and so on)
+as optional, because only some people have them. 6 new tests (98 in total). The balance
+simulation is unchanged.
+
+**Checked:** in the browser, there's no Week button before the party exists. In a patched save
+with a party, Week moved day 1 to day 6 and stopped for the 21 May story event. Kunal shows
+Age 22; Saurav Das (a real person) shows no age. 1440px and 390px, no horizontal scroll, no
+console errors.
+
+---
+
 ## L2 · The team grows and changes (8 Oct 2026)
 
 **Before:** staff did nothing except cost money. Only their morale changed, and it only ever fell.

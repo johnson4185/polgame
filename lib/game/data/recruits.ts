@@ -4,6 +4,7 @@ import { RecruitablePerson } from '../types';
 export const INITIAL_RECRUITS: RecruitablePerson[] = [
   {
     id: 'REC-001',
+    birthDate: { year: 1984, month: 11, day: 3 },
     name: 'Advocate Meera Tandon',
     role: 'LAWYER',
     state: 'NCT of Delhi',
@@ -29,6 +30,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-002',
+    birthDate: { year: 2003, month: 8, day: 21 },
     name: 'Kunal Verma',
     role: 'ORGANIZER',
     state: 'Bihar',
@@ -54,6 +56,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-003',
+    birthDate: { year: 1991, month: 2, day: 12 },
     name: 'Sujata Sen',
     role: 'INVESTIGATOR',
     state: 'West Bengal',
@@ -79,6 +82,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-004',
+    birthDate: { year: 1998, month: 6, day: 2 },
     name: 'Farhan Sheikh',
     role: 'COMMUNICATIONS',
     state: 'Maharashtra',
@@ -104,6 +108,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-005',
+    birthDate: { year: 1979, month: 1, day: 27 },
     name: 'Dr. Nilesh Patil',
     role: 'REGIONAL_LEAD',
     state: 'Maharashtra',
@@ -129,6 +134,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-006',
+    birthDate: { year: 1996, month: 10, day: 19 },
     name: 'Harpreet Kaur',
     role: 'FUNDRAISER',
     state: 'Punjab',
@@ -154,6 +160,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-007',
+    birthDate: { year: 1988, month: 4, day: 8 },
     name: 'Satbir Dhillon',
     role: 'ORGANIZER',
     state: 'Haryana',
@@ -179,6 +186,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-008',
+    birthDate: { year: 2004, month: 5, day: 30 },
     name: 'Ananya Sharma',
     role: 'INVESTIGATOR',
     state: 'Rajasthan',
@@ -375,6 +383,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-01',
+    birthDate: { year: 2002, month: 7, day: 11 },
     name: 'Rohit Bhandari',
     role: 'COMMUNICATIONS',
     state: 'Uttarakhand',
@@ -395,6 +404,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-02',
+    birthDate: { year: 1981, month: 12, day: 5 },
     name: 'Lakshmi Narayanan',
     role: 'FUNDRAISER',
     state: 'Tamil Nadu',
@@ -415,6 +425,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-03',
+    birthDate: { year: 2003, month: 3, day: 23 },
     name: 'Imran Qureshi',
     role: 'INVESTIGATOR',
     state: 'Uttar Pradesh',
@@ -435,6 +446,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-04',
+    birthDate: { year: 2004, month: 9, day: 9 },
     name: 'Bhavna Rathod',
     role: 'ORGANIZER',
     state: 'Gujarat',
@@ -455,6 +467,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-05',
+    birthDate: { year: 1987, month: 5, day: 25 },
     name: 'Tenzin Dorje',
     role: 'REGIONAL_LEAD',
     state: 'Sikkim',
@@ -475,6 +488,7 @@ export const INITIAL_RECRUITS: RecruitablePerson[] = [
   },
   {
     id: 'REC-L2-06',
+    birthDate: { year: 1972, month: 8, day: 30 },
     name: 'Advocate Ritu Malhotra',
     role: 'LAWYER',
     state: 'Punjab',

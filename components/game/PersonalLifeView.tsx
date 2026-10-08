@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Activity, Bed, Briefcase, Coffee, Flame, HandHeart, Heart, Landmark, MessageSquare, Newspaper, Send, Wallet, Zap } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { formatDate } from '@/lib/game/simulation/engine';
+import { ageOn } from '@/lib/game/simulation/ages';
 import { SKILL_FADE_AFTER_DAYS, SKILL_KEYS, SKILL_LABEL, SKILL_MAX, emptySkillProgress, xpToNext } from '@/lib/game/simulation/skills';
 import { soundManager } from '@/lib/game/simulation/sound';
 import type { GameState } from '@/lib/game/types';
@@ -38,7 +39,13 @@ export function PersonalLifeView() {
               <div className="mt-1 flex flex-wrap gap-1">
                 <Badge tone={p.campaignMode === 'ABHIJEET_CJP' ? 'teal' : 'neutral'}>{p.campaignMode === 'ABHIJEET_CJP' ? 'Real person' : 'Your citizen'}</Badge>
                 <Badge tone="neutral">{p.background.replace(/_/g, ' ').toLowerCase()}</Badge>
+                {p.birthDate && (
+                  <Badge tone="gold">
+                    Age {ageOn(p.birthDate, state.currentDate)} · born {formatDate(p.birthDate)}
+                  </Badge>
+                )}
               </div>
+              {p.birthDateSource && <p className="mt-0.5 text-[11px] font-semibold text-muted">Birth date from the public record ({p.birthDateSource}).</p>}
             </div>
           </div>
           <div className="flex flex-col gap-1 sm:items-end">

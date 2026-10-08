@@ -6,6 +6,8 @@ const optional = new Set([
   'portraitUrl', 'historical', 'fictional', 'joinDate', 'source', 'donorName',
   'outcomeSummary', 'outcomeNotes', 'isFictional', 'cjpCandidate', 'electionResult',
   'sensitive', 'associatedScreen', 'coalitionSummary', 'miniGameLastPlayed', 'theme',
+  // living world (L2, L3): only some people have these
+  'birthDate', 'birthDateSource', 'rank', 'daysServed', 'lowMoraleDays', 'unlockVolunteers', 'availableSince',
 ]);
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const date = { year: 2026, month: 1, day: 1 };
@@ -17,6 +19,8 @@ const extraShapes: Record<string, unknown> = {
   cjpCandidate: { name: '', isCoreMember: false, localReputation: 0, campaignFundingAllocated: 0 },
   electionResult: { winnerParty: '', winnerCandidate: '', votesWon: 0, marginVotes: 0, cjpVotes: 0, cjpVoteShare: 0, rank: 0 },
   joinDate: date,
+  birthDate: date,
+  availableSince: date,
 };
 let template: GameState | undefined;
 

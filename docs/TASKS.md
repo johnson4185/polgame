@@ -262,7 +262,7 @@ pay, wins and losses. Someone kept at morale below 20 for two weeks warns you, t
 fictional recruits turn up over time as the movement grows, so the roster is never "finished".
 Memories come from real game events (they were at the vigil, they were arrested with you).
 
-### L3. Age and time
+### L3. Age and time — ✅ DONE (8 Oct 2026)
 Birth dates for the player and fictional characters, with age shown on profiles; birthdays are
 small moments. Age has mild effects over a long game, such as slower energy recovery past about
 40. Real people only get an age if the public record states one; otherwise none is shown.
