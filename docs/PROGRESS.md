@@ -25,6 +25,25 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4g · Archive screen rebuilt (8 Oct 2026)
+
+**What changed**
+- The Archive ("The real record") is now a timeline in date order. Each entry has a saffron date
+  sticker, then a card with:
+  - its verification badge and source publication;
+  - the summary, plus the Tele-MANAS helpline note on sensitive entries;
+  - a "Why it matters" callout;
+  - the people mentioned, as chips;
+  - a Source button.
+- An "entries unlocked" bar (for example 4 / 39) shows how much of the record you've reached, and a
+  line at the bottom says how many entries are still locked.
+- The filter row is now tabs (All, Facts, Court, Official, Contested), each showing its count.
+
+**Checked:** 1440px and 390px on day 1 (4 of 39 unlocked; the filter counts add up), no horizontal
+scroll, no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+---
+
 ## A4f · Parliament screen rebuilt (8 Oct 2026)
 
 **What changed**

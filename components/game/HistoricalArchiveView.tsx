@@ -1,128 +1,146 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import { BookOpen, ExternalLink, Lock, Users } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
-import { soundManager } from '@/lib/game/simulation/sound';
-import { BookOpen, ExternalLink, ShieldCheck, AlertCircle, Calendar, CheckCircle2, Bookmark } from 'lucide-react';
+import type { HistoricalDispatch } from '@/lib/game/types';
+import { Badge, Meter, Panel, PanelHeader } from '@/components/ui/primitives';
+import { TabPanel, Tabs } from '@/components/ui/menus';
 
+type Status = HistoricalDispatch['verificationStatus'];
+const STATUS: Record<Status, { label: string; tone: 'success' | 'teal' | 'gold' | 'neutral' | 'pink' }> = {
+  DOCUMENTED_FACT: { label: 'Documented fact', tone: 'success' },
+  COURT_RECORD: { label: 'Court record', tone: 'teal' },
+  OFFICIAL_PROCEEDING: { label: 'Official proceeding', tone: 'neutral' },
+  CONTESTED_CLAIM: { label: 'Contested claim', tone: 'gold' },
+  SIMULATED_DRAMATIZATION: { label: 'Dramatised', tone: 'pink' },
+};
+const FILTERS: { value: 'ALL' | Status; label: string }[] = [
+  { value: 'ALL', label: 'All' },
+  { value: 'DOCUMENTED_FACT', label: 'Facts' },
+  { value: 'COURT_RECORD', label: 'Court' },
+  { value: 'OFFICIAL_PROCEEDING', label: 'Official' },
+  { value: 'CONTESTED_CLAIM', label: 'Contested' },
+];
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function niceDate(iso: string) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return y && m && d ? { day: String(d), month: `${MONTHS[m - 1]} ${y}` } : { day: '', month: iso };
+}
+
+/** The real record: sourced entries that unlock as the story reaches their date. */
 export function HistoricalArchiveView() {
   const { state } = useGame();
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
-
-  const lockedCount = state.historicalArchive.filter(d => !d.isUnlocked).length;
-  const filteredArchive = state.historicalArchive.filter(d => {
-    if (!d.isUnlocked) return false;
-    if (filterStatus !== 'ALL' && d.verificationStatus !== filterStatus) return false;
-    return true;
-  });
+  const all = state.historicalArchive;
+  const unlocked = all.filter(d => d.isUnlocked).sort((a, b) => a.historicalDate.localeCompare(b.historicalDate));
+  const locked = all.length - unlocked.length;
 
   return (
     <div className="space-y-4">
-      
-      {/* Header in Black, Red, Yellow */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-tactical text-xs font-black uppercase tracking-wider text-danger-fg flex items-center gap-1.5 bg-danger-soft px-2 py-0.5 rounded-xs border border-danger-line">
-              <span className="stamp-red text-[9px]">OFFICIAL RECORD</span>
-              <span>THE REAL RECORD · 15 MAY – 5 OCT 2026</span>
+      <Panel className="p-4 sm:p-5">
+        <PanelHeader title="The real record" icon={BookOpen} />
+        <p className="mt-2 text-sm font-semibold text-fg-2">
+          How the Cockroach Janta Party really happened, 15 May to 5 October 2026. Every entry comes from published reporting and links its source.
+          Where sources disagree, the entry is marked <strong>Contested</strong> and says who claimed what. Gameplay numbers, investigations and some
+          characters are fiction and are labelled as such.
+        </p>
+        <div className="mt-3">
+          <div className="flex justify-between text-sm font-extrabold text-fg">
+            <span>Entries unlocked</span>
+            <span className="tabular-nums">
+              {unlocked.length} / {all.length}
             </span>
-            <span className="text-faint">|</span>
-            <span className="text-xs text-fg-2">Public Records & Citations</span>
           </div>
-          <h2 className="font-display text-xl font-bold text-fg mt-1">
-            How the Cockroach Janta Party Really Happened
-          </h2>
+          <Meter value={unlocked.length} max={Math.max(1, all.length)} tone="teal" showValue={false} className="mt-1" />
         </div>
+      </Panel>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs font-tactical">
-          <span className="text-muted font-bold">FILTER:</span>
-          {['ALL', 'DOCUMENTED_FACT', 'COURT_RECORD', 'OFFICIAL_PROCEEDING', 'CONTESTED_CLAIM'].map((f) => (
-            <button
-              key={f}
-              onClick={() => {
-                soundManager.playClick();
-                setFilterStatus(f);
-              }}
-              className={`px-3 py-1 rounded-xs border font-black transition-all ${
-                filterStatus === f
-                  ? 'border-accent bg-[#FACC15] text-black shadow-xs'
-                  : 'border-line bg-raised text-muted hover:text-fg hover:border-line-strong'
-              }`}
-            >
-              {f.replace(/_/g, ' ')}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Archive Disclaimer Notice */}
-      <div className="rounded-xs border border-line bg-surface p-3.5 text-xs text-fg-2 leading-relaxed font-sans shadow-md">
-        <strong className="text-accent-fg font-tactical">ABOUT THIS ARCHIVE: </strong>
-        Every entry is drawn from published reporting and links its source. Where sources disagree, the entry is marked{' '}
-        <strong>Contested claim</strong> and says who claimed what. Entries unlock as the story reaches their date
-        {lockedCount > 0 ? ` (${lockedCount} still locked)` : ''}. Gameplay numbers, investigations and some characters are fiction and are labelled as such.
-      </div>
-
-      {/* Dispatches Timeline */}
-      <div className="space-y-3">
-        {filteredArchive.map((dispatch) => (
-          <div
-            key={dispatch.id}
-            className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-2.5 shadow-md hover:border-line-strong transition-colors"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-line pb-2 font-tactical">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-black text-accent-fg flex items-center gap-1.5 bg-inset px-2 py-0.5 rounded-xs border border-line">
-                  <Calendar className="h-3.5 w-3.5 text-danger-fg" />
-                  {dispatch.historicalDate}
-                </span>
-                <span className="text-faint">·</span>
-                <span className="font-bold text-fg">{dispatch.sourcePublication}</span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className={`rounded-xs px-2 py-0.5 text-[9px] font-black tracking-wider ${
-                  dispatch.verificationStatus === 'DOCUMENTED_FACT' ? 'bg-success-soft text-success-fg border border-success-line' :
-                  dispatch.verificationStatus === 'COURT_RECORD' ? 'bg-info-soft text-info-fg border border-info-line' :
-                  dispatch.verificationStatus === 'CONTESTED_CLAIM' ? 'bg-accent-soft text-accent-fg border border-accent-line' : 'bg-raised text-fg-2 border border-line'
-                }`}>
-                  {dispatch.verificationStatus.replace(/_/g, ' ')}
-                </span>
-
-                <a
-                  href={dispatch.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 text-danger-fg hover:text-accent-fg text-[10px] font-bold transition-colors"
-                >
-                  <span>Source</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            </div>
-
-            <h3 className="font-tactical text-sm font-black text-fg">{dispatch.title}</h3>
-            <p className="text-fg-2 leading-relaxed font-sans">{dispatch.summary}</p>
-            {dispatch.sensitive && (
-              <p className="rounded-xs border border-line bg-inset px-2.5 py-1.5 text-[11px] font-semibold text-fg-2">
-                If you or someone you know is struggling, call Tele-MANAS on 14416 (free, 24×7, India).
-              </p>
-            )}
-
-            <div className="border-t border-line pt-2 flex flex-wrap items-center justify-between text-[11px] font-tactical text-muted">
-              <div>
-                <span className="text-faint">PEOPLE MENTIONED: </span>
-                <span className="text-fg">{dispatch.peopleMentioned.length ? dispatch.peopleMentioned.join(', ') : 'Not named'}</span>
-              </div>
-              <div className="text-[10px] text-accent-fg font-mono">
-                Why it matters: {dispatch.relevanceToCJP}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
+      <Panel className="p-3 sm:p-4">
+        <Tabs
+          size="sm"
+          tabs={FILTERS.map(f => ({
+            value: f.value,
+            label: f.label,
+            badge: f.value === 'ALL' ? undefined : unlocked.filter(d => d.verificationStatus === f.value).length || undefined,
+          }))}
+        >
+          {FILTERS.map(f => {
+            const list = f.value === 'ALL' ? unlocked : unlocked.filter(d => d.verificationStatus === f.value);
+            return (
+              <TabPanel key={f.value} value={f.value}>
+                {list.length === 0 ? (
+                  <p className="py-8 text-center text-sm font-semibold text-muted">Nothing here yet.</p>
+                ) : (
+                  <ol className="relative space-y-4 before:absolute before:bottom-2 before:left-[1.6rem] before:top-2 before:w-1 before:rounded-full before:bg-ink/20">
+                    {list.map(d => (
+                      <Entry key={d.id} entry={d} />
+                    ))}
+                  </ol>
+                )}
+                {locked > 0 && (
+                  <p className="mt-4 flex items-center justify-center gap-1.5 text-sm font-bold text-muted">
+                    <Lock className="h-4 w-4" aria-hidden="true" /> {locked} more {locked === 1 ? 'entry unlocks' : 'entries unlock'} as the story reaches
+                    {locked === 1 ? ' its' : ' their'} date.
+                  </p>
+                )}
+              </TabPanel>
+            );
+          })}
+        </Tabs>
+      </Panel>
     </div>
+  );
+}
+
+function Entry({ entry: d }: { entry: HistoricalDispatch }) {
+  const date = niceDate(d.historicalDate);
+  const status = STATUS[d.verificationStatus];
+  return (
+    <li className="relative grid grid-cols-[3.25rem_minmax(0,1fr)] gap-3">
+      <div className="chunky-sm z-10 flex h-14 flex-col items-center justify-center self-start bg-brand text-brand-ink">
+        <span className="font-display text-lg leading-none">{date.day}</span>
+        <span className="mt-0.5 text-center text-[10px] font-extrabold leading-tight">{date.month}</span>
+      </div>
+      <article className="chunky-sm bg-raised p-3 sm:p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge tone={status.tone}>{status.label}</Badge>
+          <span className="text-xs font-bold text-muted">{d.sourcePublication}</span>
+        </div>
+        <h3 className="mt-1.5 text-base font-extrabold leading-snug text-fg">{d.title}</h3>
+        <p className="mt-1 text-sm font-semibold leading-relaxed text-fg-2">{d.summary}</p>
+        {d.sensitive && (
+          <p className="mt-2 rounded-lg border-2 border-ink bg-surface px-2.5 py-1.5 text-xs font-bold text-fg">
+            If you or someone you know is struggling, call Tele-MANAS on 14416 (free, 24×7, India).
+          </p>
+        )}
+        <p className="mt-2 border-l-4 border-pink pl-2 text-sm font-semibold text-fg">
+          <span className="font-extrabold">Why it matters: </span>
+          {d.relevanceToCJP}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <Users className="h-3.5 w-3.5 text-muted" aria-label="People mentioned" />
+            {d.peopleMentioned.length ? (
+              d.peopleMentioned.map(p => (
+                <Badge key={p} tone="neutral">
+                  {p}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-xs font-semibold text-muted">Not named</span>
+            )}
+          </div>
+          <a
+            href={d.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="chunky-sm pressable inline-flex items-center gap-1 bg-surface px-2.5 py-1 text-xs font-extrabold text-fg"
+          >
+            Source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </a>
+        </div>
+      </article>
+    </li>
   );
 }
