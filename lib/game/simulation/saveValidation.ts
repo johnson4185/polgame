@@ -7,7 +7,7 @@ const optional = new Set([
   'outcomeSummary', 'outcomeNotes', 'isFictional', 'cjpCandidate', 'electionResult',
   'sensitive', 'associatedScreen', 'coalitionSummary', 'miniGameLastPlayed', 'theme',
   // living world (L2, L3): only some people have these
-  'birthDate', 'birthDateSource', 'rank', 'daysServed', 'lowMoraleDays', 'unlockVolunteers', 'availableSince',
+  'birthDate', 'birthDateSource', 'rank', 'daysServed', 'lowMoraleDays', 'unlockVolunteers', 'availableSince', 'neglectDays',
 ]);
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const date = { year: 2026, month: 1, day: 1 };

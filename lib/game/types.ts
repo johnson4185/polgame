@@ -295,6 +295,8 @@ export interface StateData {
   cjpChapterLevel: 0 | 1 | 2 | 3; // 0 = none, 1 = informal, 2 = verified office, 3 = mass branch
   volunteerStrength: number;
   keyLeaders: string[];
+  /** L4: days this chapter has been neglected (volunteers far below its level) */
+  neglectDays?: number;
 }
 
 // Real Historical Archive

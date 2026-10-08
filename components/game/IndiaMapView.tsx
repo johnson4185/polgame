@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Flag, MapPin, Megaphone, Search, UserCheck, Users } from 'lucide-react';
 import { useGame } from '@/lib/game/context/GameContext';
 import { BALANCE } from '@/lib/game/simulation/engine';
+import { CHAPTER_DECLINE_DAYS, CHAPTER_DECLINE_SHARE, CHAPTER_NAME, CHAPTER_THRESHOLDS, SUPPORT_CAP, supportTarget } from '@/lib/game/simulation/geography';
 import { soundManager } from '@/lib/game/simulation/sound';
 import type { LokSabhaConstituency, StateData } from '@/lib/game/types';
 import { Badge, Button, Meter, Panel, PanelHeader, SegmentMeter, StatCard, cn } from '@/components/ui/primitives';
@@ -22,10 +23,10 @@ const MOOD: Record<StateData['regionalMood'], { label: string; tone: 'success' |
   VOLATILE: { label: 'Volatile', tone: 'gold' },
   RULING_LEAN: { label: 'Leans ruling', tone: 'neutral' },
 };
-const CHAPTER = ['No chapter yet', 'Volunteer group', 'District offices', 'Mass movement'];
+const CHAPTER = CHAPTER_NAME;
 const CHAPTER_DOT = ['bg-inset', 'bg-teal', 'bg-accent', 'bg-pink'];
 // The engine caps support from grassroots blitzes at this level
-const BLITZ_CAP = 45;
+const BLITZ_CAP = SUPPORT_CAP;
 
 /** India by state: pick a state, read its mood and issues, and campaign seat by seat. */
 export function IndiaMapView() {
@@ -57,7 +58,7 @@ export function IndiaMapView() {
         <StatCard icon={UserCheck} iconTone="saffron" label="Seats contested" value={`${candidates} / 543`} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <Panel className="p-3">
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Region">
             {['All', ...Object.keys(ZONES)].map(z => (
@@ -140,16 +141,18 @@ export function IndiaMapView() {
                 {current.keyLeaders.length ? current.keyLeaders.join(', ') : 'None yet'}
               </div>
               <div className="sm:text-right">
-                <span className="font-extrabold text-fg">Volunteers: </span>
+                <span className="font-extrabold text-fg">Volunteers here: </span>
                 {current.volunteerStrength.toLocaleString('en-IN')}
               </div>
             </div>
+            <ChapterProgress st={current} />
           </Panel>
 
           <Panel className="p-4">
             <PanelHeader title={`Seats (${seats.length})`} icon={MapPin} />
             <p className="mt-1 text-xs font-semibold text-muted">
-              A grassroots blitz costs 1 AP and ₹{BALANCE.boostCost.toLocaleString('en-IN')}; blitzes alone can lift support to {BLITZ_CAP}%.
+              Support drifts towards what your presence here justifies: national trust, the local chapter and volunteers. A grassroots blitz (1 AP,
+              ₹{BALANCE.boostCost.toLocaleString('en-IN')}) pushes it faster; neither goes past {BLITZ_CAP}%.
             </p>
             {globalBlocker && <p className="chunky-sm mt-2 bg-accent px-3 py-2 text-sm font-bold text-ink">{globalBlocker} Blitzes are paused.</p>}
             <ul className="mt-3 max-h-[32rem] space-y-2 overflow-y-auto pr-1">
@@ -167,7 +170,8 @@ export function IndiaMapView() {
 }
 
 function SeatCard({ seat: c, paused }: { seat: LokSabhaConstituency; paused: boolean }) {
-  const { dispatch } = useGame();
+  const { state, dispatch } = useGame();
+  const target = supportTarget(state, c, state.states.find(st => st.name === c.state));
   const atCap = c.cjpSupportScore >= BLITZ_CAP;
   return (
     <div className="chunky-sm bg-raised p-3">
@@ -201,7 +205,12 @@ function SeatCard({ seat: c, paused }: { seat: LokSabhaConstituency; paused: boo
       </div>
       <div className="mt-2">
         <div className="flex justify-between text-xs font-extrabold text-fg">
-          <span>Your support</span>
+          <span>
+            Your support{' '}
+            <span className="font-semibold text-muted">
+              {target > c.cjpSupportScore ? `(rising towards ${target}%)` : state.movement.publicTrust < 25 && target < c.cjpSupportScore ? `(falling towards ${target}%)` : ''}
+            </span>
+          </span>
           <span className="tabular-nums">{c.cjpSupportScore}%</span>
         </div>
         <Meter value={c.cjpSupportScore} tone="brand" showValue={false} className="mt-0.5" />
@@ -211,6 +220,38 @@ function SeatCard({ seat: c, paused }: { seat: LokSabhaConstituency; paused: boo
         </div>
         {atCap && <div className="mt-1 text-xs font-bold text-muted">At the {BLITZ_CAP}% blitz limit: nominate a candidate and fund their campaign to go further.</div>}
       </div>
+    </div>
+  );
+}
+
+/** Local volunteers against the next chapter threshold, and a warning when the chapter is fading */
+function ChapterProgress({ st }: { st: StateData }) {
+  const level = st.cjpChapterLevel;
+  const next = level < 3 ? CHAPTER_THRESHOLDS[(level + 1) as 1 | 2 | 3] : null;
+  const floor = level > 0 ? Math.round(CHAPTER_THRESHOLDS[level] * CHAPTER_DECLINE_SHARE) : 0;
+  const fading = level > 0 && st.volunteerStrength < floor;
+  return (
+    <div className="mt-3">
+      {next ? (
+        <>
+          <div className="flex justify-between text-xs font-extrabold text-fg">
+            <span>Towards {CHAPTER[level + 1].toLowerCase()}</span>
+            <span className="tabular-nums">
+              {Math.min(st.volunteerStrength, next).toLocaleString('en-IN')} / {next.toLocaleString('en-IN')} volunteers
+            </span>
+          </div>
+          <Meter value={Math.min(st.volunteerStrength, next)} max={next} tone="pink" showValue={false} className="mt-0.5" />
+        </>
+      ) : (
+        <p className="text-xs font-bold text-success-fg">A mass movement: the strongest a chapter gets.</p>
+      )}
+      {fading && (
+        <p className="mt-1.5 text-xs font-bold text-danger-fg">
+          Fading: under {floor.toLocaleString('en-IN')} volunteers for {st.neglectDays ?? 0} of {CHAPTER_DECLINE_DAYS} days before it shrinks. Run a campaign
+          here to bring people back.
+        </p>
+      )}
+      <p className="mt-1 text-xs font-semibold text-muted">Volunteers settle where you have chapters, campaigns and support.</p>
     </div>
   );
 }

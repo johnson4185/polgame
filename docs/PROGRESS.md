@@ -25,6 +25,42 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L4 · The movement spreads on the map (8 Oct 2026)
+
+**Before:** volunteers in every state stayed at 0, chapters only grew when a story event said
+so, and seat support only moved with blitzes.
+
+**What changed**
+- **Volunteers settle into states every day.** They go where the movement is strongest: states
+  with chapters, active campaigns, existing support, and more seats. The Map's "Volunteers in
+  states" figure is now real.
+- **Chapters grow by themselves.** A state reaches "volunteer group" at 300 local volunteers,
+  "district offices" at 1,500 and "mass movement" at 6,000. Each step is journaled, and a new
+  chapter shows as good news.
+- **Chapters fade if neglected.** If a state stays under a quarter of its level's threshold for
+  45 days, the chapter drops a level. A warning appears (it also stops End week), and the state
+  panel shows the countdown and suggests running a campaign there.
+- **Seat support follows presence.** Each seat drifts towards a target set by national trust,
+  the state's chapter, local volunteers and the regional mood. It is capped at 45%, the same cap
+  as blitzes. Support only falls back if trust collapses below 25, so you don't lose ground just
+  for standing still. Seat cards say "rising towards X%".
+- On the Map's state panel, a bar shows local volunteers against the next chapter threshold.
+- Fixed a phone-only layout bug: the Map's grid column could be stretched wider than the screen.
+
+**Balance:** sensible play now wins 25–37 seats (17–27 before), because presence finally
+counts. It still wins on about day 266–273, as before. Reckless and passive play are unchanged.
+I lowered the drift strength after a first version gave 39–47 seats, which made a first-time
+party's election too easy.
+
+**Technical:** the logic lives in `lib/game/simulation/geography.ts`. `SAVE_VERSION` is 12, and
+states have an optional `neglectDays`. 6 new tests (104 in total).
+
+**Checked:** in the browser, after 6 days 489 volunteers had spread across the states, and Delhi
+showed "15 / 300 volunteers" towards a volunteer group. 1440px and 390px, no horizontal scroll, no
+console errors.
+
+---
+
 ## L3 · Age and time (8 Oct 2026)
 
 **What changed**

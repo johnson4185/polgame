@@ -268,7 +268,7 @@ small moments. Age has mild effects over a long game, such as slower energy reco
 40. Real people only get an age if the public record states one; otherwise none is shown.
 Optional time compression (see the questions).
 
-### L4. The movement spreads on the map
+### L4. The movement spreads on the map — ✅ DONE (8 Oct 2026)
 National volunteers settle into states each day, weighted by support, chapters and active
 campaigns, so per-state volunteers become real. Chapters grow automatically at volunteer
 thresholds and shrink if a state is neglected. Seat support drifts towards state presence and

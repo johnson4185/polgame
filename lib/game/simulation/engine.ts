@@ -32,10 +32,11 @@ import { getOperationTemplate, type OperationTemplate } from '../data/operations
 import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
 import { WEEK_DAYS, ageEnergyPenalty, ageOn, isBirthday, ordinal } from './ages';
+import { CHAPTER_NAME, stepGeography } from './geography';
 import { PROMOTION_PAY_RISE, RANK_LABEL, nextRank, promotionBlocker, stepTeam, teamOutput } from './team';
 import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -2143,13 +2144,41 @@ export function advanceSimulationDay(state: GameState, opts: { routine?: boolean
   for (const b of birthdays) {
     next = { ...next, people: next.people.map(x => (x.id === b.id ? { ...x, morale: clamp(x.morale + 5, 0, 100) } : x)) };
   }
+  // The map (L4): volunteers settle into states, chapters grow or fade, seat support follows presence
+  const geo = stepGeography(next, { rng });
+  next = {
+    ...next,
+    states: geo.states,
+    constituencies: geo.constituencies,
+    movement: { ...next.movement, stateChaptersCount: geo.states.filter(st => st.cjpChapterLevel > 0).length },
+  };
+  for (const o of geo.opened) {
+    next = addJournal(
+      next,
+      o.level === 1 ? `Chapter Opens in ${o.name}` : `${o.name}: ${CHAPTER_NAME[o.level]}`,
+      o.level === 1
+        ? `Enough volunteers in ${o.name} now meet every week to call themselves a chapter.`
+        : `The ${o.name} chapter has grown into ${CHAPTER_NAME[o.level].toLowerCase()}.`,
+      o.level === 3 ? 'MILESTONE' : 'MINOR',
+      'MAP_543',
+    );
+  }
+  for (const o of geo.shrank) {
+    next = addJournal(next, `${o.name} Chapter Shrinks`, `Too few volunteers kept showing up in ${o.name}. The chapter is now: ${CHAPTER_NAME[o.level].toLowerCase()}.`, 'MINOR', 'MAP_543');
+  }
+
   // Bad news is a warning (and stops End week); good news is shown only on a quiet day
-  const teamWarnings = [...team.quits.map(n => `${n} has quit the team.`), ...team.warnings];
+  const teamWarnings = [
+    ...team.quits.map(n => `${n} has quit the team.`),
+    ...team.warnings,
+    ...geo.shrank.map(o => `The ${o.name} chapter is shrinking for lack of volunteers.`),
+  ];
   if (teamWarnings.length) warning = [warning, ...teamWarnings].filter(Boolean).join(' ');
   const goodNews = [
     ...(isBirthday(next.player.birthDate, nextDate) ? [`Happy ${ordinal(ageOn(next.player.birthDate, nextDate)!)} birthday!`] : []),
     ...birthdays.map(b => `It's ${b.name}'s ${ordinal(ageOn(b.birthDate, nextDate)!)} birthday. Morale +5.`),
     ...(team.joined.length ? [`${team.joined.join(' and ')} want${team.joined.length === 1 ? 's' : ''} to join the team.`] : []),
+    ...geo.opened.map(o => (o.level === 1 ? `A chapter opened in ${o.name}.` : `${o.name} grew to ${CHAPTER_NAME[o.level].toLowerCase()}.`)),
   ].join(' ');
 
   next = growChapters(
