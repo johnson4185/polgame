@@ -25,6 +25,32 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4j · Map screen rebuilt (8 Oct 2026)
+
+**What changed**
+- Top cards: states with a chapter, volunteers in the states, and seats contested out of 543.
+- The state list has region chips (North, South, East, West, Central, North-east) and a search
+  box. Each row shows a coloured dot for your chapter level, a mood badge and the seat count.
+- The state panel shows the type, capital, seat count, mood, a 3-step "your presence" meter, the
+  issues people care about, local leads and volunteers.
+- Seat cards show who holds the seat, voters, your candidate, a support bar and last election's
+  vote shares. Each card has a **Blitz** button (1 AP and ₹5,000).
+- When blitzes are paused (no AP or not enough money), the reason appears once above the list,
+  not on every card. A seat at the 45% blitz limit says so. The 45% limit is the engine's cap,
+  and it is now explained.
+- **Removed:**
+  - A "Road to 272" bar whose fill was really just the chapter count.
+  - A fixed line claiming "high impact in Delhi, UP, Bihar, Maharashtra".
+  - The mood filter, which existed in code but had no control on screen.
+
+**Checked:** 1440px and 390px. 36 states; the South chip and the "bih" search both filter; Bihar
+detail. Blitzes in Patna Sahib went 17% → 21% → 29% until AP ran out, then the paused note
+appeared. No horizontal scroll, no console errors. Typecheck, lint, 77 tests and the build all pass.
+
+**A4 is complete:** every screen on the old list now uses the kit.
+
+---
+
 ## A4i · Personal screen rebuilt (8 Oct 2026)
 
 **What changed**
