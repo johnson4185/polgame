@@ -274,7 +274,7 @@ campaigns, so per-state volunteers become real. Chapters grow automatically at v
 thresholds and shrink if a state is neglected. Seat support drifts towards state presence and
 national trust, so blitzes stop being the only lever. Protests grow the chapter in their state.
 
-### L5. The country moves too
+### L5. The country moves too — ✅ DONE (8 Oct 2026)
 NDA and INDIA popularity drift: anti-incumbency builds over years, and scandals and events move
 it. Seat baselines shift between elections. New issues rise in states over time.
 

@@ -7,6 +7,7 @@ import { BALANCE } from '@/lib/game/simulation/engine';
 import { CHAPTER_DECLINE_DAYS, CHAPTER_DECLINE_SHARE, CHAPTER_NAME, CHAPTER_THRESHOLDS, SUPPORT_CAP, supportTarget } from '@/lib/game/simulation/geography';
 import { soundManager } from '@/lib/game/simulation/sound';
 import type { LokSabhaConstituency, StateData } from '@/lib/game/types';
+import { NationalMoodPanel } from './NationalMoodPanel';
 import { Badge, Button, Meter, Panel, PanelHeader, SegmentMeter, StatCard, cn } from '@/components/ui/primitives';
 
 const ZONES: Record<string, string[]> = {
@@ -57,6 +58,8 @@ export function IndiaMapView() {
         <StatCard icon={Users} iconTone="teal" label="Volunteers in states" value={volunteers.toLocaleString('en-IN')} />
         <StatCard icon={UserCheck} iconTone="saffron" label="Seats contested" value={`${candidates} / 543`} />
       </div>
+
+      <NationalMoodPanel />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <Panel className="p-3">

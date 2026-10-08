@@ -281,6 +281,9 @@ export interface LokSabhaConstituency {
     cjpVotes: number;
     cjpVoteShare: number;
     rank: number;
+    /** L5: the alliances' actual shares, used to shift baselines after the election */
+    rulingShare?: number;
+    oppShare?: number;
   };
 }
 
@@ -615,6 +618,8 @@ export interface GameState {
   govResponse: { pressure: number };
 
   media: MediaState;
+  /** L5: national vote-share swing for each alliance (points, ±12) */
+  nationalMood?: NationalMood;
 
   // Active dialogue or notification alert
   activeDialogue: {
@@ -628,4 +633,9 @@ export interface GameState {
       actionPayload: string;
     }[];
   } | null;
+}
+
+export interface NationalMood {
+  nda: number;
+  india: number;
 }

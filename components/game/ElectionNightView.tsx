@@ -7,6 +7,7 @@ import { BALANCE } from '@/lib/game/simulation/engine';
 import { soundManager } from '@/lib/game/simulation/sound';
 import { Badge, Button, EffectChip, Meter, Panel, PanelHeader, cn } from '@/components/ui/primitives';
 import { ChoiceCard } from '@/components/ui/menus';
+import { NationalMoodPanel } from './NationalMoodPanel';
 
 const TOTAL = 543;
 const MAJORITY = BALANCE.majority;
@@ -19,18 +20,21 @@ export function ElectionNightView() {
 
   if (!live.isCountingUnderway && !live.isCountingFinished) {
     return (
-      <Panel className="mx-auto max-w-xl px-6 py-10 text-center">
-        <Vote className="mx-auto h-12 w-12 text-brand-fg" strokeWidth={2.5} aria-hidden="true" />
-        <h2 className="mt-3 font-display text-xl text-fg">No election called yet</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm font-semibold text-fg-2">
-          {state.party.isFormed
-            ? `Nominate candidates on the Party screen, then call the general election. You have ${state.party.candidateCount} candidate${state.party.candidateCount === 1 ? '' : 's'}, projected to win ${state.party.projectedSeats} seat${state.party.projectedSeats === 1 ? '' : 's'}.`
-            : 'Register the party with the Election Commission first, then nominate candidates and call the election.'}
-        </p>
-        <Button className="mt-5" icon={Landmark} onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'PARTY_ECI' })}>
-          Go to the Party screen
-        </Button>
-      </Panel>
+      <div className="mx-auto max-w-xl space-y-4">
+        <Panel className="px-6 py-10 text-center">
+          <Vote className="mx-auto h-12 w-12 text-brand-fg" strokeWidth={2.5} aria-hidden="true" />
+          <h2 className="mt-3 font-display text-xl text-fg">No election called yet</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm font-semibold text-fg-2">
+            {state.party.isFormed
+              ? `Nominate candidates on the Party screen, then call the general election. You have ${state.party.candidateCount} candidate${state.party.candidateCount === 1 ? '' : 's'}, projected to win ${state.party.projectedSeats} seat${state.party.projectedSeats === 1 ? '' : 's'}.`
+              : 'Register the party with the Election Commission first, then nominate candidates and call the election.'}
+          </p>
+          <Button className="mt-5" icon={Landmark} onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'PARTY_ECI' })}>
+            Go to the Party screen
+          </Button>
+        </Panel>
+        <NationalMoodPanel />
+      </div>
     );
   }
 
@@ -108,6 +112,7 @@ export function ElectionNightView() {
       </Panel>
 
       {live.isCountingFinished && <Verdict />}
+      {!live.isCountingFinished && <NationalMoodPanel />}
     </div>
   );
 }

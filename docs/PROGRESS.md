@@ -25,6 +25,47 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## L5 · The country moves too (8 Oct 2026)
+
+**Before:** the NDA and INDIA were frozen. Each election added a random ±4-point swing, seat
+baselines never changed, and state moods and issues were fixed.
+
+**What changed**
+- **National mood.** The NDA and INDIA each have a national swing (±12 points) that moves
+  monthly:
+  - anti-incumbency costs the NDA 0.6 points a month;
+  - INDIA picks up 0.7 a month;
+  - each also drifts randomly.
+
+  Your exposés that land (−1.5) and PILs the court admits (−0.5) hurt the government. The swing
+  feeds seat projections and the real election, which now adds only ±3 points of election-day
+  uncertainty.
+- **Seats change hands.** After each count, the winner becomes the incumbent, each seat's NDA and
+  INDIA baselines move halfway towards the actual result, and the national mood resets for the
+  new mandate. The verdict title now uses the right year (it said "2026" for every election).
+- **States change mood.** Every quarter, about a quarter of the states may shift mood: towards
+  anti-incumbent when the NDA is unpopular, towards ruling-leaning when it's popular, and towards
+  open to reform where your chapters are strong and trust is high. Mood already affects your vote
+  share and seat support. The shifts are journaled.
+- **New grievances.** Every two months a new issue surfaces in one state (paper leaks, power
+  cuts, unpaid teachers and so on). Each state keeps its four most recent.
+- **A "National mood" panel** on the Map and Election screens shows both swings as bars from the
+  centre and describes the mood in words.
+
+**Balance:** sensible play wins 28–39 seats (25–37 after L4) and still wins around day 266–273.
+My first version let the CJP pick up most of the NDA's losses (31–45 seats). Making INDIA absorb
+anti-incumbency, as usually happens, brought it back in line.
+
+**Technical:** the logic lives in `lib/game/simulation/country.ts`. `SAVE_VERSION` is 13;
+`nationalMood` is new, and election results also store the alliances' shares. 7 new tests
+(111 in total).
+
+**Checked:** in the browser with a patched mood (NDA −6.4, INDIA +4.2), both panels show "Anti-
+incumbency is strong" and the bars point the right way. 1440px and 390px, no horizontal scroll,
+no console errors.
+
+---
+
 ## L4 · The movement spreads on the map (8 Oct 2026)
 
 **Before:** volunteers in every state stayed at 0, chapters only grew when a story event said

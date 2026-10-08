@@ -33,10 +33,11 @@ import { HASHTAGS, POST_TEMPLATES } from '../data/media';
 import { emptySkillProgress, fadeSkills, trainSkills } from './skills';
 import { WEEK_DAYS, ageEnergyPenalty, ageOn, isBirthday, ordinal } from './ages';
 import { CHAPTER_NAME, stepGeography } from './geography';
+import { ELECTION_DAY_NOISE, dentGovernment, initialMood, settleSeats, shiftStateMoods, stepMood, surfaceIssue } from './country';
 import { PROMOTION_PAY_RISE, RANK_LABEL, nextRank, promotionBlocker, stepTeam, teamOutput } from './team';
 import type { SkillKey } from '../types';
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 // Balance constants — tune here rather than inline
 export const BALANCE = {
@@ -512,6 +513,7 @@ export function createInitialState(mode: CampaignMode = 'ABHIJEET_CJP', seed: nu
     story: initialStoryState(INITIAL_GAME_DATE),
     govResponse: { pressure: 0 },
     media: initialMediaState(),
+    nationalMood: initialMood(),
   };
 }
 
@@ -769,13 +771,16 @@ export function contestSeat(c: LokSabhaConstituency, ctx: SeatContext, rng?: See
 
 function projectSeats(state: GameState): number {
   if (!state.party.isFormed) return 0;
-  const ctx = seatContext(state);
+  const mood = state.nationalMood ?? initialMood();
+  const ctx = seatContext(state, mood.nda, mood.india);
   return state.constituencies.filter(c => c.cjpCandidate && contestSeat(c, ctx).winner === 'CJP').length;
 }
 
 function runElection(state: GameState): GameState {
   const rng = rngFor(state, 543);
-  const ctx = seatContext(state, (rng.next() - 0.5) * 8, (rng.next() - 0.5) * 8);
+  // Election-day swing: the national mood plus a little uncertainty
+  const mood = state.nationalMood ?? initialMood();
+  const ctx = seatContext(state, mood.nda + (rng.next() - 0.5) * ELECTION_DAY_NOISE, mood.india + (rng.next() - 0.5) * ELECTION_DAY_NOISE);
   const labels: Record<SeatWinner, string> = {
     RULING: 'NDA',
     OPPOSITION: 'INDIA',
@@ -797,6 +802,8 @@ function runElection(state: GameState): GameState {
         cjpVotes: votes('CJP'),
         cjpVoteShare: Math.round(r.shares.CJP * 10) / 10,
         rank: c.cjpCandidate ? r.cjpRank : 0,
+        rulingShare: Math.round(r.shares.RULING),
+        oppShare: Math.round(r.shares.OPPOSITION),
       },
     };
   });
@@ -932,6 +939,8 @@ export function migrateState(saved: GameState): GameState {
     activeOperationId: saved.activeOperationId ?? saved.operations?.[0]?.id ?? null,
     // v7: media room
     media: saved.media ?? initialMediaState(),
+    // v13: the country moves
+    nationalMood: saved.nationalMood ?? initialMood(),
     // v8: manifesto pledges linked to reforms
     party: {
       ...saved.party,
@@ -957,7 +966,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === 'ADVANCE_WEEK') return advanceWeek(state);
   const next = reduce(state, action);
   if (next === state) return state;
-  return finalize(practise(next, state, action), state);
+  return finalize(react(practise(next, state, action), state, action), state);
+}
+
+/** L5: the country reacts to what you do */
+function react(next: GameState, prev: GameState, action: GameAction): GameState {
+  if (action.type !== 'INVESTIGATION_ACTION') return next;
+  const before = prev.cases.find(c => c.id === action.caseId)?.currentStage;
+  const after = next.cases.find(c => c.id === action.caseId)?.currentStage;
+  if (before === after || next.lastOutcome?.tone === 'FAILURE') return next;
+  const hit = after === 'EXPOSED' ? 1.5 : after === 'FILED_PIL' ? 0.5 : 0;
+  return hit ? { ...next, nationalMood: dentGovernment(next.nationalMood ?? initialMood(), hit) } : next;
 }
 
 /** End week (L3): play up to a week of routine days, stopping for anything that needs the player */
@@ -1738,9 +1757,11 @@ function reduce(state: GameState, action: GameAction): GameState {
         },
       };
       if (finished) {
+        // Seats change hands and baselines move towards the result; the new mandate resets the mood
+        next = { ...next, constituencies: settleSeats(next.constituencies), nationalMood: initialMood() };
         next = addJournal(
           next,
-          `Verdict 2026: ${state.party.abbreviation} wins ${t.cjp} seat${t.cjp === 1 ? '' : 's'}`,
+          `Verdict ${state.currentDate.year}: ${state.party.abbreviation} wins ${t.cjp} seat${t.cjp === 1 ? '' : 's'}`,
           `Final tally — NDA ${t.ruling}, INDIA ${t.opp}, ${state.party.abbreviation} ${t.cjp}, others ${t.others}. ${t.cjp >= BALANCE.majority ? 'An outright majority.' : t.cjp > 0 ? 'We have a voice in the Lok Sabha.' : 'Not a single seat. The movement must rebuild.'}`,
           'HISTORIC_TURNING_POINT',
           'ELECTION_NIGHT',
@@ -2165,6 +2186,32 @@ export function advanceSimulationDay(state: GameState, opts: { routine?: boolean
   }
   for (const o of geo.shrank) {
     next = addJournal(next, `${o.name} Chapter Shrinks`, `Too few volunteers kept showing up in ${o.name}. The chapter is now: ${CHAPTER_NAME[o.level].toLowerCase()}.`, 'MINOR', 'MAP_543');
+  }
+
+  // The country (L5): national mood monthly, state moods quarterly, new grievances every two months
+  if (isNewMonth) {
+    next = { ...next, nationalMood: stepMood(next.nationalMood ?? initialMood(), rng) };
+    if (nextDate.month % 3 === 0) {
+      const shifted = shiftStateMoods(next, next.nationalMood!, rng);
+      next = { ...next, states: shifted.states };
+      if (shifted.changed.length) {
+        const label = { RULING_LEAN: 'leans to the ruling alliance', ANTI_INCUMBENCY: 'turned anti-incumbent', VOLATILE: 'is volatile', REFORM_RECEPTIVE: 'is open to reform' } as const;
+        next = addJournal(
+          next,
+          'The Mood Shifts in the States',
+          shifted.changed.map(c => `${c.name} ${label[c.mood]}`).join('; ') + '.',
+          'MINOR',
+          'MAP_543',
+        );
+      }
+    }
+    if (nextDate.month % 2 === 0) {
+      const raised = surfaceIssue(next.states, rng);
+      next = { ...next, states: raised.states };
+      if (raised.surfaced) {
+        next = addJournal(next, `New Grievance in ${raised.surfaced.name}`, `${raised.surfaced.issue} is now what people in ${raised.surfaced.name} talk about.`, 'MINOR', 'MAP_543');
+      }
+    }
   }
 
   // Bad news is a warning (and stops End week); good news is shown only on a quiet day
