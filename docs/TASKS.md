@@ -234,6 +234,55 @@ temperature by season; no Delhi street names outside Delhi; no named fictional l
 People, Research, Ledgers, Party, Election, Parliament, Archive, Chronicle + Situation log,
 Personal and Map all use the component kit now. See PROGRESS A4a–A4j.
 
+## Living world — APPROVED by the owner (8 Oct 2026), Claude, in order L1→L6
+Owner decisions: build in order L1 to L6. Add an optional "End week" once the party exists (days stay the
+default; events still stop a skip). Real people get an age only where the public record states one,
+with the source; otherwise no age is shown.
+Goal: real progress over time. People get older and better at things, the team changes, the
+movement spreads across the map, and the rest of the country moves too. All of it lives in the
+engine (pure reducer, seeded RNG), is covered by tests, and loads old saves through migration.
+`balance.sim` must still pass after each step.
+
+Today: skills, ages, staff skills, state chapters (outside story events), per-state volunteers
+and seat support (outside blitzes) never change on their own. The Personal screen currently says
+"Skills rise as you rank up", which is not true yet. L1 makes it true.
+
+### L1. Skills grow by doing (player)
+Each action trains a related skill: RTI and corroboration train research; media and rallies train
+communication; campaigns and blitzes train organising; lobbying and coalitions train negotiation;
+fundraising and the ledger train finances; leading a crisis trains leadership. Skills have XP with
+diminishing returns from 1 to 10. Fresh skills grow fast, mastery is slow, and unused skills fade
+a little. The Personal screen shows progress to the next level, and the toast says when a skill
+goes up.
+
+### L2. The team grows and changes
+Staff gain skill XP from their assignment and time served (months on the team). Promotions:
+Volunteer → Coordinator → Lead, bringing better output and a higher stipend. Loyalty drifts with
+pay, wins and losses. Someone kept at morale below 20 for two weeks warns you, then quits. New
+fictional recruits turn up over time as the movement grows, so the roster is never "finished".
+Memories come from real game events (they were at the vigil, they were arrested with you).
+
+### L3. Age and time
+Birth dates for the player and fictional characters, with age shown on profiles; birthdays are
+small moments. Age has mild effects over a long game, such as slower energy recovery past about
+40. Real people only get an age if the public record states one; otherwise none is shown.
+Optional time compression (see the questions).
+
+### L4. The movement spreads on the map
+National volunteers settle into states each day, weighted by support, chapters and active
+campaigns, so per-state volunteers become real. Chapters grow automatically at volunteer
+thresholds and shrink if a state is neglected. Seat support drifts towards state presence and
+national trust, so blitzes stop being the only lever. Protests grow the chapter in their state.
+
+### L5. The country moves too
+NDA and INDIA popularity drift: anti-incumbency builds over years, and scandals and events move
+it. Seat baselines shift between elections. New issues rise in states over time.
+
+### L6. Progress you can see
+A "Then and now" view: your stats and skills on day 1 against today, monthly snapshots (the
+statistics history already exists), the map filling in over time, and a yearly anniversary
+report event.
+
 ## Still open (after the autonomous run)
 - [ ] Illustrations for every `ArtPlaceholder` (waiting on the owner — see PROGRESS "Questions")
 - [ ] Location-aware protest scene (currently Jantar Mantar visuals for every protest)
