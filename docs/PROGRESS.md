@@ -25,6 +25,34 @@ no console errors after a 12-day scripted playthrough.
 
 ---
 
+## A4i · Personal screen rebuilt (8 Oct 2026)
+
+**What changed**
+- The header has your portrait, name and role, and health, energy and stress meters, plus a
+  burnout warning when it applies. "Take a day off" says exactly what it does: skip to tomorrow,
+  +35 energy, −25 stress, +5 health. It is locked while an event is open.
+- There are four tabs:
+  - **Money:** savings, living costs, debt and family support, and how monthly costs work. "Give to
+    the movement" has quick amounts and tells you when you don't have enough saved.
+  - **Work:** the three job options as choice cards with the real effects.
+  - **Skills:** six meters out of 10.
+  - **Phone:** a phone showing your latest journal entry and news headlines.
+- **Bugs and accuracy fixes:**
+  - The donate button used to show its own "Injected ₹…" message whether or not the transfer
+    worked. Now only the game's own result toast appears.
+  - The job descriptions were wrong: leave pays half salary, not nothing, and a job costs 4 more
+    energy a night, not 8. They now match the engine.
+  - The phone widget was invented content (a June electricity bill, buses from Rajasthan, a fake
+    trend count). It now shows real in-game news and your journal.
+  - A custom citizen no longer shows the real founder's photo; they get a placeholder portrait.
+
+**Checked:** 1440px and 390px. Gave ₹25K (savings went from ₹65,000 to ₹40,000 and the movement
+fund rose); a ₹50K gift was blocked with the reason; switched to leave; skills and phone render;
+a day off moved day 1 to day 2. No horizontal scroll, no console errors. Typecheck, lint, 77 tests
+and the build all pass.
+
+---
+
 ## A4h · Chronicle and Situation log rebuilt (8 Oct 2026)
 
 **What changed**

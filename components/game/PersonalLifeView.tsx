@@ -1,366 +1,265 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useGame } from '@/lib/game/context/GameContext';
-import { soundManager } from '@/lib/game/simulation/sound';
-import { 
-  User, 
-  Heart, 
-  Zap, 
-  Smile, 
-  Briefcase, 
-  Wallet, 
-  CreditCard, 
-  BookOpen, 
-  Send, 
-  Bed, 
-  AlertCircle,
-  Smartphone,
-  MessageSquare,
-  Twitter,
-  TrendingUp,
-  BatteryCharging,
-  Activity
-} from 'lucide-react';
 import Image from 'next/image';
+import { Activity, Bed, Briefcase, Coffee, Flame, HandHeart, Heart, Landmark, MessageSquare, Newspaper, Send, Wallet, Zap } from 'lucide-react';
+import { useGame } from '@/lib/game/context/GameContext';
+import { formatDate } from '@/lib/game/simulation/engine';
+import { soundManager } from '@/lib/game/simulation/sound';
+import type { GameState } from '@/lib/game/types';
+import { ArtPlaceholder, Badge, Button, EffectChip, Meter, Panel, PanelHeader, StatCard, cn } from '@/components/ui/primitives';
+import { ChoiceCard, TabPanel, Tabs } from '@/components/ui/menus';
 
+const inr = (n: number) => `₹${Math.round(n).toLocaleString('en-IN')}`;
+type Employment = GameState['player']['employmentStatus'];
+
+/** Your own life: vitals, money, work, skills and your phone. */
 export function PersonalLifeView() {
   const { state, dispatch } = useGame();
-  const [donateAmount, setDonateAmount] = useState<number>(10000);
-  const [feedback, setFeedback] = useState<string | null>(null);
-
-  const handleDonate = () => {
-    if (donateAmount <= 0 || donateAmount > state.player.personalSavings) {
-      setFeedback('Insufficient personal savings');
-      return;
-    }
-    soundManager.playGavel();
-    dispatch({ type: 'PERSONAL_TO_MOVEMENT_DONATION', amount: donateAmount });
-    setFeedback(`Injected ₹${donateAmount.toLocaleString('en-IN')} from personal savings to movement war chest`);
-    setTimeout(() => setFeedback(null), 3500);
-  };
-
-  const handleRest = () => {
-    soundManager.playClick();
-    dispatch({ type: 'REST_DAY' });
-  };
-
-  const handleEmploymentChange = (status: 'FULL_TIME_JOB' | 'LEAVE_OF_ABSENCE' | 'FULL_TIME_ACTIVISM') => {
-    soundManager.playClick();
-    dispatch({ type: 'TOGGLE_EMPLOYMENT', status });
-  };
+  const p = state.player;
+  const blocked = !!(state.activeCrisis || state.activeMiniGame || state.story?.activeEventId);
 
   return (
     <div className="space-y-4">
-      
-      {/* Profile Overview Card with Black, Red, Yellow Secondary Highlights */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xs border-2 border-line bg-surface p-4 shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="relative h-20 w-20 overflow-hidden rounded-xs border-2 border-accent bg-inset shadow-md">
-            <Image
-              src="/images/portrait_abhijeet_1790774328368.jpg"
-              alt={state.player.name}
-              fill
-              className="object-cover"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h2 className="font-display text-2xl font-bold text-fg">{state.player.name}</h2>
-              <span className="stamp-red text-[10px]">
-                {state.player.campaignMode === 'ABHIJEET_CJP' ? 'HISTORICAL PROTAGONIST' : 'CITIZEN STRATEGIST'}
-              </span>
+      <Panel className="p-4 sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-[3px] border-ink">
+              {p.campaignMode === 'ABHIJEET_CJP' ? (
+                <Image src="/images/portrait_abhijeet_1790774328368.jpg" alt={p.name} fill className="object-cover" />
+              ) : (
+                <ArtPlaceholder label={p.name} compact className="h-full w-full" />
+              )}
             </div>
-            <p className="text-xs text-fg-2 font-medium mt-0.5">{state.player.roleTitle}</p>
-            <p className="text-[11px] font-tactical text-muted mt-1 flex items-center gap-1.5">
-              <span>Background:</span>
-              <span className="bg-inset text-accent-fg font-bold px-2 py-0.5 rounded-xs border border-line-strong">
-                {state.player.background.replace(/_/g, ' ')}
-              </span>
-            </p>
+            <div className="min-w-0">
+              <h2 className="font-display text-xl text-fg">{p.name}</h2>
+              <p className="text-sm font-semibold text-fg-2">{p.roleTitle}</p>
+              <div className="mt-1 flex flex-wrap gap-1">
+                <Badge tone={p.campaignMode === 'ABHIJEET_CJP' ? 'teal' : 'neutral'}>{p.campaignMode === 'ABHIJEET_CJP' ? 'Real person' : 'Your citizen'}</Badge>
+                <Badge tone="neutral">{p.background.replace(/_/g, ' ').toLowerCase()}</Badge>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 sm:items-end">
+            <Button
+              icon={Bed}
+              variant="teal"
+              disabled={blocked}
+              onClick={() => {
+                soundManager.playClick();
+                dispatch({ type: 'REST_DAY' });
+              }}
+            >
+              Take a day off
+            </Button>
+            <span className="text-xs font-bold text-muted">{blocked ? 'Finish the current event first.' : 'Skips to tomorrow: +35 energy, −25 stress, +5 health'}</span>
           </div>
         </div>
 
-        <button
-          onClick={handleRest}
-          className="flex items-center gap-2 rounded-xs bg-[#DC2626] border-2 border-red-500 px-4 py-2.5 font-tactical text-xs font-black text-white hover:bg-red-700 transition-all shadow-md active:translate-y-0.5"
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+          <Meter label="Health" icon={Heart} value={p.health} tone={p.health < 40 ? 'danger' : 'success'} />
+          <Meter label="Energy" icon={Zap} value={p.energy} tone={p.energy < 30 ? 'danger' : 'accent'} />
+          <Meter label="Stress" icon={Activity} value={p.stress} tone={p.stress > 65 ? 'danger' : 'pink'} />
+        </div>
+        {p.burnoutRisk && <p className="mt-2 text-sm font-bold text-danger-fg">Burnout risk: your stress is very high. Rest before your health starts to fall.</p>}
+      </Panel>
+
+      <Panel className="p-3 sm:p-4">
+        <Tabs
+          size="sm"
+          tabs={[
+            { value: 'money', label: 'Money' },
+            { value: 'work', label: 'Work' },
+            { value: 'skills', label: 'Skills' },
+            { value: 'phone', label: 'Phone', badge: state.newsFeed.filter(n => !n.read).length || undefined },
+          ]}
         >
-          <Bed className="h-4 w-4 text-accent-fg" />
-          <span>Rest &amp; Recover Energy (24h)</span>
-        </button>
-      </div>
-
-      {feedback && (
-        <div className="rounded-xs bg-accent-soft border-2 border-accent px-4 py-2.5 text-xs font-bold text-accent-fg shadow-md flex items-center gap-2 animate-bounce">
-          <Zap className="h-4 w-4 text-accent-fg" />
-          <span>{feedback}</span>
-        </div>
-      )}
-
-      {/* Vitals and Daily Health Status Grid in Red, Yellow, Black */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Physical Health */}
-        <div className="rounded-xs border-2 border-line bg-surface p-3.5 shadow-md">
-          <div className="flex items-center justify-between text-xs font-tactical text-muted">
-            <span className="font-bold">PHYSICAL HEALTH</span>
-            <Heart className="h-4 w-4 text-danger-fg" />
-          </div>
-          <div className="text-2xl font-black font-tactical text-fg mt-1 tabular-nums flex items-baseline gap-1">
-            <span className={state.player.health < 40 ? 'text-danger-fg' : 'text-success-fg'}>{state.player.health}%</span>
-            <span className="text-xs text-faint font-normal">/ 100</span>
-          </div>
-          <div className="mt-2 h-2.5 w-full rounded-xs bg-inset border border-line overflow-hidden">
-            <div className={`h-full rounded-xs ${state.player.health < 40 ? "bg-[#DC2626]" : "bg-emerald-500"} transition-all duration-300`} style={{ width: `${state.player.health}%` }} />
-          </div>
-        </div>
-
-        {/* Stamina & Energy in Yellow */}
-        <div className="rounded-xs border-2 border-line bg-surface p-3.5 shadow-md">
-          <div className="flex items-center justify-between text-xs font-tactical text-muted">
-            <span className="font-bold">STAMINA &amp; ENERGY</span>
-            <Zap className="h-4 w-4 text-accent-fg" />
-          </div>
-          <div className="text-2xl font-black font-tactical text-fg mt-1 tabular-nums flex items-baseline gap-1">
-            <span className={state.player.energy < 30 ? 'text-danger-fg' : 'text-accent-fg'}>{state.player.energy}%</span>
-            <span className="text-xs text-faint font-normal">/ 100</span>
-          </div>
-          <div className="mt-2 h-2.5 w-full rounded-xs bg-inset border border-line overflow-hidden">
-            <div className="h-full rounded-xs bg-[#FACC15] transition-all duration-300" style={{ width: `${state.player.energy}%` }} />
-          </div>
-        </div>
-
-        {/* Stress & Burnout in Red */}
-        <div className="rounded-xs border-2 border-line bg-surface p-3.5 shadow-md">
-          <div className="flex items-center justify-between text-xs font-tactical text-muted">
-            <span className="font-bold">STRESS &amp; PRESSURE</span>
-            <Activity className="h-4 w-4 text-danger-fg" />
-          </div>
-          <div className={`text-2xl font-black font-tactical mt-1 tabular-nums flex items-baseline gap-1 ${state.player.stress > 65 ? 'text-danger-fg' : 'text-fg'}`}>
-            <span>{state.player.stress}%</span>
-            <span className="text-xs text-faint font-normal">/ 100</span>
-          </div>
-          <div className="mt-2 h-2.5 w-full rounded-xs bg-inset border border-line overflow-hidden">
-            <div 
-              className={`h-full rounded-xs transition-all duration-300 ${state.player.stress > 65 ? 'bg-[#EF4444] animate-pulse' : 'bg-orange-500'}`} 
-              style={{ width: `${state.player.stress}%` }} 
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive Smartphone Desk Widget + Finances Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        
-        {/* Left Column: Personal Finances & Employment (7 cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          
-          {/* Personal Finances */}
-          <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-3 shadow-md">
-            <div className="flex items-center justify-between border-b-2 border-line pb-2">
-              <h3 className="font-tactical font-black text-fg flex items-center gap-1.5">
-                <Wallet className="h-4 w-4 text-accent-fg" />
-                <span>PERSONAL SAVINGS & HOUSEHOLD LEDGER</span>
-              </h3>
-              <span className="stamp-yellow text-[10px]">INDEPENDENT AUDIT</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 font-tactical">
-              <div className="rounded-xs border border-line-strong bg-inset p-3">
-                <span className="text-muted text-[11px]">PERSONAL BANK SAVINGS:</span>
-                <div className="text-xl font-black text-success-fg mt-1 tabular-nums">
-                  ₹{state.player.personalSavings.toLocaleString('en-IN')}
-                </div>
-              </div>
-              <div className="rounded-xs border border-line-strong bg-inset p-3">
-                <span className="text-muted text-[11px]">MONTHLY LIVING EXPENSE:</span>
-                <div className="text-xl font-black text-danger-fg mt-1 tabular-nums">
-                  ₹{state.player.monthlyLivingCost.toLocaleString('en-IN')}
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-line pt-3">
-              <label className="font-tactical font-bold text-fg block mb-1.5">
-                Inject Personal Capital into Movement War Chest:
-              </label>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <input
-                  type="number"
-                  step="5000"
-                  min="1000"
-                  max={state.player.personalSavings}
-                  value={donateAmount}
-                  onChange={(e) => setDonateAmount(Number(e.target.value))}
-                  className="w-40 rounded-xs border-2 border-line-strong bg-inset px-3 py-2 font-tactical text-xs text-fg focus:outline-none focus:border-accent"
-                />
-                <button
-                  onClick={handleDonate}
-                  disabled={state.player.personalSavings < donateAmount}
-                  className="flex items-center gap-1.5 rounded-xs bg-[#DC2626] border-2 border-red-500 px-4 py-2 font-tactical font-black text-white hover:bg-red-700 transition-colors disabled:bg-line-strong disabled:border-line-strong disabled:text-faint disabled:cursor-not-allowed shadow-xs"
-                >
-                  <Send className="h-3.5 w-3.5 text-accent-fg" />
-                  <span>Transfer Funds</span>
-                </button>
-              </div>
-              <p className="text-[11px] text-faint mt-1.5 font-mono">
-                *Separation of personal and public movement accounts strictly enforced by simulation ethics.
-              </p>
-            </div>
-          </div>
-
-          {/* Employment & Day Commitments */}
-          <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs space-y-3 shadow-md">
-            <div className="flex items-center justify-between border-b-2 border-line pb-2">
-              <h3 className="font-tactical font-black text-fg flex items-center gap-1.5">
-                <Briefcase className="h-4 w-4 text-accent-fg" />
-                <span>EMPLOYMENT STATUS & TIME ALLOCATION</span>
-              </h3>
-              <span className="text-muted font-mono text-[11px]">Salary: ₹{state.player.salaryMonthly.toLocaleString('en-IN')}/mo</span>
-            </div>
-
-            <div className="space-y-2 pt-1 font-tactical">
+          <TabPanel value="money">
+            <Money />
+          </TabPanel>
+          <TabPanel value="work">
+            <Work />
+          </TabPanel>
+          <TabPanel value="skills">
+            <div className="grid gap-x-6 gap-y-2.5 sm:grid-cols-2">
               {[
-                {
-                  id: 'FULL_TIME_JOB',
-                  label: 'Maintain Corporate Employment',
-                  desc: `Guarantees ₹${state.player.salaryMonthly.toLocaleString('en-IN')}/mo income, but drains 8 extra energy points every day.`,
-                },
-                {
-                  id: 'LEAVE_OF_ABSENCE',
-                  label: 'Official Unpaid Leave of Absence',
-                  desc: 'Job held in reserve. No monthly income, but gives maximum daily stamina for ground organizing.',
-                },
-                {
-                  id: 'FULL_TIME_ACTIVISM',
-                  label: 'Resign & Dedicate 100% to Public Service',
-                  desc: 'Sever corporate ties completely. Live exclusively on personal savings and transparent community stipends.',
-                },
-              ].map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => handleEmploymentChange(option.id as any)}
-                  className={`w-full text-left p-3 rounded-xs border-2 transition-all ${
-                    state.player.employmentStatus === option.id
-                      ? 'border-accent bg-inset text-fg font-bold shadow-md ring-1 ring-[#FACC15]/40'
-                      : 'border-line bg-raised text-fg-2 hover:border-line-strong hover:bg-raised'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={state.player.employmentStatus === option.id ? 'text-accent-fg' : 'text-fg'}>
-                      {option.label}
-                    </span>
-                    {state.player.employmentStatus === option.id && (
-                      <span className="text-[10px] bg-[#DC2626] text-white px-1.5 py-0.5 rounded-xs font-black">
-                        ACTIVE
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-muted font-normal mt-1 font-sans">{option.desc}</div>
-                </button>
+                { label: 'Communication', val: p.communication },
+                { label: 'Organising', val: p.organizing },
+                { label: 'Research and RTI', val: p.research },
+                { label: 'Negotiation', val: p.negotiation },
+                { label: 'Leadership', val: p.leadership },
+                { label: 'Finances', val: p.financialAcumen },
+              ].map(s => (
+                <Meter key={s.label} label={s.label} value={s.val} max={10} tone="brand" />
               ))}
             </div>
-          </div>
+            <p className="mt-3 text-xs font-semibold text-muted">Skills rise as you rank up. Research makes RTIs stronger; negotiation helps bills through Parliament.</p>
+          </TabPanel>
+          <TabPanel value="phone">
+            <Phone />
+          </TabPanel>
+        </Tabs>
+      </Panel>
+    </div>
+  );
+}
 
-        </div>
+function Money() {
+  const { state, dispatch } = useGame();
+  const p = state.player;
+  const [amount, setAmount] = useState(10000);
+  const presets = [5000, 10000, 25000, 50000];
+  const tooMuch = amount > p.personalSavings;
 
-        {/* Right Column: Citizen Smartphone Widget (5 cols) */}
-        <div className="lg:col-span-5 rounded-xs border-2 border-line bg-canvas p-4 text-xs shadow-xl space-y-3">
-          
-          {/* Smartphone Frame Header */}
-          <div className="flex items-center justify-between border-b-2 border-line pb-2">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <Smartphone className="h-4 w-4 text-accent-fg" />
-              <span className="font-tactical font-black text-fg text-xs">CITIZEN COMMUNICATOR</span>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-muted">
-              <span className="text-accent-fg">5G CONNECTED</span>
-              <span>● 88%</span>
-            </div>
-          </div>
-
-          {/* Social Media & Instant Messaging Feed */}
-          <div className="space-y-2.5">
-            {/* WhatsApp Group Notification */}
-            <div className="rounded-xs border border-success-line bg-success-soft p-2.5 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-bold text-success-fg">
-                <span className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3 text-success-fg" />
-                  <span>WhatsApp: Jantar Mantar Volunteer Core</span>
-                </span>
-                <span className="text-[9px] text-muted">Just now</span>
-              </div>
-              <p className="text-[11px] text-fg">
-                &ldquo;Buses carrying 400 NEET aspirants from Rajasthan just arrived at Delhi border. Police checking banners.&rdquo;
-              </p>
-            </div>
-
-            {/* X / Twitter Trend Alert */}
-            <div className="rounded-xs border border-line bg-inset p-2.5 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-bold text-info-fg">
-                <span className="flex items-center gap-1">
-                  <Twitter className="h-3 w-3 text-info-fg" />
-                  <span>X Viral Trend India</span>
-                </span>
-                <span className="stamp-red text-[8px]">#1 TRENDING</span>
-              </div>
-              <p className="text-[11px] text-fg font-mono">
-                #CockroachJanta · 184K Posts
-              </p>
-              <p className="text-[10px] text-muted">
-                Citizens posting videos of paper leaks and judicial accountability debates across colleges.
-              </p>
-            </div>
-
-            {/* Delhi Power Discom SMS */}
-            <div className="rounded-xs border border-accent-line bg-accent-soft p-2.5 space-y-1">
-              <div className="flex items-center justify-between text-[11px] font-bold text-accent-fg">
-                <span className="flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3 text-accent-fg" />
-                  <span>BSES Electricity Bill</span>
-                </span>
-                <span className="text-[9px] text-muted">Due in 5 days</span>
-              </div>
-              <p className="text-[11px] text-fg-2">
-                Bill amount ₹2,840 for June cycle. Auto-debited from personal account if not deferred.
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Motivational Quote */}
-          <div className="border-t border-line pt-2 text-[11px] text-muted italic font-serif">
-            &ldquo;When an ordinary citizen becomes angry enough to challenge the system, history begins to bend.&rdquo;
-          </div>
-        </div>
-
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard icon={Wallet} iconTone="teal" label="Savings" value={inr(p.personalSavings)} />
+        <StatCard icon={Coffee} iconTone="saffron" label="Living costs a month" value={inr(p.monthlyLivingCost)} />
+        <StatCard icon={Flame} iconTone={p.personalDebt > 0 ? 'pink' : 'ink'} label="Debt" value={inr(p.personalDebt)} />
+        <StatCard icon={HandHeart} iconTone="success" label="Family support" value={`${p.familySupport}%`} />
       </div>
+      <p className="text-sm font-semibold text-fg-2">
+        Living costs come out of your savings at the start of each month. If savings run out, the rest becomes debt and your family&apos;s patience wears
+        thin.
+      </p>
 
-      {/* Skills Matrix in Black, Red, Yellow */}
-      <div className="rounded-xs border-2 border-line bg-surface p-4 text-xs shadow-md">
-        <h3 className="font-tactical font-black text-fg border-b-2 border-line pb-2 mb-3 flex items-center justify-between">
-          <span>PERSONAL LEADERSHIP & CIVIC SKILLS PROFILE</span>
-          <span className="text-accent-fg text-[11px] font-mono">MAX: 10/10</span>
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 font-tactical">
-          {[
-            { label: 'COMMUNICATION', val: state.player.communication },
-            { label: 'ORGANIZING', val: state.player.organizing },
-            { label: 'RESEARCH & RTI', val: state.player.research },
-            { label: 'NEGOTIATION', val: state.player.negotiation },
-            { label: 'LEADERSHIP', val: state.player.leadership },
-            { label: 'FINANCES', val: state.player.financialAcumen },
-          ].map((skill, idx) => (
-            <div key={idx} className="rounded-xs border border-line bg-inset p-2.5 text-center">
-              <span className="text-muted text-[10px] font-bold block">{skill.label}</span>
-              <div className="text-xl font-black text-accent-fg mt-1 tabular-nums">{skill.val}/10</div>
-              <div className="mt-1.5 h-1.5 w-full bg-raised rounded-xs overflow-hidden">
-                <div className="h-full bg-[#FACC15]" style={{ width: `${skill.val * 10}%` }} />
-              </div>
-            </div>
+      <div className="chunky-sm space-y-2 bg-raised p-3">
+        <div className="font-display text-xs text-fg">Give to the movement</div>
+        <p className="text-sm font-semibold text-fg-2">Moves your own money into the movement fund. It is recorded in the ledger as a founder contribution.</p>
+        <div className="flex flex-wrap gap-1.5">
+          {presets.map(v => (
+            <button
+              key={v}
+              aria-pressed={amount === v}
+              onClick={() => setAmount(v)}
+              className={cn('chunky-sm pressable px-3 py-1.5 text-sm font-extrabold', amount === v ? 'bg-brand text-brand-ink' : 'bg-surface text-fg')}
+            >
+              ₹{v / 1000}K
+            </button>
           ))}
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            icon={Send}
+            disabled={tooMuch || amount <= 0}
+            onClick={() => {
+              soundManager.playGavel();
+              dispatch({ type: 'PERSONAL_TO_MOVEMENT_DONATION', amount });
+            }}
+          >
+            Give {inr(amount)}
+          </Button>
+          {tooMuch && <span className="text-sm font-bold text-danger-fg">You only have {inr(p.personalSavings)} saved.</span>}
+        </div>
       </div>
+    </div>
+  );
+}
 
+function Work() {
+  const { state, dispatch } = useGame();
+  const p = state.player;
+  const options: { id: Employment; icon: React.ElementType; title: string; desc: string; effects: React.ReactNode }[] = [
+    {
+      id: 'FULL_TIME_JOB',
+      icon: Briefcase,
+      title: 'Keep the day job',
+      desc: 'Steady money, but you go to bed more tired every night.',
+      effects: (
+        <>
+          <EffectChip value={inr(p.salaryMonthly)} label="per month" tone="good" />
+          <EffectChip value="−6" label="energy/night" tone="bad" />
+        </>
+      ),
+    },
+    {
+      id: 'LEAVE_OF_ABSENCE',
+      icon: Landmark,
+      title: 'Take leave',
+      desc: 'Your job waits for you on half pay.',
+      effects: (
+        <>
+          <EffectChip value={inr(p.salaryMonthly / 2)} label="per month" tone="good" />
+          <EffectChip value="−2" label="energy/night" tone="neutral" />
+        </>
+      ),
+    },
+    {
+      id: 'FULL_TIME_ACTIVISM',
+      icon: Flame,
+      title: 'Go full-time',
+      desc: 'No salary. You live on savings and give everything to the movement.',
+      effects: (
+        <>
+          <EffectChip value="₹0" label="per month" tone="bad" />
+          <EffectChip value="−2" label="energy/night" tone="neutral" />
+        </>
+      ),
+    },
+  ];
+  return (
+    <div className="space-y-3">
+      {options.map(o => {
+        const current = p.employmentStatus === o.id;
+        return (
+          <ChoiceCard
+            key={o.id}
+            icon={o.icon}
+            title={current ? `${o.title} (current)` : o.title}
+            description={o.desc}
+            emphasis={current}
+            effects={o.effects}
+            onSelect={() => {
+              if (current) return;
+              soundManager.playClick();
+              dispatch({ type: 'TOGGLE_EMPLOYMENT', status: o.id });
+            }}
+          />
+        );
+      })}
+      <p className="text-xs font-semibold text-muted">Pay arrives at the start of each month. Every option loses some energy overnight; the job loses more.</p>
+    </div>
+  );
+}
+
+function Phone() {
+  const { state } = useGame();
+  const news = state.newsFeed.slice(0, 4);
+  const latest = state.journal[0];
+  return (
+    <div className="mx-auto max-w-sm">
+      <div className="rounded-[2rem] border-[3px] border-ink bg-ink p-2 shadow-[5px_5px_0_var(--pink)]">
+        <div className="rounded-[1.5rem] bg-surface p-3">
+          <div className="flex items-center justify-between px-1 text-xs font-extrabold text-fg">
+            <span>{formatDate(state.currentDate)}</span>
+            <span>{state.player.energy}% ⚡</span>
+          </div>
+          <div className="mt-3 space-y-2">
+            {latest && (
+              <div className="chunky-sm bg-success-soft p-2.5">
+                <div className="flex items-center gap-1 text-xs font-extrabold text-success-fg">
+                  <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" /> Volunteer group
+                </div>
+                <p className="mt-0.5 text-sm font-bold text-fg">{latest.title}</p>
+              </div>
+            )}
+            {news.map(n => (
+              <div key={n.id} className="chunky-sm bg-raised p-2.5">
+                <div className="flex items-center justify-between gap-2 text-xs font-extrabold text-muted">
+                  <span className="flex min-w-0 items-center gap-1 truncate">
+                    <Newspaper className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {n.sourceName}
+                  </span>
+                  <span className="shrink-0">{formatDate(n.date)}</span>
+                </div>
+                <p className="mt-0.5 text-sm font-bold leading-snug text-fg">{n.headline}</p>
+              </div>
+            ))}
+            {!latest && news.length === 0 && <p className="py-6 text-center text-sm font-semibold text-muted">No notifications.</p>}
+          </div>
+        </div>
+      </div>
+      <p className="mt-2 text-center text-xs font-semibold text-muted">The full news is on the Media screen.</p>
     </div>
   );
 }
